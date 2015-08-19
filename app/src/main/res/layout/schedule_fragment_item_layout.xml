@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:paddingLeft="@dimen/abc_button_padding_horizontal_material"
+    android:paddingRight="@dimen/abc_action_bar_default_padding_material"
+    android:paddingStart="@dimen/abc_button_padding_horizontal_material"
+    android:paddingEnd="@dimen/abc_action_bar_default_padding_material"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/abc_action_bar_default_padding_material"
+        android:paddingRight="@dimen/abc_action_bar_default_padding_material"
+        android:paddingTop="@dimen/abc_action_bar_default_padding_material"
+        android:layout_marginRight="5dp"
+        android:layout_marginEnd="5dp">
+
+        <TextView
+            android:id="@+id/scheduleTimeTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/abc_text_size_small_material" />
+
+        <TextView
+            android:id="@+id/auditoryNameListItem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/abc_text_size_small_material"/>
+    </LinearLayout>
+
+    <View
+        android:id="@+id/lessonTypeView"
+        android:layout_width="6dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp"
+        android:layout_height="fill_parent"
+        android:background="#000000" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="11dp"
+        android:paddingRight="6dp"
+        android:paddingEnd="6dp"
+        android:paddingStart="11dp"
+        android:paddingTop="@dimen/abc_action_bar_default_padding_material"
+        android:layout_weight="1">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/subjectNameListItem"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="@dimen/abc_text_size_medium_material"
+                android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/scheduleNoteTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_marginStart="15dp"
+                android:textSize="@dimen/abc_text_size_small_material"/>
+        </LinearLayout>
+        <TextView
+            android:id="@+id/employeeNameListItem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/abc_text_size_small_material"
+            android:textStyle="italic"/>
+    </LinearLayout>
+
+
+    <View
+
+        android:layout_width="1dp"
+        android:layout_height="fill_parent"
+        android:background="#000000"
+        android:layout_marginTop="7dp"
+        android:layout_marginBottom="7dp"/>
+
+
+    <LinearLayout
+        android:layout_width="@dimen/auditory_width"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="5dp">
+
+        <TextView
+            android:id="@+id/subGroupTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/abc_text_size_small_material"
+            android:textStyle="italic"
+            />
+        <TextView
+            android:layout_marginTop="5dp"
+            android:id="@+id/weekNumberTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/abc_text_size_small_material"
+            android:textStyle="italic"
+            />
+
+    </LinearLayout>
+</LinearLayout>
