@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 
+import com.example.myapplication.DataProvider.FileUtil;
 import com.example.myapplication.DataProvider.XmlDataProvider;
 import com.example.myapplication.Model.AvailableFragments;
 import com.example.myapplication.Model.SchoolDay;
@@ -29,8 +30,6 @@ import java.util.List;
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, OnFragmentInteractionListener, ActionBar.OnNavigationListener {
 
-    private static final String DEFAULT_GROUP = "defaultGroup";
-    private static final String DEFAULT_EMPLOYEE = "defaultEmployee";
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -70,7 +69,7 @@ public class MainActivity extends ActionBarActivity
         downloadScheduleForGroupFragment = new DownloadScheduleForGroup();
         downloadScheduleForEmployeeFragment = new DownloadScheduleForEmployee();
         showScheduleFragmentForGroup = new ScheduleFragmentForGroup();
-        String defaultSchedule = getDefaultSchedule();
+        String defaultSchedule = FileUtil.getDefaultSchedule(this);
         if(defaultSchedule == null) {
             onChangeFragment(AvailableFragments.WhoAreYou);
         } else{
@@ -178,7 +177,7 @@ public class MainActivity extends ActionBarActivity
                 fragmentTransaction.replace(R.id.fragment_container, whoAreYouFragment);
                 break;
             case ShowSchedules:
-                String defaultSchedule = getDefaultSchedule();
+                String defaultSchedule = FileUtil.getDefaultSchedule(this);
                 if(defaultSchedule == null) {
                     onChangeFragment(AvailableFragments.WhoAreYou);
                 } else {
@@ -199,20 +198,6 @@ public class MainActivity extends ActionBarActivity
         fragmentTransaction.commit();
     }
 
-    public String getDefaultSchedule(){
-        String settingFileName = getString(R.string.setting_file_name);
-        SharedPreferences preferences = getSharedPreferences(settingFileName, 0);
-        String defaultGroup = preferences.getString(DEFAULT_GROUP, "none");
-        if(!defaultGroup.equalsIgnoreCase("none")){
-            return defaultGroup + ".xml";
-        } else{
-            String defaultEmployee = preferences.getString(DEFAULT_EMPLOYEE, "none");
-            if(!defaultEmployee.equalsIgnoreCase("none")){
-                return defaultEmployee + ".xml";
-            }
-        }
-        return null;
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

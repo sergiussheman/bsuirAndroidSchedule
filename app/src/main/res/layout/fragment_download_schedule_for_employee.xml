@@ -18,25 +18,20 @@
             android:layout_gravity="center"
             android:text="@string/schedule_for_employee"
             android:textSize="@dimen/abc_action_bar_content_inset_material"
-            android:layout_centerHorizontal="true"
             android:id="@+id/textViewScheduleForEmployee"
-            android:layout_marginBottom="18px"/>
+            android:layout_marginBottom="18dp"/>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
             android:background="@android:color/black"
-            android:layout_below="@+id/textViewScheduleForEmployee"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
             android:id="@+id/viewScheduleForEmployee"
-            android:layout_marginBottom="40px"/>
+            android:layout_marginBottom="40dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/enterGroupNameView"
-            android:layout_alignBottom="@id/viewScheduleForEmployee"
             android:text="@string/enter_employee_name"/>
 
         <AutoCompleteTextView
@@ -59,16 +54,12 @@
             android:text="@string/downloaded_schedules"
             android:paddingTop="40dp"
             android:textSize="@dimen/abc_action_bar_content_inset_material"
-            android:layout_centerHorizontal="true"
             android:layout_marginBottom="18dp"/>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
             android:background="@android:color/black"
-            android:layout_below="@+id/textViewScheduleForEmployee"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
             android:layout_marginBottom="18dp"/>
 
         <TableLayout

@@ -40,6 +40,7 @@
     <string name="default_group_for_test">151002</string>
     <string name="setting_file_name">Settings</string>
     <string name="default_group_field_in_settings">defaultGroup</string>
+    <string name="default_employee_field_in_settings">defaultEmployee</string>
 
     <string name="empty_lessons">Сегодня занятий нет</string>
 
@@ -77,6 +78,5 @@
         <item>Расписание на сегодня</item>
         <item>Расписание экзаменов</item>
         <item>Скачать расписание</item>
-        <item>Настройки</item>
     </string-array>
 </resources>

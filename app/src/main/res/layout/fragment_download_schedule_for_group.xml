@@ -17,25 +17,20 @@
             android:layout_gravity="center"
             android:text="@string/schedule_for_student_group"
             android:textSize="@dimen/abc_action_bar_content_inset_material"
-            android:layout_centerHorizontal="true"
             android:id="@+id/textViewScheduleForGroup"
-            android:layout_marginBottom="18px"/>
+            android:layout_marginBottom="18dp"/>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
             android:background="@android:color/black"
-            android:layout_below="@+id/textViewScheduleForGroup"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
             android:id="@+id/viewScheduleForGroup"
-            android:layout_marginBottom="40px"/>
+            android:layout_marginBottom="40dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/enterGroupNameView"
-            android:layout_alignBottom="@id/viewScheduleForGroup"
             android:text="@string/enter_student_group_name"/>
 
         <EditText
@@ -51,8 +46,6 @@
             android:layout_height="wrap_content"
             android:text="@string/download_schedule" />
 
-
     </LinearLayout>
-
 
 </FrameLayout>

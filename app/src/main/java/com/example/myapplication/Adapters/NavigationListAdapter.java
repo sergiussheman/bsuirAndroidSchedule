@@ -21,8 +21,7 @@ public class NavigationListAdapter extends ArrayAdapter<String> {
     private String[] data = null;
     private int[] iconsIDs = {R.drawable.ic_action_go_to_today,
                               R.drawable.ic_action_time,
-                              R.drawable.ic_action_download,
-                              R.drawable.ic_action_settings};
+                              R.drawable.ic_action_download};
 
 
     public NavigationListAdapter(Context context, int layoutResourceId, String[] data){

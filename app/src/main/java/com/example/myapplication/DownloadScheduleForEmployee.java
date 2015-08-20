@@ -118,7 +118,7 @@ public class DownloadScheduleForEmployee extends Fragment {
         TableRow headerRow = new TableRow(getActivity());
         TextView employeeHeaderTextView = new TextView(getActivity());
         employeeHeaderTextView.setText(getResources().getString(R.string.employee_name));
-        employeeHeaderTextView.setGravity(Gravity.LEFT);
+        employeeHeaderTextView.setGravity(Gravity.START);
         employeeHeaderTextView.setLayoutParams(params);
         employeeHeaderTextView.setTypeface(null, Typeface.BOLD);
         headerRow.addView(employeeHeaderTextView);
@@ -131,7 +131,7 @@ public class DownloadScheduleForEmployee extends Fragment {
         TextView deleteHeader = new TextView(getActivity());
         deleteHeader.setText(getResources().getString(R.string.delete));
         deleteHeader.setTypeface(null, Typeface.BOLD);
-        deleteHeader.setGravity(Gravity.RIGHT);
+        deleteHeader.setGravity(Gravity.END);
 
         headerRow.addView(deleteHeader);
 
@@ -141,7 +141,7 @@ public class DownloadScheduleForEmployee extends Fragment {
         for(String currentEmployeeSchedule : schedulesForEmployee) {
             TableRow rowForEmployeeSchedule = new TableRow(getActivity());
             TextView textViewForEmployeeName = new TextView(getActivity());
-            textViewForEmployeeName.setGravity(Gravity.LEFT);
+            textViewForEmployeeName.setGravity(Gravity.START);
             textViewForEmployeeName.setText(currentEmployeeSchedule);
             textViewForEmployeeName.setLayoutParams(params);
             rowForEmployeeSchedule.addView(textViewForEmployeeName);
@@ -169,6 +169,7 @@ public class DownloadScheduleForEmployee extends Fragment {
                                     if (!file.delete()) {
                                         Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
                                     }
+                                    updateDefaultEmployeeIfNeed(fileNameForDelete);
                                     setDownloadedSchedules(FileUtil.getAllDownloadedSchedules(getActivity(), false));
                                     populateTableLayout(tableLayout, getDownloadedSchedules());
                                 }
@@ -177,7 +178,28 @@ public class DownloadScheduleForEmployee extends Fragment {
                 }
             });
             rowForEmployeeSchedule.addView(deleteImageView);
+
+            rowForEmployeeSchedule.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    TableRow selectedTableRow = (TableRow) v;
+                    String selectedEmployee = ((TextView) selectedTableRow.getChildAt(0)).getText().toString();
+                    updateDefaultEmployee(selectedEmployee);
+                    mListener.onChangeFragment(AvailableFragments.ShowSchedules);
+                }
+            });
             tableLayout.addView(rowForEmployeeSchedule);
+        }
+    }
+
+    private void updateDefaultEmployeeIfNeed(String employeeName){
+        String settingFileName = getActivity().getString(R.string.setting_file_name);
+        final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
+        final SharedPreferences.Editor editor = preferences.edit();
+        String employeeFieldInSettings = getActivity().getString(R.string.default_employee_field_in_settings);
+        String defaultEmployeeName = preferences.getString(employeeFieldInSettings, "none");
+        if(employeeName.equalsIgnoreCase(defaultEmployeeName)){
+            editor.remove(employeeFieldInSettings);
         }
     }
 
@@ -185,10 +207,23 @@ public class DownloadScheduleForEmployee extends Fragment {
         String settingFileName = getActivity().getString(R.string.setting_file_name);
         final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
         final SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("defaultGroup", "none");
+        String employeeFieldInSettings = getActivity().getString(R.string.default_employee_field_in_settings);
+        editor.putString(employeeFieldInSettings, "none");
         String employeeForPreferences = employee.getLastName() + employee.getId();
-        editor.putString("defaultEmployee", employeeForPreferences);
+        editor.putString(employeeFieldInSettings, employeeForPreferences);
         editor.apply();
+    }
+    private void updateDefaultEmployee(String defaultEmployee){
+        defaultEmployee = defaultEmployee.substring(0, defaultEmployee.length() - 4);
+        String settingFileName = getActivity().getString(R.string.setting_file_name);
+        final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
+        String employeeFieldInSettings = getActivity().getString(R.string.default_employee_field_in_settings);
+        String currentDefaultEmployee = preferences.getString(employeeFieldInSettings, "none");
+        if(!defaultEmployee.equalsIgnoreCase(currentDefaultEmployee)){
+            final SharedPreferences.Editor editor = preferences.edit();
+            editor.putString(employeeFieldInSettings, defaultEmployee);
+            editor.apply();
+        }
     }
 
     @Nullable
