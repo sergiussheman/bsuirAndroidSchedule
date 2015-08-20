@@ -18,8 +18,14 @@
     <string name="schedule_for_student_group">Расписание для группы</string>
     <string name="enter_student_group_name">Введите номер группы</string>
     <string name="schedule_for_employee">Расписание для преподавателя</string>
+    <string name="downloaded_schedules">Скачанное расписание</string>
     <string name="enter_employee_name">Введите имя преподавателя</string>
-    <string name="download_schedule">Скачать расписание</string>
+    <string name="download_schedule">Выбрать расписание</string>
+    <string name="employee_name">Преподаватель</string>
+    <string name="last_updated">Дата скач.</string>
+    <string name="delete">Удалить</string>
+    <string name="confirm_delete_message">Вы действительно хотите удалить расписание?</string>
+    <string name="error_while_deleting_file">Ошибка при удалении файла</string>
 
     <string name="not_appropriate_student_group">Неправильное название группы</string>
 
