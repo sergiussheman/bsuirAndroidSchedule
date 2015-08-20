@@ -26,7 +26,8 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.myapplication.DataProvider.FileUtil;
+import com.example.myapplication.Utils.DateUtil;
+import com.example.myapplication.Utils.FileUtil;
 import com.example.myapplication.DataProvider.LoadSchedule;
 import com.example.myapplication.Model.AvailableFragments;
 import com.example.myapplication.Model.Employee;
@@ -45,6 +46,8 @@ public class DownloadScheduleForEmployee extends Fragment {
     private List<Employee> availableEmployeeList;
     private List<String> downloadedSchedules;
     private  View currentView;
+    private boolean isDownloadingNewSchedule;
+    private TableLayout tableLayoutForDownloadedSchedules;
 
     private OnFragmentInteractionListener mListener;
 
@@ -89,11 +92,11 @@ public class DownloadScheduleForEmployee extends Fragment {
                     String selectedEmployeeName = textView.getText().toString();
                     Employee selectedEmployee = getEmployeeByName(selectedEmployeeName);
                     if(selectedEmployee != null) {
-                        String parameterForDownloadSchedule = selectedEmployee.getLastName() + selectedEmployee.getId();
-                        DownloadFilesTask task = new DownloadFilesTask();
-                        task.filesDir = getActivity().getFilesDir();
-                        task.execute(parameterForDownloadSchedule);
+                        String parameterForDownloadSchedule = getFileNameForEmployeeSchedule(selectedEmployee);
+                        setIsDownloadingNewSchedule(true);
+                        downloadOrUpdateScheduleForEmployee(parameterForDownloadSchedule);
                         updateDefaultEmployee(selectedEmployee);
+
                     } else{
                         Toast.makeText(getActivity(), getResources().getString(R.string.should_select_employee), Toast.LENGTH_LONG).show();
                     }
@@ -103,11 +106,17 @@ public class DownloadScheduleForEmployee extends Fragment {
             }
         });
 
-        TableLayout tableLayout = (TableLayout) currentView.findViewById(R.id.tableLayoutForEmployee);
+        setTableLayoutForDownloadedSchedules((TableLayout) currentView.findViewById(R.id.tableLayoutForEmployee));
         setDownloadedSchedules(FileUtil.getAllDownloadedSchedules(getActivity(), false));
-        populateTableLayout(tableLayout, downloadedSchedules);
+        populateTableLayout(getTableLayoutForDownloadedSchedules(), downloadedSchedules);
 
         return currentView;
+    }
+
+    public void downloadOrUpdateScheduleForEmployee(String employeeNameForDownload){
+        DownloadFilesTask task = new DownloadFilesTask();
+        task.filesDir = getActivity().getFilesDir();
+        task.execute(employeeNameForDownload);
     }
 
     public void populateTableLayout(final TableLayout tableLayout, List<String> schedulesForEmployee){
@@ -147,8 +156,9 @@ public class DownloadScheduleForEmployee extends Fragment {
             rowForEmployeeSchedule.addView(textViewForEmployeeName);
 
             TextView lastUpdatedTextView = new TextView(getActivity());
-            lastUpdatedTextView.setText("11.11.2012");
+            lastUpdatedTextView.setText(getLastUpdateFromPreference(currentEmployeeSchedule));
             rowForEmployeeSchedule.addView(lastUpdatedTextView);
+
 
             ImageView deleteImageView = new ImageView(getActivity());
             deleteImageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_remove));
@@ -169,7 +179,7 @@ public class DownloadScheduleForEmployee extends Fragment {
                                     if (!file.delete()) {
                                         Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
                                     }
-                                    updateDefaultEmployeeIfNeed(fileNameForDelete);
+                                    deleteDefaultEmployeeIfNeed(fileNameForDelete);
                                     setDownloadedSchedules(FileUtil.getAllDownloadedSchedules(getActivity(), false));
                                     populateTableLayout(tableLayout, getDownloadedSchedules());
                                 }
@@ -178,6 +188,19 @@ public class DownloadScheduleForEmployee extends Fragment {
                 }
             });
             rowForEmployeeSchedule.addView(deleteImageView);
+
+            ImageView refreshImageView = new ImageView(getActivity());
+            refreshImageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_refresh));
+            refreshImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    TableRow selectedRow = (TableRow) v.getParent();
+                    String fileNameForRefresh = ((TextView) selectedRow.getChildAt(0)).getText().toString();
+                    fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
+                    setIsDownloadingNewSchedule(false);
+                    downloadOrUpdateScheduleForEmployee(fileNameForRefresh);
+                }
+            });
 
             rowForEmployeeSchedule.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -192,15 +215,19 @@ public class DownloadScheduleForEmployee extends Fragment {
         }
     }
 
-    private void updateDefaultEmployeeIfNeed(String employeeName){
+    private void deleteDefaultEmployeeIfNeed(String employeeName){
         String settingFileName = getActivity().getString(R.string.setting_file_name);
         final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
         final SharedPreferences.Editor editor = preferences.edit();
         String employeeFieldInSettings = getActivity().getString(R.string.default_employee_field_in_settings);
         String defaultEmployeeName = preferences.getString(employeeFieldInSettings, "none");
+        employeeName = employeeName.substring(0, employeeName.length() - 4);
         if(employeeName.equalsIgnoreCase(defaultEmployeeName)){
             editor.remove(employeeFieldInSettings);
+
         }
+        editor.remove(employeeName);
+        editor.apply();
     }
 
     private void updateDefaultEmployee(Employee employee){
@@ -208,11 +235,14 @@ public class DownloadScheduleForEmployee extends Fragment {
         final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
         final SharedPreferences.Editor editor = preferences.edit();
         String employeeFieldInSettings = getActivity().getString(R.string.default_employee_field_in_settings);
-        editor.putString(employeeFieldInSettings, "none");
-        String employeeForPreferences = employee.getLastName() + employee.getId();
+        String groupFiledInSettings = getActivity().getString(R.string.default_group_field_in_settings);
+        editor.putString(groupFiledInSettings, "none");
+        String employeeForPreferences = getFileNameForEmployeeSchedule(employee);
         editor.putString(employeeFieldInSettings, employeeForPreferences);
+        editor.putString(employeeForPreferences, DateUtil.getCurrentDateAsString());
         editor.apply();
     }
+
     private void updateDefaultEmployee(String defaultEmployee){
         defaultEmployee = defaultEmployee.substring(0, defaultEmployee.length() - 4);
         String settingFileName = getActivity().getString(R.string.setting_file_name);
@@ -222,8 +252,21 @@ public class DownloadScheduleForEmployee extends Fragment {
         if(!defaultEmployee.equalsIgnoreCase(currentDefaultEmployee)){
             final SharedPreferences.Editor editor = preferences.edit();
             editor.putString(employeeFieldInSettings, defaultEmployee);
+            String groupFiledInSettings = getActivity().getString(R.string.default_group_field_in_settings);
+            editor.putString(groupFiledInSettings, "none");
             editor.apply();
         }
+    }
+
+    private String getLastUpdateFromPreference(String schedulesName){
+        schedulesName = schedulesName.substring(0, schedulesName.length() - 4);
+        String settingFileName = getActivity().getString(R.string.setting_file_name);
+        final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
+        return preferences.getString(schedulesName, "-");
+    }
+
+    private String getFileNameForEmployeeSchedule(Employee employee){
+        return employee.getLastName() + employee.getFirstName().charAt(0) + employee.getMiddleName().charAt(0) + employee.getId();
     }
 
     @Nullable
@@ -319,7 +362,11 @@ public class DownloadScheduleForEmployee extends Fragment {
                 //Toast.makeText(ScheduleForGroup.this, result, Toast.LENGTH_SHORT).show();
                 Log.v(TAG, result);
             } else {
-                mListener.onChangeFragment(AvailableFragments.ShowSchedules);
+                if(isDownloadingNewSchedule()) {
+                    mListener.onChangeFragment(AvailableFragments.ShowSchedules);
+                } else{
+                    populateTableLayout(getTableLayoutForDownloadedSchedules(), getDownloadedSchedules());
+                }
             }
         }
     }
@@ -330,5 +377,21 @@ public class DownloadScheduleForEmployee extends Fragment {
 
     public void setDownloadedSchedules(List<String> downloadedSchedules) {
         this.downloadedSchedules = downloadedSchedules;
+    }
+
+    public boolean isDownloadingNewSchedule() {
+        return isDownloadingNewSchedule;
+    }
+
+    public void setIsDownloadingNewSchedule(boolean isDownloadingNewSchedule) {
+        this.isDownloadingNewSchedule = isDownloadingNewSchedule;
+    }
+
+    public TableLayout getTableLayoutForDownloadedSchedules() {
+        return tableLayoutForDownloadedSchedules;
+    }
+
+    public void setTableLayoutForDownloadedSchedules(TableLayout tableLayoutForDownloadedSchedules) {
+        this.tableLayoutForDownloadedSchedules = tableLayoutForDownloadedSchedules;
     }
 }

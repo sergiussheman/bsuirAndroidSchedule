@@ -20,10 +20,13 @@
     <string name="schedule_for_employee">Расписание для преподавателя</string>
     <string name="downloaded_schedules">Скачанное расписание</string>
     <string name="enter_employee_name">Введите имя преподавателя</string>
-    <string name="download_schedule">Выбрать расписание</string>
+    <string name="download_schedule">Скачать расписание</string>
+    <string name="select_schedule">Выбрать расписание</string>
     <string name="employee_name">Преподаватель</string>
-    <string name="last_updated">Дата скач.</string>
+    <string name="group_name">Группа</string>
+    <string name="last_updated">Дата обнов.</string>
     <string name="delete">Удалить</string>
+    <string name="refresh">Обновить</string>
     <string name="confirm_delete_message">Вы действительно хотите удалить расписание?</string>
     <string name="error_while_deleting_file">Ошибка при удалении файла</string>
 
@@ -77,6 +80,6 @@
     <string-array name="navigation_labels_array">
         <item>Расписание на сегодня</item>
         <item>Расписание экзаменов</item>
-        <item>Скачать расписание</item>
+        <item>Выбрать расписание</item>
     </string-array>
 </resources>

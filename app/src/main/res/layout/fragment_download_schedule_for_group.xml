@@ -46,6 +46,26 @@
             android:layout_height="wrap_content"
             android:text="@string/download_schedule" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/downloaded_schedules"
+            android:paddingTop="40dp"
+            android:textSize="@dimen/abc_action_bar_content_inset_material"
+            android:layout_marginBottom="18dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@android:color/black"
+            android:layout_marginBottom="18dp"/>
+
+        <TableLayout
+            android:id="@+id/tableLayoutForGroup"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"/>
+
     </LinearLayout>
 
 </FrameLayout>

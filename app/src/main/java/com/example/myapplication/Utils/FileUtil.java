@@ -1,4 +1,4 @@
-package com.example.myapplication.DataProvider;
+package com.example.myapplication.Utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;

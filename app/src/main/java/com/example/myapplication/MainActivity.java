@@ -2,7 +2,6 @@ package com.example.myapplication;
 
 import android.app.Activity;
 import android.app.FragmentTransaction;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -18,7 +17,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 
-import com.example.myapplication.DataProvider.FileUtil;
+import com.example.myapplication.Utils.FileUtil;
 import com.example.myapplication.DataProvider.XmlDataProvider;
 import com.example.myapplication.Model.AvailableFragments;
 import com.example.myapplication.Model.SchoolDay;
