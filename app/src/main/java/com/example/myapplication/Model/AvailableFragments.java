@@ -7,6 +7,5 @@ public enum AvailableFragments {
     WhoAreYou,
     DownloadScheduleForGroup,
     DownloadScheduleForEmployee,
-    ShowSchedules,
-    Settings;
+    ShowSchedules
 }

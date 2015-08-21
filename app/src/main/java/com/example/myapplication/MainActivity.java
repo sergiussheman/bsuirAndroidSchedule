@@ -44,7 +44,6 @@ public class MainActivity extends ActionBarActivity
     private WeekNumberEnum selectedWeekNumber;
     private SubGroupEnum selectedSubGroup;
     private Integer selectedDayPosition;
-    private CharSequence mTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +55,6 @@ public class MainActivity extends ActionBarActivity
 
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
-        mTitle = getTitle();
 
         // Set up the drawer.
         mNavigationDrawerFragment.setUp(
@@ -112,10 +110,8 @@ public class MainActivity extends ActionBarActivity
                 onChangeFragment(AvailableFragments.ShowSchedules);
                 break;
             case 2:
-                mTitle = getString(R.string.title_section2);
                 break;
             case 3:
-                mTitle = getString(R.string.title_section3);
                 onChangeFragment(AvailableFragments.WhoAreYou);
                 break;
             default:
@@ -125,33 +121,31 @@ public class MainActivity extends ActionBarActivity
 
     public void restoreActionBar(Menu menu) {
         ActionBar actionBar = getSupportActionBar();
-        if(showScheduleFragmentForGroup.isAdded()) {
-            assert actionBar != null;
-            actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                    R.layout.row_layout, R.id.text1, this.getResources().getStringArray(R.array.day_of_week));
-            assert actionBar != null;
-            actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
-                @Override
-                public boolean onNavigationItemSelected(int itemPosition, long itemId) {
-                    showScheduleFragmentForGroup.updateSchedule(itemPosition);
-                    selectedDayPosition = itemPosition;
-                    return false;
-                }
-            });
+        if(actionBar != null) {
+            if (showScheduleFragmentForGroup.isAdded()) {
+                actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                        R.layout.row_layout, R.id.text1, this.getResources().getStringArray(R.array.day_of_week));
+                actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(int itemPosition, long itemId) {
+                        showScheduleFragmentForGroup.updateSchedule(itemPosition);
+                        selectedDayPosition = itemPosition;
+                        return false;
+                    }
+                });
 
-            actionBar.setDisplayShowTitleEnabled(false);
-            setVisibilityForSubMenus(true, menu);
-        } else{
-            actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-            setVisibilityForSubMenus(false, menu);
+                actionBar.setDisplayShowTitleEnabled(false);
+                setVisibilityForSubMenus(true, menu);
+            } else {
+                actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+                setVisibilityForSubMenus(false, menu);
+            }
+            invalidateOptionsMenu();
         }
-        invalidateOptionsMenu();
-        //actionBar.setTitle(mTitle);
     }
 
     public void setVisibilityForSubMenus(boolean visible, Menu menu){
-        //MenuItem weekNumberSubMenu = (MenuItem) findViewById(R.id.subMenuWeekNumber);
         MenuItem weekNumberSubMenu = menu.findItem(R.id.subMenuWeekNumber);
         MenuItem subGroupSubMenu = menu.findItem(R.id.subMenuSubGroup);
         if(weekNumberSubMenu != null) {
@@ -193,10 +187,17 @@ public class MainActivity extends ActionBarActivity
             default:
                 break;
         }
-        fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
     }
 
+    @Override
+    public void onBackPressed() {
+        if(showScheduleFragmentForGroup.isAdded()) {
+            System.exit(0);
+        } else{
+            onChangeFragment(AvailableFragments.ShowSchedules);
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -219,7 +220,6 @@ public class MainActivity extends ActionBarActivity
         int id = item.getItemId();
         ActionMenuItemView weekNumberSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuWeekNumber);
         ActionMenuItemView subGroupSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuSubGroup);
-        //noinspection SimplifiableIfStatement
         switch (id){
             case R.id.menuAllWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.ALL;

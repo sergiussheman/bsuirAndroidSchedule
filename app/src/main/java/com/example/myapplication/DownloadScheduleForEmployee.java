@@ -144,9 +144,16 @@ public class DownloadScheduleForEmployee extends Fragment {
         TextView deleteHeader = new TextView(getActivity());
         deleteHeader.setText(getResources().getString(R.string.delete));
         deleteHeader.setTypeface(null, Typeface.BOLD);
-        deleteHeader.setGravity(Gravity.END);
-
+        deleteHeader.setGravity(Gravity.CENTER);
+        deleteHeader.setPadding(5, 0, 5, 0);
         headerRow.addView(deleteHeader);
+
+        TextView refreshHeader = new TextView(getActivity());
+        refreshHeader.setText(R.string.refresh);
+        refreshHeader.setTypeface(null, Typeface.BOLD);
+        refreshHeader.setGravity(Gravity.CENTER);
+        refreshHeader.setPadding(5,0,5,0);
+        headerRow.addView(refreshHeader);
 
         headerRow.setPadding(0, 0, 0, 18);
         tableLayout.addView(headerRow);
