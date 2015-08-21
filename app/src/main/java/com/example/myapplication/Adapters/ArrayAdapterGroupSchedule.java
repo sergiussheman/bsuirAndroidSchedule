@@ -110,4 +110,14 @@ public class ArrayAdapterGroupSchedule extends ArrayAdapter<Schedule> {
         }
         return result.toString();
     }
+
+    @Override
+    public boolean areAllItemsEnabled() {
+        return false;
+    }
+
+    @Override
+    public boolean isEnabled(int position) {
+        return false;
+    }
 }

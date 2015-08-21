@@ -97,7 +97,8 @@ public class DownloadScheduleForGroup extends Fragment {
         }
     }
 
-    public void populateTableLayout(final TableLayout tableLayout, List<String> schedulesForGroup){
+    public void populateTableLayout(final TableLayout tableLayout, final List<String> schedulesForGroup){
+        Integer currentRowNumber = 0;
         tableLayout.removeAllViews();
         tableLayout.setPadding(5, 0, 5, 0);
         TableRow.LayoutParams params = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
@@ -143,7 +144,7 @@ public class DownloadScheduleForGroup extends Fragment {
 
             TextView lastUpdatedTextView = new TextView(getActivity());
             lastUpdatedTextView.setText(getLastUpdateFromPreference(currentGroupSchedule));
-            lastUpdatedTextView.setPadding(5,0,5,0);
+            lastUpdatedTextView.setPadding(5, 0, 5, 0);
             rowForGroupSchedule.addView(lastUpdatedTextView);
 
             ImageView deleteImageView = new ImageView(getActivity());
@@ -159,7 +160,8 @@ public class DownloadScheduleForGroup extends Fragment {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     TableRow selectedRow = (TableRow) v.getParent();
-                                    String fileNameForDelete = ((TextView) selectedRow.getChildAt(0)).getText().toString();
+                                    Integer rowNumber = (Integer) selectedRow.getTag();
+                                    String fileNameForDelete = schedulesForGroup.get(rowNumber);
 
                                     File file = new File(getActivity().getFilesDir(), fileNameForDelete);
                                     if (!file.delete()) {
@@ -181,12 +183,11 @@ public class DownloadScheduleForGroup extends Fragment {
                 @Override
                 public void onClick(View v) {
                     TableRow selectedRow = (TableRow) v.getParent();
-                    String fileNameForRefresh = ((TextView) selectedRow.getChildAt(0)).getText().toString();
+                    Integer rowNumber = (Integer) selectedRow.getTag();
+                    String fileNameForRefresh = schedulesForGroup.get(rowNumber);
                     fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
                     setIsDownloadingNewSchedule(false);
                     downloadOrUpdateSchedule(fileNameForRefresh);
-
-                    //populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());
                 }
             });
             rowForGroupSchedule.addView(refreshImageView);
@@ -195,11 +196,15 @@ public class DownloadScheduleForGroup extends Fragment {
                 @Override
                 public void onClick(View v) {
                     TableRow selectedTableRow = (TableRow) v;
-                    String selectedGroup = ((TextView) selectedTableRow.getChildAt(0)).getText().toString();
+                    Integer rowNumber = (Integer) selectedTableRow.getTag();
+                    String selectedGroup = schedulesForGroup.get(rowNumber);
                     updateDefaultGroup(selectedGroup);
                     mListener.onChangeFragment(AvailableFragments.ShowSchedules);
                 }
             });
+
+            rowForGroupSchedule.setTag(currentRowNumber);
+            currentRowNumber++;
             tableLayout.addView(rowForGroupSchedule);
         }
     }

@@ -35,12 +35,15 @@ import com.example.myapplication.Model.Employee;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class DownloadScheduleForEmployee extends Fragment {
     private static final String TAG = "employeeDownloadTAG";
     private static final String AVAILABLE_EMPLOYEES_PARAM = "availableEmployees";
     private static final String DOWNLOADED_SCHEDULES_PARAM = "downloadScheduls";
+    private static final String PATTERN = "^[а-яА-ЯёЁ]+";
 
 
     private List<Employee> availableEmployeeList;
@@ -119,7 +122,8 @@ public class DownloadScheduleForEmployee extends Fragment {
         task.execute(employeeNameForDownload);
     }
 
-    public void populateTableLayout(final TableLayout tableLayout, List<String> schedulesForEmployee){
+    public void populateTableLayout(final TableLayout tableLayout, final List<String> schedulesForEmployee){
+        Integer currentRowNumber = 0;
         tableLayout.removeAllViews();
         tableLayout.setPadding(5, 0, 5, 0);
         TableRow.LayoutParams params = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 1f);
@@ -144,14 +148,14 @@ public class DownloadScheduleForEmployee extends Fragment {
 
         headerRow.addView(deleteHeader);
 
-        headerRow.setPadding(0,0,0,18);
+        headerRow.setPadding(0, 0, 0, 18);
         tableLayout.addView(headerRow);
 
         for(String currentEmployeeSchedule : schedulesForEmployee) {
             TableRow rowForEmployeeSchedule = new TableRow(getActivity());
             TextView textViewForEmployeeName = new TextView(getActivity());
             textViewForEmployeeName.setGravity(Gravity.START);
-            textViewForEmployeeName.setText(currentEmployeeSchedule);
+            textViewForEmployeeName.setText(getEmployeeNameFromString(currentEmployeeSchedule));
             textViewForEmployeeName.setLayoutParams(params);
             rowForEmployeeSchedule.addView(textViewForEmployeeName);
 
@@ -173,8 +177,8 @@ public class DownloadScheduleForEmployee extends Fragment {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     TableRow selectedRow = (TableRow) v.getParent();
-                                    String fileNameForDelete = ((TextView) selectedRow.getChildAt(0)).getText().toString();
-
+                                    Integer rowNumber = (Integer) selectedRow.getTag();
+                                    String fileNameForDelete = schedulesForEmployee.get(rowNumber);
                                     File file = new File(getActivity().getFilesDir(), fileNameForDelete);
                                     if (!file.delete()) {
                                         Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
@@ -194,23 +198,36 @@ public class DownloadScheduleForEmployee extends Fragment {
             refreshImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    TableRow selectedRow = (TableRow) v.getParent();
-                    String fileNameForRefresh = ((TextView) selectedRow.getChildAt(0)).getText().toString();
-                    fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
-                    setIsDownloadingNewSchedule(false);
-                    downloadOrUpdateScheduleForEmployee(fileNameForRefresh);
+                    ConnectivityManager connectMan = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+                    NetworkInfo networkInfo = connectMan.getActiveNetworkInfo();
+                    if (networkInfo != null && networkInfo.isConnected()) {
+                        TableRow selectedRow = (TableRow) v.getParent();
+                        Integer rowNumber = (Integer) selectedRow.getTag();
+                        String fileNameForRefresh = schedulesForEmployee.get(rowNumber);
+                        fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
+                        setIsDownloadingNewSchedule(false);
+                        downloadOrUpdateScheduleForEmployee(fileNameForRefresh);
+                        updateDefaultEmployee(fileNameForRefresh);
+                    } else {
+                        Toast.makeText(getActivity(), getResources().getString(R.string.no_connection_to_network), Toast.LENGTH_LONG).show();
+                    }
                 }
             });
+            rowForEmployeeSchedule.addView(refreshImageView);
 
             rowForEmployeeSchedule.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     TableRow selectedTableRow = (TableRow) v;
-                    String selectedEmployee = ((TextView) selectedTableRow.getChildAt(0)).getText().toString();
+                    Integer rowNumber = (Integer) selectedTableRow.getTag();
+                    String selectedEmployee = schedulesForEmployee.get(rowNumber);
                     updateDefaultEmployee(selectedEmployee);
                     mListener.onChangeFragment(AvailableFragments.ShowSchedules);
                 }
             });
+
+            rowForEmployeeSchedule.setTag(currentRowNumber);
+            currentRowNumber++;
             tableLayout.addView(rowForEmployeeSchedule);
         }
     }
@@ -244,18 +261,21 @@ public class DownloadScheduleForEmployee extends Fragment {
     }
 
     private void updateDefaultEmployee(String defaultEmployee){
-        defaultEmployee = defaultEmployee.substring(0, defaultEmployee.length() - 4);
+        if(".xml".equalsIgnoreCase(defaultEmployee.substring(defaultEmployee.length() -4))) {
+            defaultEmployee = defaultEmployee.substring(0, defaultEmployee.length() - 4);
+        }
         String settingFileName = getActivity().getString(R.string.setting_file_name);
         final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
+        final SharedPreferences.Editor editor = preferences.edit();
         String employeeFieldInSettings = getActivity().getString(R.string.default_employee_field_in_settings);
         String currentDefaultEmployee = preferences.getString(employeeFieldInSettings, "none");
         if(!defaultEmployee.equalsIgnoreCase(currentDefaultEmployee)){
-            final SharedPreferences.Editor editor = preferences.edit();
             editor.putString(employeeFieldInSettings, defaultEmployee);
             String groupFiledInSettings = getActivity().getString(R.string.default_group_field_in_settings);
             editor.putString(groupFiledInSettings, "none");
-            editor.apply();
         }
+        editor.putString(defaultEmployee, DateUtil.getCurrentDateAsString());
+        editor.apply();
     }
 
     private String getLastUpdateFromPreference(String schedulesName){
@@ -263,6 +283,15 @@ public class DownloadScheduleForEmployee extends Fragment {
         String settingFileName = getActivity().getString(R.string.setting_file_name);
         final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
         return preferences.getString(schedulesName, "-");
+    }
+
+    private String getEmployeeNameFromString(String passedString){
+        Pattern pattern = Pattern.compile(PATTERN);
+        Matcher matcher = pattern.matcher(passedString);
+        if(matcher.find()){
+            return matcher.group(0);
+        }
+        return "Not found matches";
     }
 
     private String getFileNameForEmployeeSchedule(Employee employee){
@@ -360,7 +389,7 @@ public class DownloadScheduleForEmployee extends Fragment {
         protected void onPostExecute(String result) {
             if(result != null) {
                 //Toast.makeText(ScheduleForGroup.this, result, Toast.LENGTH_SHORT).show();
-                Log.v(TAG, result);
+                Toast.makeText(getActivity(), "Some problems while loading schedule", Toast.LENGTH_LONG).show();
             } else {
                 if(isDownloadingNewSchedule()) {
                     mListener.onChangeFragment(AvailableFragments.ShowSchedules);
