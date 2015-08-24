@@ -28,6 +28,7 @@
     <string name="delete">Удалить</string>
     <string name="refresh">Обновить</string>
     <string name="confirm_delete_message">Вы действительно хотите удалить расписание?</string>
+    <string name="application_deprecated">Доступна новая версия приложения. Обновить?</string>
     <string name="error_while_deleting_file">Ошибка при удалении файла</string>
 
     <string name="not_appropriate_student_group">Неправильное название группы</string>
@@ -35,6 +36,8 @@
     <string name="connection_timeout">Не удалось загрузить расписание</string>
     <string name="no_connection_to_network">Для скачивания расписания необходимо подключиться к сети</string>
     <string name="should_select_employee">Необходимо выбрать преподавателя!</string>
+    <string name="update_needed">Обновление</string>
+    <string name="update_message">Доступно обновление. Обновить?</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_schedule_for_group">Расписание БГУИР</string>
@@ -44,6 +47,8 @@
     <string name="setting_file_name">Settings</string>
     <string name="default_group_field_in_settings">defaultGroup</string>
     <string name="default_employee_field_in_settings">defaultEmployee</string>
+
+    <string name="url_for_update_application">http://www.bsuir.by/schedule/schedule.xhtml</string>
 
     <string name="empty_lessons">Сегодня занятий нет</string>
 

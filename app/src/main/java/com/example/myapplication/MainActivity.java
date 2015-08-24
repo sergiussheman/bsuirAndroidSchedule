@@ -1,7 +1,16 @@
 package com.example.myapplication;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.FragmentTransaction;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -9,6 +18,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.internal.view.menu.ActionMenuItemView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,6 +27,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 
+import com.example.myapplication.DataProvider.LoadSchedule;
 import com.example.myapplication.Utils.FileUtil;
 import com.example.myapplication.DataProvider.XmlDataProvider;
 import com.example.myapplication.Model.AvailableFragments;
@@ -28,7 +39,7 @@ import java.util.List;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, OnFragmentInteractionListener, ActionBar.OnNavigationListener {
-
+    private static final String TAG = "mainActivityTAG";
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -73,6 +84,7 @@ public class MainActivity extends ActionBarActivity
             showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule));
             onChangeFragment(AvailableFragments.ShowSchedules);
         }
+        checkForUpdated();
     }
 
     public boolean onNavigationItemSelected(int position, long id) {
@@ -93,6 +105,37 @@ public class MainActivity extends ActionBarActivity
 
     public List<SchoolDay> getScheduleFromFile(String fileName){
         return XmlDataProvider.parseScheduleXml(getFilesDir(), fileName);
+    }
+
+    public void checkForUpdated(){
+        ConnectivityManager connectMan = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectMan.getActiveNetworkInfo();
+        if(networkInfo != null && networkInfo.isConnected()) {
+            DownloadActualVersionTask task = new DownloadActualVersionTask();
+            task.execute();
+        }
+    }
+
+    public void showDialogForUpdateApplication(String actualVersion){
+        try {
+            String currentVersionName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            if(!actualVersion.equalsIgnoreCase(currentVersionName)) {
+                new AlertDialog.Builder(this)
+                        .setTitle(getResources().getString(R.string.update_needed))
+                        .setMessage(getResources().getString(R.string.update_message))
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_for_update_application)));
+                                startActivity(browserIntent);
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, null).show();
+            }
+        } catch (PackageManager.NameNotFoundException e){
+            Log.v(TAG, e.toString());
+        }
     }
 
     @Override
@@ -295,8 +338,7 @@ public class MainActivity extends ActionBarActivity
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
+            return inflater.inflate(R.layout.fragment_main, container, false);
         }
 
         @Override
@@ -304,6 +346,19 @@ public class MainActivity extends ActionBarActivity
             super.onAttach(activity);
             ((MainActivity) activity).onSectionAttached(
                     getArguments().getInt(ARG_SECTION_NUMBER));
+        }
+    }
+
+    private class DownloadActualVersionTask extends AsyncTask<Void, String, String> {
+
+        protected String doInBackground(Void... parameters) {
+            return LoadSchedule.loadActualApplicationVersion();
+        }
+
+        protected void onPostExecute(String result) {
+            if(result != null){
+                showDialogForUpdateApplication(result);
+            }
         }
     }
 

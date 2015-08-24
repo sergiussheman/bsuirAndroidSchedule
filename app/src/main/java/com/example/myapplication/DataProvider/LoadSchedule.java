@@ -16,14 +16,15 @@ import java.net.URL;
 import java.util.List;
 
 public class LoadSchedule {
-    private static final String bsuir = "http://bsuir.by/schedule/rest/schedule/";
+    private static final String BSUIR = "http://bsuir.by/schedule/rest/schedule/";
+    private static final String ACTUAL_APPLICATION_VERSION_URL = "http://www.bsuir.by/schedule/rest/android/actualAndroidVersion";
     private static final String EMPLOYEE_LIST_REST = "http://www.bsuir.by/schedule/rest/employee";
     private static final String SCHEDULE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/employee/";
     private static final String TAG = "Load";
 
     public static String loadScheduleForStudentGroup(String group, File filesDir) {
         try {
-            URL url = new URL(bsuir + group);
+            URL url = new URL(BSUIR + group);
             loadSchedule(url, filesDir, group);
             return null;
         } catch (SocketTimeoutException e) {
@@ -95,6 +96,33 @@ public class LoadSchedule {
                     reader.close();
                 }
 
+            } catch (IOException e){
+                Log.v(TAG, e.toString());
+            }
+        }
+        return null;
+    }
+
+    public static String loadActualApplicationVersion(){
+        BufferedReader reader = null;
+        try{
+            URL url = new URL(ACTUAL_APPLICATION_VERSION_URL);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(5000);
+            connection.connect();
+
+            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String line = reader.readLine();
+            if (line != null && !line.isEmpty()){
+                return line;
+            }
+        } catch (Exception e){
+            Log.v(TAG, e.toString());
+        } finally {
+            try {
+                if(reader != null){
+                    reader.close();
+                }
             } catch (IOException e){
                 Log.v(TAG, e.toString());
             }
