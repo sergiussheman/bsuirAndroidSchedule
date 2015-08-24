@@ -1,6 +1,5 @@
 package com.example.myapplication;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.content.Context;
@@ -12,18 +11,13 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.internal.view.menu.ActionMenuItemView;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 
@@ -35,7 +29,10 @@ import com.example.myapplication.Model.SchoolDay;
 import com.example.myapplication.Model.SubGroupEnum;
 import com.example.myapplication.Model.WeekNumberEnum;
 
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, OnFragmentInteractionListener, ActionBar.OnNavigationListener {
@@ -141,24 +138,21 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, PlaceholderFragment.newInstance(position + 1))
-                .commit();
-    }
-
-    public void onSectionAttached(int number) {
-        switch (number) {
+        switch (position){
+            case 0:
+                if(showScheduleFragmentForGroup != null) {
+                    onChangeFragment(AvailableFragments.ShowSchedules);
+                }
+                break;
             case 1:
-                onChangeFragment(AvailableFragments.ShowSchedules);
                 break;
             case 2:
-                break;
-            case 3:
-                onChangeFragment(AvailableFragments.WhoAreYou);
+                if(whoAreYouFragment != null) {
+                    onChangeFragment(AvailableFragments.WhoAreYou);
+                }
                 break;
             default:
-                throw new UnsupportedOperationException();
+                throw new NoSuchElementException();
         }
     }
 
@@ -172,8 +166,15 @@ public class MainActivity extends ActionBarActivity
                 actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
                     @Override
                     public boolean onNavigationItemSelected(int itemPosition, long itemId) {
-                        showScheduleFragmentForGroup.updateSchedule(itemPosition);
-                        selectedDayPosition = itemPosition;
+                        if(itemPosition == 0){
+                            Calendar calendar = GregorianCalendar.getInstance();
+                            int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+                            showScheduleFragmentForGroup.updateSchedule(currentDay - 1);
+                            selectedDayPosition = itemPosition;
+                        } else {
+                            showScheduleFragmentForGroup.updateSchedule(itemPosition);
+                            selectedDayPosition = itemPosition;
+                        }
                         return false;
                     }
                 });
@@ -223,8 +224,8 @@ public class MainActivity extends ActionBarActivity
                     } else {
                         showScheduleFragmentForGroup.updateSchedule(0);
                     }
+                    fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
                 }
-                fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
                 invalidateOptionsMenu();
                 break;
             default:
@@ -309,46 +310,6 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            return inflater.inflate(R.layout.fragment_main, container, false);
-        }
-
-        @Override
-        public void onAttach(Activity activity) {
-            super.onAttach(activity);
-            ((MainActivity) activity).onSectionAttached(
-                    getArguments().getInt(ARG_SECTION_NUMBER));
-        }
-    }
-
     private class DownloadActualVersionTask extends AsyncTask<Void, String, String> {
 
         protected String doInBackground(Void... parameters) {
@@ -361,5 +322,4 @@ public class MainActivity extends ActionBarActivity
             }
         }
     }
-
 }

@@ -43,7 +43,6 @@
     <string name="title_activity_schedule_for_group">Расписание БГУИР</string>
     <string name="title_activity_schedule_for_employee">Расписание БГУИР</string>
 
-    <string name="default_group_for_test">151002</string>
     <string name="setting_file_name">Settings</string>
     <string name="default_group_field_in_settings">defaultGroup</string>
     <string name="default_employee_field_in_settings">defaultEmployee</string>
@@ -62,6 +61,7 @@
     <string name="fourth_week_number">4 неделя</string>
 
     <string-array name="day_of_week">
+        <item>Сегодня</item>
         <item>Понедельник</item>
         <item>Вторник</item>
         <item>Среда</item>

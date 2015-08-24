@@ -37,7 +37,6 @@
             android:id="@+id/editTextForEnterGroup"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="@string/default_group_for_test"
             android:inputType="number"/>
 
         <Button

@@ -377,11 +377,15 @@ public class DownloadScheduleForEmployee extends Fragment {
 
         @Override
         protected void onPostExecute(String result) {
-            if(result == null) {
-                String[] employeesAsArray = convertEmployeeToArray(availableEmployeeList);
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, employeesAsArray);
-                AutoCompleteTextView textView = (AutoCompleteTextView) currentView.findViewById(R.id.autoCompleteForEmployee);
-                textView.setAdapter(adapter);
+            try {
+                if(result == null) {
+                    String[] employeesAsArray = convertEmployeeToArray(availableEmployeeList);
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, employeesAsArray);
+                    AutoCompleteTextView textView = (AutoCompleteTextView) currentView.findViewById(R.id.autoCompleteForEmployee);
+                    textView.setAdapter(adapter);
+                }
+            } catch (Exception e){
+                Log.v(TAG, "Exception occurred" + e.toString());
             }
         }
     }
