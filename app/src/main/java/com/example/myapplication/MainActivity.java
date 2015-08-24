@@ -47,6 +47,7 @@ public class MainActivity extends ActionBarActivity
     private DownloadScheduleForGroup downloadScheduleForGroupFragment;
     private DownloadScheduleForEmployee downloadScheduleForEmployeeFragment;
     private ScheduleFragmentForGroup showScheduleFragmentForGroup;
+    private ExamScheduleFragment examScheduleFragment;
 
 
     private WeekNumberEnum selectedWeekNumber;
@@ -74,6 +75,7 @@ public class MainActivity extends ActionBarActivity
         downloadScheduleForGroupFragment = new DownloadScheduleForGroup();
         downloadScheduleForEmployeeFragment = new DownloadScheduleForEmployee();
         showScheduleFragmentForGroup = new ScheduleFragmentForGroup();
+        examScheduleFragment = new ExamScheduleFragment();
         String defaultSchedule = FileUtil.getDefaultSchedule(this);
         if(defaultSchedule == null) {
             onChangeFragment(AvailableFragments.WhoAreYou);
@@ -145,6 +147,9 @@ public class MainActivity extends ActionBarActivity
                 }
                 break;
             case 1:
+                if(examScheduleFragment != null){
+                    onChangeFragment(AvailableFragments.ExamSchedule);
+                }
                 break;
             case 2:
                 if(whoAreYouFragment != null) {
@@ -227,6 +232,9 @@ public class MainActivity extends ActionBarActivity
                     fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
                 }
                 invalidateOptionsMenu();
+                break;
+            case ExamSchedule:
+                fragmentTransaction.replace(R.id.fragment_container, examScheduleFragment);
                 break;
             default:
                 break;

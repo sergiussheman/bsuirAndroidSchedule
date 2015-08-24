@@ -35,13 +35,13 @@
             android:text="@string/enter_employee_name"/>
 
         <AutoCompleteTextView
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/autoCompleteForEmployee"
             />
 
         <Button
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/buttonForDownloadEmployeeSchedule"
             android:text="@string/download_schedule"/>
@@ -64,7 +64,7 @@
 
         <TableLayout
             android:id="@+id/tableLayoutForEmployee"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
     </LinearLayout>

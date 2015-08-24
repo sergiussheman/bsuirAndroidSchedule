@@ -35,13 +35,13 @@
 
         <EditText
             android:id="@+id/editTextForEnterGroup"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="number"/>
 
         <Button
             android:id="@+id/buttonForDownloadSchedule"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/download_schedule" />
 
@@ -62,7 +62,7 @@
 
         <TableLayout
             android:id="@+id/tableLayoutForGroup"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
     </LinearLayout>

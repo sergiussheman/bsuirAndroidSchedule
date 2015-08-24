@@ -87,4 +87,6 @@
         <item>Расписание экзаменов</item>
         <item>Выбрать расписание</item>
     </string-array>
+
+    <string name="in_progress">В разработке</string>
 </resources>
