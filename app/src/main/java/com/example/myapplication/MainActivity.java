@@ -50,8 +50,8 @@ public class MainActivity extends ActionBarActivity
     private ExamScheduleFragment examScheduleFragment;
 
 
-    private WeekNumberEnum selectedWeekNumber;
-    private SubGroupEnum selectedSubGroup;
+    private WeekNumberEnum selectedWeekNumber = WeekNumberEnum.ALL;
+    private SubGroupEnum selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
     private Integer selectedDayPosition;
 
     @Override
@@ -89,12 +89,19 @@ public class MainActivity extends ActionBarActivity
     public boolean onNavigationItemSelected(int position, long id) {
         switch (position){
             case 1:
-                onChangeFragment(AvailableFragments.ShowSchedules);
+                if(showScheduleFragmentForGroup != null) {
+                    onChangeFragment(AvailableFragments.ShowSchedules);
+                }
                 break;
             case 2:
+                if(examScheduleFragment != null){
+                    onChangeFragment(AvailableFragments.ExamSchedule);
+                }
                 break;
             case 3:
-                onChangeFragment(AvailableFragments.WhoAreYou);
+                if(whoAreYouFragment != null) {
+                    onChangeFragment(AvailableFragments.WhoAreYou);
+                }
                 break;
             default:
                 throw new UnsupportedOperationException();
@@ -136,7 +143,6 @@ public class MainActivity extends ActionBarActivity
             Log.v(TAG, e.toString());
         }
     }
-
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
@@ -174,10 +180,12 @@ public class MainActivity extends ActionBarActivity
                         if(itemPosition == 0){
                             Calendar calendar = GregorianCalendar.getInstance();
                             int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
-                            showScheduleFragmentForGroup.updateSchedule(currentDay - 1);
+                            showScheduleFragmentForGroup.updateSchedule(currentDay - 2);
+                            showScheduleFragmentForGroup.filterScheduleList(currentDay - 2, selectedWeekNumber, selectedSubGroup);
                             selectedDayPosition = itemPosition;
                         } else {
-                            showScheduleFragmentForGroup.updateSchedule(itemPosition);
+                            showScheduleFragmentForGroup.updateSchedule(itemPosition - 1);
+                            showScheduleFragmentForGroup.filterScheduleList(itemPosition - 1, selectedWeekNumber, selectedSubGroup);
                             selectedDayPosition = itemPosition;
                         }
                         return false;
@@ -224,10 +232,12 @@ public class MainActivity extends ActionBarActivity
                     onChangeFragment(AvailableFragments.WhoAreYou);
                 } else {
                     showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule));
-                    if(selectedDayPosition != null) {
-                        showScheduleFragmentForGroup.updateSchedule(selectedDayPosition);
+                    if(selectedDayPosition != null && selectedDayPosition > 1) {
+                        showScheduleFragmentForGroup.updateSchedule(selectedDayPosition - 1);
+                        showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition - 1, selectedWeekNumber, selectedSubGroup);
                     } else {
                         showScheduleFragmentForGroup.updateSchedule(0);
+                        showScheduleFragmentForGroup.filterScheduleList(0, selectedWeekNumber, selectedSubGroup);
                     }
                     fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
                 }
@@ -272,45 +282,50 @@ public class MainActivity extends ActionBarActivity
         int id = item.getItemId();
         ActionMenuItemView weekNumberSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuWeekNumber);
         ActionMenuItemView subGroupSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuSubGroup);
+        int dayPositionForPass = selectedDayPosition;
+        if(dayPositionForPass == 0){
+            Calendar calendar = new GregorianCalendar();
+            dayPositionForPass = calendar.get(Calendar.DAY_OF_WEEK) - 1;
+        }
         switch (id){
             case R.id.menuAllWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.ALL;
-                showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition, selectedWeekNumber, selectedSubGroup);
+                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.all_week_number));
                 break;
             case R.id.menuFirstWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.FIRST;
-                showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition, selectedWeekNumber, selectedSubGroup);
+                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.first_week_number));
                 break;
             case R.id.menuSecondWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.SECOND;
-                showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition, selectedWeekNumber, selectedSubGroup);
+                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.second_week_number));
                 break;
             case R.id.menuThirdWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.THIRD;
-                showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition, selectedWeekNumber, selectedSubGroup);
+                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.third_week_number));
                 break;
             case R.id.menuFourthWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.FOURTH;
-                showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition, selectedWeekNumber, selectedSubGroup);
+                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.fourth_week_number));
                 break;
             case R.id.menuEntireGroup:
                 selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
-                showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition, selectedWeekNumber, selectedSubGroup);
+                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 subGroupSubMenu.setTitle(getResources().getString(R.string.entire_group));
                 break;
             case R.id.menuFirstSubGroup:
                 selectedSubGroup = SubGroupEnum.FIRST_SUB_GROUP;
-                showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition, selectedWeekNumber, selectedSubGroup);
+                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 subGroupSubMenu.setTitle(getResources().getString(R.string.first_sub_group));
                 break;
             case R.id.menuSecondSubGroup:
                 selectedSubGroup = SubGroupEnum.SECOND_SUB_GROUP;
-                showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition, selectedWeekNumber, selectedSubGroup);
+                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 subGroupSubMenu.setTitle(getResources().getString(R.string.second_sub_group));
                 break;
         }
