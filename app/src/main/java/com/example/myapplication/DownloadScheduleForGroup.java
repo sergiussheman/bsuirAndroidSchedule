@@ -91,7 +91,7 @@ public class DownloadScheduleForGroup extends Fragment {
             DownloadFilesTask downloadFilesTask = new DownloadFilesTask();
             downloadFilesTask.fileDir = getActivity().getFilesDir();
             downloadFilesTask.execute(studentGroup);
-            updateDefaultGroup(studentGroup);
+            updateDefaultGroup(studentGroup, true);
         } else {
             Toast.makeText(getActivity(), getResources().getString(R.string.no_connection_to_network), Toast.LENGTH_LONG).show();
         }
@@ -198,7 +198,7 @@ public class DownloadScheduleForGroup extends Fragment {
                     TableRow selectedTableRow = (TableRow) v;
                     Integer rowNumber = (Integer) selectedTableRow.getTag();
                     String selectedGroup = schedulesForGroup.get(rowNumber);
-                    updateDefaultGroup(selectedGroup);
+                    updateDefaultGroup(selectedGroup, false);
                     mListener.onChangeFragment(AvailableFragments.ShowSchedules);
                 }
             });
@@ -223,7 +223,7 @@ public class DownloadScheduleForGroup extends Fragment {
         editor.apply();
     }
 
-    private void updateDefaultGroup(String studentGroup){
+    private void updateDefaultGroup(String studentGroup, boolean isDownloadedSchedule){
         if(".xml".equalsIgnoreCase(studentGroup.substring(studentGroup.length() - 4))){
             studentGroup = studentGroup.substring(0, studentGroup.length() - 4);
         }
@@ -234,7 +234,9 @@ public class DownloadScheduleForGroup extends Fragment {
         String groupFieldInSettings = getActivity().getString(R.string.default_group_field_in_settings);
         editor.putString(groupFieldInSettings, studentGroup);
         editor.putString(employeeFieldInSettings, "none");
-        editor.putString(studentGroup, DateUtil.getCurrentDateAsString());
+        if(isDownloadedSchedule) {
+            editor.putString(studentGroup, DateUtil.getCurrentDateAsString());
+        }
         editor.apply();
     }
 

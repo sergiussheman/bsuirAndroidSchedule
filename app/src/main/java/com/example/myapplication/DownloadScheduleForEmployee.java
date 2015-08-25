@@ -98,7 +98,7 @@ public class DownloadScheduleForEmployee extends Fragment {
                         String parameterForDownloadSchedule = getFileNameForEmployeeSchedule(selectedEmployee);
                         setIsDownloadingNewSchedule(true);
                         downloadOrUpdateScheduleForEmployee(parameterForDownloadSchedule);
-                        updateDefaultEmployee(selectedEmployee);
+                        updateDefaultEmployee(selectedEmployee, true);
 
                     } else{
                         Toast.makeText(getActivity(), getResources().getString(R.string.should_select_employee), Toast.LENGTH_LONG).show();
@@ -130,7 +130,7 @@ public class DownloadScheduleForEmployee extends Fragment {
 
         TableRow headerRow = new TableRow(getActivity());
         TextView employeeHeaderTextView = new TextView(getActivity());
-        employeeHeaderTextView.setText(getResources().getString(R.string.employee_name));
+        employeeHeaderTextView.setText(getResources().getString(R.string.employee_shortcut));
         employeeHeaderTextView.setGravity(Gravity.START);
         employeeHeaderTextView.setLayoutParams(params);
         employeeHeaderTextView.setTypeface(null, Typeface.BOLD);
@@ -214,7 +214,7 @@ public class DownloadScheduleForEmployee extends Fragment {
                         fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
                         setIsDownloadingNewSchedule(false);
                         downloadOrUpdateScheduleForEmployee(fileNameForRefresh);
-                        updateDefaultEmployee(fileNameForRefresh);
+                        updateDefaultEmployee(fileNameForRefresh, true);
                     } else {
                         Toast.makeText(getActivity(), getResources().getString(R.string.no_connection_to_network), Toast.LENGTH_LONG).show();
                     }
@@ -228,7 +228,7 @@ public class DownloadScheduleForEmployee extends Fragment {
                     TableRow selectedTableRow = (TableRow) v;
                     Integer rowNumber = (Integer) selectedTableRow.getTag();
                     String selectedEmployee = schedulesForEmployee.get(rowNumber);
-                    updateDefaultEmployee(selectedEmployee);
+                    updateDefaultEmployee(selectedEmployee, false);
                     mListener.onChangeFragment(AvailableFragments.ShowSchedules);
                 }
             });
@@ -254,7 +254,7 @@ public class DownloadScheduleForEmployee extends Fragment {
         editor.apply();
     }
 
-    private void updateDefaultEmployee(Employee employee){
+    private void updateDefaultEmployee(Employee employee, boolean isDownloadedSchedule){
         String settingFileName = getActivity().getString(R.string.setting_file_name);
         final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
         final SharedPreferences.Editor editor = preferences.edit();
@@ -263,11 +263,13 @@ public class DownloadScheduleForEmployee extends Fragment {
         editor.putString(groupFiledInSettings, "none");
         String employeeForPreferences = getFileNameForEmployeeSchedule(employee);
         editor.putString(employeeFieldInSettings, employeeForPreferences);
-        editor.putString(employeeForPreferences, DateUtil.getCurrentDateAsString());
+        if(isDownloadedSchedule) {
+            editor.putString(employeeForPreferences, DateUtil.getCurrentDateAsString());
+        }
         editor.apply();
     }
 
-    private void updateDefaultEmployee(String defaultEmployee){
+    private void updateDefaultEmployee(String defaultEmployee, boolean isDownloadedSchedule){
         if(".xml".equalsIgnoreCase(defaultEmployee.substring(defaultEmployee.length() -4))) {
             defaultEmployee = defaultEmployee.substring(0, defaultEmployee.length() - 4);
         }
@@ -281,7 +283,9 @@ public class DownloadScheduleForEmployee extends Fragment {
             String groupFiledInSettings = getActivity().getString(R.string.default_group_field_in_settings);
             editor.putString(groupFiledInSettings, "none");
         }
-        editor.putString(defaultEmployee, DateUtil.getCurrentDateAsString());
+        if(isDownloadedSchedule) {
+            editor.putString(defaultEmployee, DateUtil.getCurrentDateAsString());
+        }
         editor.apply();
     }
 

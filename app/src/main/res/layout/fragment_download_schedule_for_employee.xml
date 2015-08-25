@@ -28,16 +28,11 @@
             android:id="@+id/viewScheduleForEmployee"
             android:layout_marginBottom="40dp"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/enterGroupNameView"
-            android:text="@string/enter_employee_name"/>
-
         <AutoCompleteTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/autoCompleteForEmployee"
+            android:hint="@string/enter_employee_name"
             />
 
         <Button

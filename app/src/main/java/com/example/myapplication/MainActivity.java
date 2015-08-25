@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import android.app.AlertDialog;
 import android.app.FragmentTransaction;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,6 +12,8 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.PowerManager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -20,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.widget.ArrayAdapter;
+import android.widget.Toast;
 
 import com.example.myapplication.DataProvider.LoadSchedule;
 import com.example.myapplication.Utils.FileUtil;
@@ -29,6 +33,13 @@ import com.example.myapplication.Model.SchoolDay;
 import com.example.myapplication.Model.SubGroupEnum;
 import com.example.myapplication.Model.WeekNumberEnum;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -37,6 +48,9 @@ import java.util.NoSuchElementException;
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, OnFragmentInteractionListener, ActionBar.OnNavigationListener {
     private static final String TAG = "mainActivityTAG";
+    private static final String URL_FOR_DOWNLOAD_APK = "http://www.bsuir.by/schedule/resources/android/BSUIR_Schedule.apk";
+    private static final String ANDROID_APK_FILE_NAME = "/androidSchedule.apk";
+    ProgressDialog mProgressDialog;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -83,6 +97,11 @@ public class MainActivity extends ActionBarActivity
             showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule));
             onChangeFragment(AvailableFragments.ShowSchedules);
         }
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setMessage("A message");
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgressDialog.setCancelable(true);
         checkForUpdated();
     }
 
@@ -133,8 +152,16 @@ public class MainActivity extends ActionBarActivity
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.url_for_update_application)));
-                                startActivity(browserIntent);
+                                final DownloadTask downloadTask = new DownloadTask(MainActivity.this);
+                                downloadTask.execute(URL_FOR_DOWNLOAD_APK);
+
+                                mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                    @Override
+                                    public void onCancel(DialogInterface dialog) {
+                                        downloadTask.cancel(true);
+                                    }
+                                });
+
                             }
                         })
                         .setNegativeButton(android.R.string.no, null).show();
@@ -172,6 +199,8 @@ public class MainActivity extends ActionBarActivity
         if(actionBar != null) {
             if (showScheduleFragmentForGroup.isAdded()) {
                 actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+                selectedWeekNumber = WeekNumberEnum.ALL;
+                selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                         R.layout.row_layout, R.id.text1, this.getResources().getStringArray(R.array.day_of_week));
                 actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
@@ -219,14 +248,20 @@ public class MainActivity extends ActionBarActivity
         switch (passedFragment){
             case DownloadScheduleForEmployee:
                 fragmentTransaction.replace(R.id.fragment_container, downloadScheduleForEmployeeFragment);
+                fragmentTransaction.commit();
                 break;
             case DownloadScheduleForGroup:
                 fragmentTransaction.replace(R.id.fragment_container, downloadScheduleForGroupFragment);
+                fragmentTransaction.commit();
                 break;
             case WhoAreYou:
                 fragmentTransaction.replace(R.id.fragment_container, whoAreYouFragment);
+                fragmentTransaction.commit();
                 break;
             case ShowSchedules:
+                fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
+                fragmentTransaction.commit();
+                getFragmentManager().executePendingTransactions();
                 String defaultSchedule = FileUtil.getDefaultSchedule(this);
                 if(defaultSchedule == null) {
                     onChangeFragment(AvailableFragments.WhoAreYou);
@@ -239,17 +274,16 @@ public class MainActivity extends ActionBarActivity
                         showScheduleFragmentForGroup.updateSchedule(0);
                         showScheduleFragmentForGroup.filterScheduleList(0, selectedWeekNumber, selectedSubGroup);
                     }
-                    fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
                 }
                 invalidateOptionsMenu();
                 break;
             case ExamSchedule:
                 fragmentTransaction.replace(R.id.fragment_container, examScheduleFragment);
+                fragmentTransaction.commit();
                 break;
             default:
                 break;
         }
-        fragmentTransaction.commit();
     }
 
     @Override
@@ -342,6 +376,110 @@ public class MainActivity extends ActionBarActivity
         protected void onPostExecute(String result) {
             if(result != null){
                 showDialogForUpdateApplication(result);
+            }
+        }
+    }
+
+    private class DownloadTask extends AsyncTask<String, Integer, String> {
+
+        private Context context;
+        private PowerManager.WakeLock mWakeLock;
+
+        public DownloadTask(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected String doInBackground(String... sUrl) {
+            InputStream input = null;
+            OutputStream output = null;
+            HttpURLConnection connection = null;
+            try {
+                URL url = new URL(sUrl[0]);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.connect();
+
+                // expect HTTP 200 OK, so we don't mistakenly save error report
+                // instead of the file
+                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                    return "Server returned HTTP " + connection.getResponseCode()
+                            + " " + connection.getResponseMessage();
+                }
+
+                // this will be useful to display download percentage
+                // might be -1: server did not report the length
+                int fileLength = connection.getContentLength();
+
+                // download the file
+                input = connection.getInputStream();
+                output = new FileOutputStream(Environment.getExternalStorageDirectory().getPath() + ANDROID_APK_FILE_NAME);
+                //output = new FileOutputStream("/sdcard/file_name.extension");
+
+                byte data[] = new byte[4096];
+                long total = 0;
+                int count;
+                while ((count = input.read(data)) != -1) {
+                    // allow canceling with back button
+                    if (isCancelled()) {
+                        input.close();
+                        return null;
+                    }
+                    total += count;
+                    // publishing the progress....
+                    if (fileLength > 0) // only if total length is known
+                        publishProgress((int) (total * 100 / fileLength));
+                    output.write(data, 0, count);
+                }
+            } catch (Exception e) {
+                return e.toString();
+            } finally {
+                try {
+                    if (output != null)
+                        output.close();
+                    if (input != null)
+                        input.close();
+                } catch (IOException ignored) {
+                }
+
+                if (connection != null)
+                    connection.disconnect();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // take CPU lock to prevent CPU from going off if the user
+            // presses the power button during download
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    getClass().getName());
+            mWakeLock.acquire();
+            mProgressDialog.show();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            super.onProgressUpdate(progress);
+            // if we get here, length is known, now set indeterminate to false
+            mProgressDialog.setIndeterminate(false);
+            mProgressDialog.setMax(100);
+            mProgressDialog.setProgress(progress[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            mWakeLock.release();
+            mProgressDialog.dismiss();
+            if (result != null) {
+                Toast.makeText(context, "Download error: " + result, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, "File downloaded", Toast.LENGTH_SHORT).show();
+                File apkFile = new File(Environment.getExternalStorageDirectory().getPath() + ANDROID_APK_FILE_NAME);
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive");
+                startActivity(intent);
             }
         }
     }

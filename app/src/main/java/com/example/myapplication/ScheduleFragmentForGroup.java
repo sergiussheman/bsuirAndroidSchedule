@@ -78,7 +78,7 @@ public class ScheduleFragmentForGroup extends Fragment {
     }
 
     public void updateListView(){
-        if(currentView != null) {
+        if(currentView != null && getActivity() != null) {
             ListView mainListView = (ListView) currentView.findViewById(R.id.showScheduleListView);
             if (isDefaultStudentGroup()) {
                 mainListView.setAdapter(new ArrayAdapterGroupSchedule(getActivity(), R.layout.schedule_fragment_item_layout, schedulesForShow));

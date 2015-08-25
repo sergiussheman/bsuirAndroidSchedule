@@ -46,8 +46,7 @@
     <string name="setting_file_name">Settings</string>
     <string name="default_group_field_in_settings">defaultGroup</string>
     <string name="default_employee_field_in_settings">defaultEmployee</string>
-
-    <string name="url_for_update_application">http://www.bsuir.by/schedule/schedule.xhtml</string>
+    <string name="employee_shortcut">Преподав.</string>
 
     <string name="empty_lessons">Сегодня занятий нет</string>
 
