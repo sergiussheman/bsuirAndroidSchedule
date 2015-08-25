@@ -209,11 +209,9 @@ public class MainActivity extends ActionBarActivity
                         if(itemPosition == 0){
                             Calendar calendar = GregorianCalendar.getInstance();
                             int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
-                            showScheduleFragmentForGroup.updateSchedule(currentDay - 2);
                             showScheduleFragmentForGroup.filterScheduleList(currentDay - 2, selectedWeekNumber, selectedSubGroup);
                             selectedDayPosition = itemPosition;
                         } else {
-                            showScheduleFragmentForGroup.updateSchedule(itemPosition - 1);
                             showScheduleFragmentForGroup.filterScheduleList(itemPosition - 1, selectedWeekNumber, selectedSubGroup);
                             selectedDayPosition = itemPosition;
                         }
@@ -268,11 +266,11 @@ public class MainActivity extends ActionBarActivity
                 } else {
                     showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule));
                     if(selectedDayPosition != null && selectedDayPosition > 1) {
-                        showScheduleFragmentForGroup.updateSchedule(selectedDayPosition - 1);
                         showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition - 1, selectedWeekNumber, selectedSubGroup);
                     } else {
-                        showScheduleFragmentForGroup.updateSchedule(0);
-                        showScheduleFragmentForGroup.filterScheduleList(0, selectedWeekNumber, selectedSubGroup);
+                        Calendar calendar = GregorianCalendar.getInstance();
+                        int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+                        showScheduleFragmentForGroup.filterScheduleList(currentDay - 2, selectedWeekNumber, selectedSubGroup);
                     }
                 }
                 invalidateOptionsMenu();
