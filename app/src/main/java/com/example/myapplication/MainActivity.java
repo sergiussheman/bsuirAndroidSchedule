@@ -122,10 +122,20 @@ public class MainActivity extends ActionBarActivity
                     onChangeFragment(AvailableFragments.WhoAreYou);
                 }
                 break;
+            case 4:
+                sendEmail();
+                break;
             default:
                 throw new UnsupportedOperationException();
         }
         return true;
+    }
+
+    public void sendEmail(){
+        Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.parse(getString(R.string.email_for_reports)));
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.email_report_title));
+
+        startActivity(Intent.createChooser(emailIntent, getString(R.string.chooser_title)));
     }
 
     public List<SchoolDay> getScheduleFromFile(String fileName){
@@ -188,6 +198,9 @@ public class MainActivity extends ActionBarActivity
                 if(whoAreYouFragment != null) {
                     onChangeFragment(AvailableFragments.WhoAreYou);
                 }
+                break;
+            case 3:
+                sendEmail();
                 break;
             default:
                 throw new NoSuchElementException();

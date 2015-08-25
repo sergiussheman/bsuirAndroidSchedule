@@ -47,6 +47,9 @@
     <string name="default_group_field_in_settings">defaultGroup</string>
     <string name="default_employee_field_in_settings">defaultEmployee</string>
     <string name="employee_shortcut">Преподав.</string>
+    <string name="email_for_reports">mailto:iis-support@bsuir.by</string>
+    <string name="chooser_title">Выберите приложение</string>
+    <string name="email_report_title">Отзыв</string>
 
     <string name="empty_lessons">Сегодня занятий нет</string>
 
@@ -85,6 +88,7 @@
         <item>Расписание на сегодня</item>
         <item>Расписание экзаменов</item>
         <item>Выбрать расписание</item>
+        <item>Отправить отзыв</item>
     </string-array>
 
     <string name="in_progress">В разработке</string>
