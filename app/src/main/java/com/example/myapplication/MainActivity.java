@@ -257,13 +257,15 @@ public class MainActivity extends ActionBarActivity
                 fragmentTransaction.commit();
                 break;
             case ShowSchedules:
-                fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
-                fragmentTransaction.commit();
-                getFragmentManager().executePendingTransactions();
+
                 String defaultSchedule = FileUtil.getDefaultSchedule(this);
                 if(defaultSchedule == null) {
                     onChangeFragment(AvailableFragments.WhoAreYou);
                 } else {
+                    fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
+                    fragmentTransaction.commit();
+                    getFragmentManager().executePendingTransactions();
+
                     showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule));
                     if(selectedDayPosition != null && selectedDayPosition > 1) {
                         showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition - 1, selectedWeekNumber, selectedSubGroup);
@@ -286,7 +288,13 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     public void onBackPressed() {
+        //TODO: determine why don't work fragmentTransaction.addToBackStack and rewrite this method
+        String defaultSchedule = FileUtil.getDefaultSchedule(this);
         if(showScheduleFragmentForGroup.isAdded()) {
+            System.exit(0);
+        } else if(!whoAreYouFragment.isAdded()){
+            onChangeFragment(AvailableFragments.ShowSchedules);
+        } else if(defaultSchedule == null){
             System.exit(0);
         } else{
             onChangeFragment(AvailableFragments.ShowSchedules);
