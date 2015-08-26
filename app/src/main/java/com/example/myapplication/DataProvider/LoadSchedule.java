@@ -16,7 +16,7 @@ import java.net.URL;
 import java.util.List;
 
 public class LoadSchedule {
-    private static final String BSUIR = "http://bsuir.by/schedule/rest/schedule/";
+    private static final String BSUIR = "http://bsuir.by/schedule/rest/schedule/android/";
     private static final String ACTUAL_APPLICATION_VERSION_URL = "http://www.bsuir.by/schedule/rest/android/actualAndroidVersion";
     private static final String EMPLOYEE_LIST_REST = "http://www.bsuir.by/schedule/rest/employee";
     private static final String SCHEDULE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/employee/";
