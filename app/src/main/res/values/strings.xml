@@ -53,6 +53,7 @@
     <string name="email_report_title">Отзыв</string>
 
     <string name="empty_lessons">Сегодня занятий нет</string>
+    <string name="empty_exams">Расписание экзаменов отсутствует</string>
 
     <string name="entire_group">Вся группа</string>
     <string name="first_sub_group">1 подгр</string>

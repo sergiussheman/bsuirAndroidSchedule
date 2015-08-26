@@ -1,11 +1,8 @@
 package com.example.myapplication;
 
-import android.app.Activity;
 import android.app.Fragment;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +15,7 @@ import com.example.myapplication.Model.Schedule;
 import com.example.myapplication.Model.SchoolDay;
 import com.example.myapplication.Model.SubGroupEnum;
 import com.example.myapplication.Model.WeekNumberEnum;
+import com.example.myapplication.Utils.FileUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +32,6 @@ public class ScheduleFragmentForGroup extends Fragment {
     private Schedule[] schedulesForShow;
     private List<SchoolDay> allScheduleForGroup;
     private View currentView;
-
-    private OnFragmentInteractionListener mListener;
 
     public static ScheduleFragmentForGroup newInstance(String param1, String param2) {
         ScheduleFragmentForGroup fragment = new ScheduleFragmentForGroup();
@@ -63,52 +59,16 @@ public class ScheduleFragmentForGroup extends Fragment {
         return currentView;
     }
 
-    public void updateSchedule(int position){
-        try {
-            List<Schedule> scheduleList = new ArrayList<>();
-            if(getAllScheduleForGroup().size() > position) {
-                scheduleList = getAllScheduleForGroup().get(position).getSchedules();
-            }
-            Schedule[] schedules = scheduleList.toArray(new Schedule[scheduleList.size()]);
-            setSchedulesForShow(schedules);
-            updateListView();
-        } catch (Exception e){
-            Log.e(TAG, e.toString());
-        }
-    }
-
     public void updateListView(){
         if(currentView != null && getActivity() != null) {
             ListView mainListView = (ListView) currentView.findViewById(R.id.showScheduleListView);
-            if (isDefaultStudentGroup()) {
+            if (FileUtil.isDefaultStudentGroup(getActivity())) {
                 mainListView.setAdapter(new ArrayAdapterGroupSchedule(getActivity(), R.layout.schedule_fragment_item_layout, schedulesForShow));
             } else {
                 mainListView.setAdapter(new ArrayAdapterEmployeeSchedule(getActivity(), R.layout.schedule_fragment_item_layout, schedulesForShow));
             }
             TextView emptyTextView = (TextView) currentView.findViewById(R.id.emptyResults);
             mainListView.setEmptyView(emptyTextView);
-        }
-    }
-
-    public boolean isDefaultStudentGroup(){
-        String settingFileName = getString(R.string.setting_file_name);
-        SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
-        String defaultGroup = preferences.getString(getActivity().getResources().getString(R.string.default_group_field_in_settings), "none");
-        if("none".equals(defaultGroup)){
-            return false;
-        } else{
-            return true;
-        }
-    }
-
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        try {
-            mListener = (OnFragmentInteractionListener) activity;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement OnFragmentInteractionListener");
         }
     }
 
@@ -149,12 +109,6 @@ public class ScheduleFragmentForGroup extends Fragment {
         }
         schedulesForShow = result.toArray(new Schedule[result.size()]);
         updateListView();
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
     }
 
     public Schedule[] getSchedulesForShow() {

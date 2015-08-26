@@ -17,6 +17,7 @@ import java.util.List;
 
 public class LoadSchedule {
     private static final String BSUIR = "http://bsuir.by/schedule/rest/schedule/";
+    private static final String EXAM_SCHEDULE = "http://bsuir.by/schedule/rest/examSchedule/";
     private static final String ACTUAL_APPLICATION_VERSION_URL = "http://www.bsuir.by/schedule/rest/android/actualAndroidVersion";
     private static final String EMPLOYEE_LIST_REST = "http://www.bsuir.by/schedule/rest/employee";
     private static final String SCHEDULE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/employee/";
@@ -24,8 +25,13 @@ public class LoadSchedule {
 
     public static String loadScheduleForStudentGroup(String group, File filesDir) {
         try {
+            //loading daily schedule
             URL url = new URL(BSUIR + group);
             loadSchedule(url, filesDir, group);
+
+            //loading exam schedule
+            url = new URL(EXAM_SCHEDULE + group);
+            loadSchedule(url, filesDir, group + "exam");
             return null;
         } catch (SocketTimeoutException e) {
             return "Ошибка подключения. Сервер не отвечает.";
@@ -62,7 +68,7 @@ public class LoadSchedule {
         File file = new File(fileDir, fileName + ".xml");
         FileOutputStream fileOutput = new FileOutputStream(file);
         byte[] buffer = new byte[1024];
-        int bufferLength = 0;
+        int bufferLength;
         while ((bufferLength = inputStream.read(buffer)) > 0) {
             fileOutput.write(buffer, 0, bufferLength);
         }

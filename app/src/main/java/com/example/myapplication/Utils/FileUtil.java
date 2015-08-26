@@ -50,4 +50,16 @@ public class FileUtil {
         }
         return null;
     }
+
+
+    public static boolean isDefaultStudentGroup(Context context){
+        String settingFileName = context.getString(R.string.setting_file_name);
+        SharedPreferences preferences = context.getSharedPreferences(settingFileName, 0);
+        String defaultGroup = preferences.getString(context.getResources().getString(R.string.default_group_field_in_settings), "none");
+        if("none".equals(defaultGroup)){
+            return false;
+        } else{
+            return true;
+        }
+    }
 }

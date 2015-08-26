@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -68,6 +69,9 @@ public class MainActivity extends ActionBarActivity
     private SubGroupEnum selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
     private Integer selectedDayPosition;
 
+    private List<SchoolDay> examSchedules;
+    private List<SchoolDay> daySchedules;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
@@ -94,7 +98,7 @@ public class MainActivity extends ActionBarActivity
         if(defaultSchedule == null) {
             onChangeFragment(AvailableFragments.WhoAreYou);
         } else{
-            showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule));
+            showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule, false));
             onChangeFragment(AvailableFragments.ShowSchedules);
         }
         mProgressDialog = new ProgressDialog(this);
@@ -138,7 +142,11 @@ public class MainActivity extends ActionBarActivity
         startActivity(Intent.createChooser(emailIntent, getString(R.string.chooser_title)));
     }
 
-    public List<SchoolDay> getScheduleFromFile(String fileName){
+    public List<SchoolDay> getScheduleFromFile(String fileName, boolean isForExam){
+        if(isForExam){
+            fileName = fileName.substring(0, fileName.length() - 4);
+            fileName += "exam.xml";
+        }
         return XmlDataProvider.parseScheduleXml(getFilesDir(), fileName);
     }
 
@@ -234,6 +242,20 @@ public class MainActivity extends ActionBarActivity
 
                 actionBar.setDisplayShowTitleEnabled(false);
                 setVisibilityForSubMenus(true, menu);
+            } else if(examScheduleFragment.isAdded()){
+                actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.row_layout, R.id.text1, getTitleArrayForActionBar());
+                actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(int itemPosition, long l) {
+                        examScheduleFragment.updateSchedule(itemPosition - 1);
+                        selectedDayPosition = itemPosition;
+                        return false;
+                    }
+                });
+
+                actionBar.setDisplayShowTitleEnabled(false);
+                setVisibilityForSubMenus(false, menu);
             } else {
                 actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
                 setVisibilityForSubMenus(false, menu);
@@ -251,6 +273,14 @@ public class MainActivity extends ActionBarActivity
         if(subGroupSubMenu != null) {
             subGroupSubMenu.setVisible(visible);
         }
+    }
+
+    public String[] getTitleArrayForActionBar(){
+        List<String> titles = new ArrayList<>();
+        for(SchoolDay schoolDay : examSchedules){
+            titles.add(schoolDay.getDayName());
+        }
+        return titles.toArray(new String[titles.size()]);
     }
 
     @Override
@@ -279,7 +309,7 @@ public class MainActivity extends ActionBarActivity
                     fragmentTransaction.commit();
                     getFragmentManager().executePendingTransactions();
 
-                    showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule));
+                    showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule, false));
                     if(selectedDayPosition != null && selectedDayPosition > 1) {
                         showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition - 1, selectedWeekNumber, selectedSubGroup);
                     } else {
@@ -291,8 +321,16 @@ public class MainActivity extends ActionBarActivity
                 invalidateOptionsMenu();
                 break;
             case ExamSchedule:
-                fragmentTransaction.replace(R.id.fragment_container, examScheduleFragment);
-                fragmentTransaction.commit();
+                String defaultScheduleFromPreference = FileUtil.getDefaultSchedule(this);
+                if(defaultScheduleFromPreference == null){
+                    onChangeFragment(AvailableFragments.WhoAreYou);
+                } else {
+                    fragmentTransaction.replace(R.id.fragment_container, examScheduleFragment);
+                    fragmentTransaction.commit();
+                    getFragmentManager().executePendingTransactions();
+                    examScheduleFragment.setAllSchedules(getScheduleFromFile(defaultScheduleFromPreference, true));
+                    examScheduleFragment.updateSchedule(selectedDayPosition);
+                }
                 break;
             default:
                 break;
