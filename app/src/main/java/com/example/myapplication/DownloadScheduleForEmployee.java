@@ -404,7 +404,7 @@ public class DownloadScheduleForEmployee extends Fragment {
         protected void onPostExecute(String result) {
             if(result != null) {
                 //Toast.makeText(ScheduleForGroup.this, result, Toast.LENGTH_SHORT).show();
-                Toast.makeText(getActivity(), "Some problems while loading schedule", Toast.LENGTH_LONG).show();
+                Toast.makeText(getActivity(), getString(R.string.error_while_downloading_schedule), Toast.LENGTH_LONG).show();
             } else {
                 if(isDownloadingNewSchedule()) {
                     mListener.onChangeFragment(AvailableFragments.ShowSchedules);

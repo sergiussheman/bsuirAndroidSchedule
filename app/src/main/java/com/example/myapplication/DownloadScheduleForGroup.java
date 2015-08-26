@@ -278,7 +278,7 @@ public class DownloadScheduleForGroup extends Fragment {
 
         protected void onPostExecute(String result) {
             if(result != null) {
-                Log.v(TAG, result);
+                Toast.makeText(getActivity(), getString(R.string.error_while_downloading_schedule), Toast.LENGTH_LONG).show();
             } else {
                 if(isDownloadingNewSchedule()) {
                     mListener.onChangeFragment(AvailableFragments.ShowSchedules);

@@ -30,6 +30,7 @@
     <string name="confirm_delete_message">Вы действительно хотите удалить расписание?</string>
     <string name="application_deprecated">Доступна новая версия приложения. Обновить?</string>
     <string name="error_while_deleting_file">Ошибка при удалении файла</string>
+    <string name="error_while_downloading_schedule">Проблема при загрузке расписания</string>
 
     <string name="not_appropriate_student_group">Неправильное название группы</string>
 
