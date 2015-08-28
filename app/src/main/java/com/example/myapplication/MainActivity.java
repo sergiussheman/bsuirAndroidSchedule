@@ -328,7 +328,9 @@ public class MainActivity extends ActionBarActivity
                     fragmentTransaction.replace(R.id.fragment_container, examScheduleFragment);
                     fragmentTransaction.commit();
                     getFragmentManager().executePendingTransactions();
-                    examScheduleFragment.setAllSchedules(getScheduleFromFile(defaultScheduleFromPreference, true));
+                    List<SchoolDay> week = getScheduleFromFile(defaultScheduleFromPreference, true);
+                    examSchedules = week;
+                    examScheduleFragment.setAllSchedules(week);
                     examScheduleFragment.updateSchedule(selectedDayPosition);
                 }
                 break;

@@ -48,13 +48,13 @@ public class ExamScheduleFragment extends Fragment {
 
     public void updateListView(){
         if(currentView != null && getActivity() != null) {
-            ListView mainListView = (ListView) currentView.findViewById(R.id.showScheduleListView);
+            ListView mainListView = (ListView) currentView.findViewById(R.id.showExamScheduleView);
             if (FileUtil.isDefaultStudentGroup(getActivity())) {
                 mainListView.setAdapter(new ArrayAdapterGroupSchedule(getActivity(), R.layout.schedule_fragment_item_layout, schedulesForShow));
             } else {
                 mainListView.setAdapter(new ArrayAdapterEmployeeSchedule(getActivity(), R.layout.schedule_fragment_item_layout, schedulesForShow));
             }
-            TextView emptyTextView = (TextView) currentView.findViewById(R.id.emptyResults);
+            TextView emptyTextView = (TextView) currentView.findViewById(R.id.emptyExamList);
             mainListView.setEmptyView(emptyTextView);
         }
     }
