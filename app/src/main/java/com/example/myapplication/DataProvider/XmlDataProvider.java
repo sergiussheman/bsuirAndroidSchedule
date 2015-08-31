@@ -5,6 +5,7 @@ import android.util.Log;
 import com.example.myapplication.Model.Employee;
 import com.example.myapplication.Model.Schedule;
 import com.example.myapplication.Model.SchoolDay;
+import com.example.myapplication.Model.StudentGroup;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -88,6 +89,62 @@ public class XmlDataProvider {
         }
         return new ArrayList<>();
     }
+
+    public static List<StudentGroup> parseListStudentGroupXml(String content){
+        try {
+            List<StudentGroup> resultList = new ArrayList<>();
+            StudentGroup currentReadingStudentGroup = null;
+            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+            XmlPullParser parser = factory.newPullParser();
+            parser.setInput(new StringReader(content));
+
+            int eventType = parser.getEventType();
+            String currentTag = null;
+
+            while(eventType != XmlPullParser.END_DOCUMENT){
+                switch (eventType){
+                    case XmlPullParser.START_DOCUMENT:
+                        Log.v(TAG, "Start document");
+                        break;
+
+                    case XmlPullParser.START_TAG:
+                        currentTag = parser.getName();
+                        if(currentTag.equals("studentGroup") && parser.getDepth() == 2){
+                            if(currentReadingStudentGroup != null){
+                                resultList.add(currentReadingStudentGroup);
+                            }
+                            currentReadingStudentGroup = new StudentGroup();
+                        }
+                        break;
+
+                    case XmlPullParser.END_TAG:
+                        currentTag = parser.getName();
+                        break;
+
+                    case XmlPullParser.TEXT:
+                        assert currentTag != null;
+                        if(currentTag.equalsIgnoreCase("name")){
+                            assert currentReadingStudentGroup != null;
+                            currentReadingStudentGroup.setStudentGroupName(parser.getText());
+                        } else if(currentTag.equalsIgnoreCase("id")) {
+                            assert currentReadingStudentGroup != null;
+                            currentReadingStudentGroup.setStudentGroupId(Long.parseLong(parser.getText()));
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                eventType = parser.next();
+            }
+            return resultList;
+        } catch(XmlPullParserException e){
+            Log.v(TAG, "Ошибка при парсинге xml");
+        } catch (IOException e){
+            Log.v(TAG, "IO exception");
+        }
+        return new ArrayList<>();
+    }
+
 
     public static List<SchoolDay> parseScheduleXml(File directory, String fileName){
         List<SchoolDay> weekSchedule = new ArrayList<>();

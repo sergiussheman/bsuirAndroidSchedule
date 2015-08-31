@@ -81,7 +81,7 @@ public class DownloadScheduleForEmployee extends Fragment {
                 new DownloadEmployeeXML().execute();
             }
         } catch (Exception e){
-            Toast.makeText(getActivity(), R.string.connection_timeout, Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), R.string.can_not_load_list_of_employees, Toast.LENGTH_LONG).show();
         }
 
         Button downloadButton = (Button) currentView.findViewById(R.id.buttonForDownloadEmployeeSchedule);

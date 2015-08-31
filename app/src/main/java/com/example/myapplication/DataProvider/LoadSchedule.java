@@ -3,6 +3,7 @@ package com.example.myapplication.DataProvider;
 import android.util.Log;
 
 import com.example.myapplication.Model.Employee;
+import com.example.myapplication.Model.StudentGroup;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,15 +14,32 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LoadSchedule {
     private static final String BSUIR = "http://bsuir.by/schedule/rest/schedule/";
+    private static final String STUDENT_GROUP_SCHEDULE_BY_ID_REST = "";
     private static final String EXAM_SCHEDULE = "http://bsuir.by/schedule/rest/examSchedule/";
     private static final String ACTUAL_APPLICATION_VERSION_URL = "http://www.bsuir.by/schedule/rest/android/actualAndroidVersion";
     private static final String EMPLOYEE_LIST_REST = "http://www.bsuir.by/schedule/rest/employee";
     private static final String SCHEDULE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/employee/";
+    private static final String STUDENT_GROUP_REST = "";
     private static final String TAG = "Load";
+
+    public static String loadScheduleForStudentGroupById(StudentGroup sg, File fileDir){
+        try{
+            URL url = new URL(STUDENT_GROUP_SCHEDULE_BY_ID_REST + sg.getStudentGroupId().toString());
+            loadSchedule(url, fileDir, sg.getStudentGroupName() + sg.getStudentGroupId());
+
+            return null;
+        } catch (SocketTimeoutException e) {
+            return "Ошибка подключения. Сервер не отвечает.";
+        } catch (IOException e) {
+            Log.v("logs", e.toString());
+            return "Группа " + sg.getStudentGroupName() + " не найдена. Проверьте соединение с интернетом." + e.toString();
+        }
+    }
 
     public static String loadScheduleForStudentGroup(String group, File filesDir) {
         try {
@@ -78,6 +96,36 @@ public class LoadSchedule {
         Log.v(TAG, "Расписание успешно загружено!");
     }
 
+    public static List<StudentGroup> loadAvailableStudentGroups(){
+        BufferedReader reader = null;
+        try{
+            URL url = new URL(STUDENT_GROUP_REST);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(5000);
+            connection.connect();
+
+            StringBuilder result = new StringBuilder();
+            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+
+            String line;
+            while ((line = reader.readLine()) != null){
+                result.append(line);
+            }
+            return XmlDataProvider.parseListStudentGroupXml(result.toString());
+        } catch (Exception e){
+            Log.v(TAG, e.toString());
+        } finally {
+            try{
+                if(reader != null){
+                    reader.close();
+                }
+            } catch (IOException e){
+                Log.v(TAG, e.toString());
+            }
+        }
+        return new ArrayList<>();
+    }
+
     public static List<Employee> loadListEmployee() {
         BufferedReader reader = null;
         try {
@@ -106,7 +154,7 @@ public class LoadSchedule {
                 Log.v(TAG, e.toString());
             }
         }
-        return null;
+        return new ArrayList<>();
     }
 
     public static String loadActualApplicationVersion(){
