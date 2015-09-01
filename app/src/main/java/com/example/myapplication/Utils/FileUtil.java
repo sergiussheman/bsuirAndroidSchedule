@@ -25,15 +25,27 @@ public class FileUtil {
             if(f.isFile()){
                 String fileName = f.getName();
                 if(".xml".equalsIgnoreCase(fileName.substring(fileName.length() - 4))){
-                    if(schedulesForGroups && fileName.length() == 10){
-                        result.add(fileName);
-                    } else if(!schedulesForGroups && fileName.length() > 10){
-                        result.add(fileName);
+                    if(!fileName.contains("exam")) {
+                        if (schedulesForGroups && isDigit(fileName.charAt(0))) {
+                            result.add(fileName);
+                        } else if (!schedulesForGroups && !isDigit(fileName.charAt(0))) {
+                            result.add(fileName);
+                        }
                     }
                 }
             }
         }
         return result;
+    }
+
+    private static boolean isDigit(char symbol){
+        char[] digits = new char[] {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
+        for(char tempSymbol : digits){
+            if(tempSymbol == symbol){
+                return true;
+            }
+        }
+        return false;
     }
 
     public static String getDefaultSchedule(Context context){
@@ -49,5 +61,17 @@ public class FileUtil {
             }
         }
         return null;
+    }
+
+
+    public static boolean isDefaultStudentGroup(Context context){
+        String settingFileName = context.getString(R.string.setting_file_name);
+        SharedPreferences preferences = context.getSharedPreferences(settingFileName, 0);
+        String defaultGroup = preferences.getString(context.getResources().getString(R.string.default_group_field_in_settings), "none");
+        if("none".equals(defaultGroup)){
+            return false;
+        } else{
+            return true;
+        }
     }
 }

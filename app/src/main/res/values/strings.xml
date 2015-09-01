@@ -32,10 +32,12 @@
     <string name="error_while_deleting_file">Ошибка при удалении файла</string>
     <string name="error_while_downloading_schedule">Проблема при загрузке расписания</string>
 
-    <string name="not_appropriate_student_group">Неправильное название группы</string>
+    <string name="not_appropriate_student_group">Неправильный номер группы</string>
 
     <string name="connection_timeout">Не удалось загрузить расписание</string>
     <string name="no_connection_to_network">Для скачивания расписания необходимо подключиться к сети</string>
+    <string name="can_not_load_list_of_employees">Не удалось загрузить список преподавателей</string>
+    <string name="can_not_load_list_of_student_groups">Не удалось загрузить список групп</string>
     <string name="should_select_employee">Необходимо выбрать преподавателя!</string>
     <string name="update_needed">Обновление</string>
     <string name="update_message">Доступно обновление. Обновить?</string>
@@ -51,8 +53,10 @@
     <string name="email_for_reports">mailto:iis-support@bsuir.by</string>
     <string name="chooser_title">Выберите приложение</string>
     <string name="email_report_title">Отзыв</string>
+    <string name="downloading">Скачивание</string>
 
     <string name="empty_lessons">Сегодня занятий нет</string>
+    <string name="empty_exams">Расписание экзаменов отсутствует. Попробуйте обновить расписание</string>
 
     <string name="entire_group">Вся группа</string>
     <string name="first_sub_group">1 подгр</string>
