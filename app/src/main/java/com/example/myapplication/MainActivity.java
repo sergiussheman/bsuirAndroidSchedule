@@ -230,6 +230,9 @@ public class MainActivity extends ActionBarActivity
                         if(itemPosition == 0){
                             Calendar calendar = GregorianCalendar.getInstance();
                             int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+                            if(currentDay == 1){
+                                currentDay = 8;
+                            }
                             showScheduleFragmentForGroup.filterScheduleList(currentDay - 2, selectedWeekNumber, selectedSubGroup);
                             selectedDayPosition = itemPosition;
                         } else {
@@ -315,6 +318,10 @@ public class MainActivity extends ActionBarActivity
                     } else {
                         Calendar calendar = GregorianCalendar.getInstance();
                         int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+                        //1 is code for sunday. But it lies in the array at index 6
+                        if(currentDay  == 1) {
+                            currentDay = 8;
+                        }
                         showScheduleFragmentForGroup.filterScheduleList(currentDay - 2, selectedWeekNumber, selectedSubGroup);
                     }
                 }
@@ -379,6 +386,9 @@ public class MainActivity extends ActionBarActivity
         if(dayPositionForPass == 0){
             Calendar calendar = new GregorianCalendar();
             dayPositionForPass = calendar.get(Calendar.DAY_OF_WEEK) - 1;
+            if(dayPositionForPass == 0){
+                dayPositionForPass = 7;
+            }
         }
         switch (id){
             case R.id.menuAllWeekNumber:

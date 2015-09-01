@@ -19,18 +19,21 @@ import java.util.List;
 
 public class LoadSchedule {
     private static final String BSUIR = "http://bsuir.by/schedule/rest/schedule/";
-    private static final String STUDENT_GROUP_SCHEDULE_BY_ID_REST = "";
-    private static final String EXAM_SCHEDULE = "http://bsuir.by/schedule/rest/examSchedule/";
+    private static final String STUDENT_GROUP_SCHEDULE_BY_ID_REST = "http://www.bsuir.by/schedule/rest/schedule/android/";
+    private static final String EXAM_SCHEDULE = "http://www.bsuir.by/schedule/rest/examSchedule/android/";
     private static final String ACTUAL_APPLICATION_VERSION_URL = "http://www.bsuir.by/schedule/rest/android/actualAndroidVersion";
     private static final String EMPLOYEE_LIST_REST = "http://www.bsuir.by/schedule/rest/employee";
     private static final String SCHEDULE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/employee/";
-    private static final String STUDENT_GROUP_REST = "";
+    private static final String STUDENT_GROUP_REST = "http://www.bsuir.by/schedule/rest/studentGroup/";
     private static final String TAG = "Load";
 
     public static String loadScheduleForStudentGroupById(StudentGroup sg, File fileDir){
         try{
             URL url = new URL(STUDENT_GROUP_SCHEDULE_BY_ID_REST + sg.getStudentGroupId().toString());
             loadSchedule(url, fileDir, sg.getStudentGroupName() + sg.getStudentGroupId());
+
+            url = new URL(EXAM_SCHEDULE + sg.getStudentGroupId().toString());
+            loadSchedule(url, fileDir, sg.getStudentGroupName() + sg.getStudentGroupId() + "exam");
 
             return null;
         } catch (SocketTimeoutException e) {

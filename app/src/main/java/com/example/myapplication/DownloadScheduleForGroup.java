@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
 public class DownloadScheduleForGroup extends Fragment {
     private static final String TAG = "downScheForGroupTAG";
     private static final Integer COUNT_DIGITS_IN_STUDENT_GROUP = 6;
-    private static final String PATTERN = "^[а-яА-ЯёЁ]+";
+    private static final String PATTERN = "^[0-9мМ]+";
 
     private OnFragmentInteractionListener mListener;
     private List<String> downloadedSchedulesForGroup;
@@ -89,7 +89,9 @@ public class DownloadScheduleForGroup extends Fragment {
                 String studentGroup = editText.getText().toString();
                 StudentGroup selectedStudentGroup = isAppropriateStudentGroup(studentGroup);
                 if (selectedStudentGroup == null) {
-                    Toast.makeText(getActivity(), R.string.not_appropriate_student_group, Toast.LENGTH_LONG).show();
+                    Toast toast =  Toast.makeText(getActivity(), R.string.not_appropriate_student_group, Toast.LENGTH_LONG);
+                    toast.setGravity(Gravity.TOP, 0, 30);
+                    toast.show();
                 } else {
                     downloadOrUpdateSchedule(selectedStudentGroup);
                 }
@@ -133,14 +135,10 @@ public class DownloadScheduleForGroup extends Fragment {
     private StudentGroup instantiateStudentGroup(String studentGroupAsString){
         StudentGroup result = new StudentGroup();
         try {
-            Pattern pattern = Pattern.compile(PATTERN);
-            Matcher matcher = pattern.matcher(studentGroupAsString);
-            if (matcher.find()) {
-                String studentGroupName = matcher.group(0);
-                result.setStudentGroupName(studentGroupName);
-                Long studentGroupId = Long.parseLong(studentGroupAsString.replace(studentGroupName, ""));
-                result.setStudentGroupId(studentGroupId);
-            }
+            //first six symbols it's student group name
+            //and remaining symbols it's student group id
+            result.setStudentGroupName(studentGroupAsString.substring(0, 6));
+            result.setStudentGroupId(Long.parseLong(studentGroupAsString.substring(6, studentGroupAsString.length())));
         } catch (Exception e){
             Log.v(TAG, "error while instantiateStudentGroup");
         }
@@ -188,7 +186,9 @@ public class DownloadScheduleForGroup extends Fragment {
             TableRow rowForGroupSchedule = new TableRow(getActivity());
             TextView textViewForGroupName = new TextView(getActivity());
             textViewForGroupName.setGravity(Gravity.START);
-            textViewForGroupName.setText(getStudentGroupIdNameFromString(currentGroupSchedule));
+            //currentGroupSchedule contains group name, group id and "exam" at end if it exam schedule
+            //group name always contains six symbols.
+            textViewForGroupName.setText(currentGroupSchedule.substring(0, 6));
             textViewForGroupName.setLayoutParams(params);
             rowForGroupSchedule.addView(textViewForGroupName);
 
@@ -211,13 +211,18 @@ public class DownloadScheduleForGroup extends Fragment {
                                 public void onClick(DialogInterface dialog, int which) {
                                     TableRow selectedRow = (TableRow) v.getParent();
                                     Integer rowNumber = (Integer) selectedRow.getTag();
-                                    String fileNameForDelete = schedulesForGroup.get(rowNumber);
+                                    StringBuilder fileNameForDelete = new StringBuilder(schedulesForGroup.get(rowNumber));
 
-                                    File file = new File(getActivity().getFilesDir(), fileNameForDelete);
+                                    File file = new File(getActivity().getFilesDir(), fileNameForDelete.toString());
                                     if (!file.delete()) {
                                         Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
                                     }
-                                    deleteDefaultGroupIfNeed(fileNameForDelete);
+                                    file = new File(getActivity().getFilesDir(), fileNameForDelete.insert(fileNameForDelete.length() - 4, "exam").toString());
+                                    if (!file.delete()) {
+                                        Log.v(TAG, "file not deleted");
+                                    }
+
+                                    deleteDefaultGroupIfNeed(fileNameForDelete.toString());
                                     setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
                                     populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());
                                 }
@@ -393,25 +398,6 @@ public class DownloadScheduleForGroup extends Fragment {
         }
     }
 
-    private class DownloadFilesTask extends AsyncTask<String, String, String> {
-        private File fileDir;
-
-        protected String doInBackground(String... urls) {
-            return LoadSchedule.loadScheduleForStudentGroup(urls[0], fileDir);
-        }
-
-        protected void onPostExecute(String result) {
-            if(result != null) {
-                Toast.makeText(getActivity(), getString(R.string.error_while_downloading_schedule), Toast.LENGTH_LONG).show();
-            } else {
-                if(isDownloadingNewSchedule()) {
-                    mListener.onChangeFragment(AvailableFragments.ShowSchedules);
-                } else{
-                    populateTableLayout(getTableLayoutForDownloadedSchedules(), getDownloadedSchedulesForGroup());
-                }
-            }
-        }
-    }
 
     public List<String> getDownloadedSchedulesForGroup() {
         return downloadedSchedulesForGroup;
