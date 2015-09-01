@@ -27,12 +27,11 @@
             android:id="@+id/viewScheduleForGroup"
             android:layout_marginBottom="40dp"/>
 
-        <EditText
+        <AutoCompleteTextView
             android:id="@+id/editTextForEnterGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/enter_student_group_name"
-            android:inputType="number"/>
+            android:hint="@string/enter_student_group_name" />
 
         <Button
             android:id="@+id/buttonForDownloadSchedule"

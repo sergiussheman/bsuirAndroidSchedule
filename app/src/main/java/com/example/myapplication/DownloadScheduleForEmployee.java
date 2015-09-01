@@ -81,7 +81,7 @@ public class DownloadScheduleForEmployee extends Fragment {
                 new DownloadEmployeeXML().execute();
             }
         } catch (Exception e){
-            Toast.makeText(getActivity(), R.string.connection_timeout, Toast.LENGTH_LONG).show();
+            Toast.makeText(getActivity(), R.string.can_not_load_list_of_employees, Toast.LENGTH_LONG).show();
         }
 
         Button downloadButton = (Button) currentView.findViewById(R.id.buttonForDownloadEmployeeSchedule);
@@ -101,7 +101,9 @@ public class DownloadScheduleForEmployee extends Fragment {
                         updateDefaultEmployee(selectedEmployee, true);
 
                     } else{
-                        Toast.makeText(getActivity(), getResources().getString(R.string.should_select_employee), Toast.LENGTH_LONG).show();
+                        Toast toast = Toast.makeText(getActivity(), getResources().getString(R.string.should_select_employee), Toast.LENGTH_LONG);
+                        toast.setGravity(Gravity.TOP, 0, 30);
+                        toast.show();
                     }
                 } else{
                     Toast.makeText(getActivity(), getResources().getString(R.string.no_connection_to_network), Toast.LENGTH_LONG).show();
@@ -311,10 +313,12 @@ public class DownloadScheduleForEmployee extends Fragment {
 
     @Nullable
     private Employee getEmployeeByName(String selectedEmployee){
-        for(Employee employee : getAvailableEmployeeList()){
-            String employeeAsString = employeeToString(employee);
-            if(employeeAsString.equalsIgnoreCase(selectedEmployee)){
-                return employee;
+        if(getAvailableEmployeeList() != null && !getAvailableEmployeeList().isEmpty()) {
+            for (Employee employee : getAvailableEmployeeList()) {
+                String employeeAsString = employeeToString(employee);
+                if (employeeAsString.equalsIgnoreCase(selectedEmployee)) {
+                    return employee;
+                }
             }
         }
         return null;
@@ -403,7 +407,6 @@ public class DownloadScheduleForEmployee extends Fragment {
 
         protected void onPostExecute(String result) {
             if(result != null) {
-                //Toast.makeText(ScheduleForGroup.this, result, Toast.LENGTH_SHORT).show();
                 Toast.makeText(getActivity(), getString(R.string.error_while_downloading_schedule), Toast.LENGTH_LONG).show();
             } else {
                 if(isDownloadingNewSchedule()) {

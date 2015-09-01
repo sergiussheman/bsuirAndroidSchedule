@@ -16,31 +16,39 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.myapplication.Model.StudentGroup;
 import com.example.myapplication.Utils.DateUtil;
 import com.example.myapplication.Utils.FileUtil;
 import com.example.myapplication.DataProvider.LoadSchedule;
 import com.example.myapplication.Model.AvailableFragments;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class DownloadScheduleForGroup extends Fragment {
     private static final String TAG = "downScheForGroupTAG";
     private static final Integer COUNT_DIGITS_IN_STUDENT_GROUP = 6;
+    private static final String PATTERN = "^[0-9мМ]+";
 
     private OnFragmentInteractionListener mListener;
     private List<String> downloadedSchedulesForGroup;
     private boolean isDownloadingNewSchedule;
+    private View currentView;
     private TableLayout tableLayoutForDownloadedSchedules;
+    private List<StudentGroup> availableStudentGroups;
 
     public static DownloadScheduleForGroup newInstance() {
         DownloadScheduleForGroup fragment = new DownloadScheduleForGroup();
@@ -60,41 +68,81 @@ public class DownloadScheduleForGroup extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        final View view = inflater.inflate(R.layout.fragment_download_schedule_for_group, container, false);
+        currentView = inflater.inflate(R.layout.fragment_download_schedule_for_group, container, false);
 
-        Button button = (Button) view.findViewById(R.id.buttonForDownloadSchedule);
+        try {
+            ConnectivityManager connectMan = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo networkInfo = connectMan.getActiveNetworkInfo();
+            if(networkInfo != null && networkInfo.isConnected()) {
+                new DownloadStudentGroupXML().execute();
+            }
+        } catch (Exception e){
+            Toast.makeText(getActivity(), R.string.can_not_load_list_of_student_groups, Toast.LENGTH_LONG).show();
+        }
+
+        Button button = (Button) currentView.findViewById(R.id.buttonForDownloadSchedule);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 setIsDownloadingNewSchedule(true);
-                EditText editText = (EditText) view.findViewById(R.id.editTextForEnterGroup);
+                AutoCompleteTextView editText = (AutoCompleteTextView) currentView.findViewById(R.id.editTextForEnterGroup);
                 String studentGroup = editText.getText().toString();
-                if (!isAppropriateStudentGroup(studentGroup)) {
-                    Toast.makeText(getActivity(), R.string.not_appropriate_student_group, Toast.LENGTH_LONG).show();
+                StudentGroup selectedStudentGroup = isAppropriateStudentGroup(studentGroup);
+                if (selectedStudentGroup == null) {
+                    Toast toast =  Toast.makeText(getActivity(), R.string.not_appropriate_student_group, Toast.LENGTH_LONG);
+                    toast.setGravity(Gravity.TOP, 0, 30);
+                    toast.show();
                 } else {
-                    downloadOrUpdateSchedule(studentGroup);
+                    downloadOrUpdateSchedule(selectedStudentGroup);
                 }
             }
         });
 
-        TableLayout tableLayout = (TableLayout) view.findViewById(R.id.tableLayoutForGroup);
+        TableLayout tableLayout = (TableLayout) currentView.findViewById(R.id.tableLayoutForGroup);
         setTableLayoutForDownloadedSchedules(tableLayout);
         setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
         populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());
-        return view;
+        return currentView;
     }
 
-    private void downloadOrUpdateSchedule(String studentGroup){
+    private void downloadOrUpdateSchedule(StudentGroup sg){
+        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        if(networkInfo != null && networkInfo.isConnected()){
+            DownloadStudentGroupScheduleTask downloadTask = new DownloadStudentGroupScheduleTask();
+            downloadTask.fileDir = getActivity().getFilesDir();
+            downloadTask.execute(sg);
+            updateDefaultGroup(sg.getStudentGroupName() + sg.getStudentGroupId(), true);
+        } else{
+            Toast.makeText(getActivity(), getResources().getString(R.string.no_connection_to_network), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void downloadOrUpdateSchedule(String passedStudentGroup){
         ConnectivityManager connectMan = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectMan.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected()) {
-            DownloadFilesTask downloadFilesTask = new DownloadFilesTask();
+            StudentGroup  sg = instantiateStudentGroup(passedStudentGroup);
+            DownloadStudentGroupScheduleTask downloadFilesTask = new DownloadStudentGroupScheduleTask();
             downloadFilesTask.fileDir = getActivity().getFilesDir();
-            downloadFilesTask.execute(studentGroup);
-            updateDefaultGroup(studentGroup, true);
+            downloadFilesTask.execute(sg);
+            updateDefaultGroup(passedStudentGroup, true);
         } else {
             Toast.makeText(getActivity(), getResources().getString(R.string.no_connection_to_network), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private StudentGroup instantiateStudentGroup(String studentGroupAsString){
+        StudentGroup result = new StudentGroup();
+        try {
+            //first six symbols it's student group name
+            //and remaining symbols it's student group id
+            result.setStudentGroupName(studentGroupAsString.substring(0, 6));
+            result.setStudentGroupId(Long.parseLong(studentGroupAsString.substring(6, studentGroupAsString.length())));
+        } catch (Exception e){
+            Log.v(TAG, "error while instantiateStudentGroup");
+        }
+        return result;
     }
 
     public void populateTableLayout(final TableLayout tableLayout, final List<String> schedulesForGroup){
@@ -138,7 +186,9 @@ public class DownloadScheduleForGroup extends Fragment {
             TableRow rowForGroupSchedule = new TableRow(getActivity());
             TextView textViewForGroupName = new TextView(getActivity());
             textViewForGroupName.setGravity(Gravity.START);
-            textViewForGroupName.setText(currentGroupSchedule);
+            //currentGroupSchedule contains group name, group id and "exam" at end if it exam schedule
+            //group name always contains six symbols.
+            textViewForGroupName.setText(currentGroupSchedule.substring(0, 6));
             textViewForGroupName.setLayoutParams(params);
             rowForGroupSchedule.addView(textViewForGroupName);
 
@@ -161,13 +211,18 @@ public class DownloadScheduleForGroup extends Fragment {
                                 public void onClick(DialogInterface dialog, int which) {
                                     TableRow selectedRow = (TableRow) v.getParent();
                                     Integer rowNumber = (Integer) selectedRow.getTag();
-                                    String fileNameForDelete = schedulesForGroup.get(rowNumber);
+                                    StringBuilder fileNameForDelete = new StringBuilder(schedulesForGroup.get(rowNumber));
 
-                                    File file = new File(getActivity().getFilesDir(), fileNameForDelete);
+                                    File file = new File(getActivity().getFilesDir(), fileNameForDelete.toString());
                                     if (!file.delete()) {
                                         Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
                                     }
-                                    deleteDefaultGroupIfNeed(fileNameForDelete);
+                                    file = new File(getActivity().getFilesDir(), fileNameForDelete.insert(fileNameForDelete.length() - 4, "exam").toString());
+                                    if (!file.delete()) {
+                                        Log.v(TAG, "file not deleted");
+                                    }
+
+                                    deleteDefaultGroupIfNeed(fileNameForDelete.toString());
                                     setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
                                     populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());
                                 }
@@ -240,6 +295,16 @@ public class DownloadScheduleForGroup extends Fragment {
         editor.apply();
     }
 
+    private String[] convertEmployeeToArray(List<StudentGroup> studentGroups){
+        List<String> resultList = new ArrayList<>();
+        for(StudentGroup sg : studentGroups){
+            resultList.add(sg.getStudentGroupName());
+        }
+        String[] resultArray = new String[resultList.size()];
+        resultArray = resultList.toArray(resultArray);
+        return resultArray;
+    }
+
     private String getLastUpdateFromPreference(String schedulesName){
         schedulesName = schedulesName.substring(0, schedulesName.length() - 4);
         String settingFileName = getActivity().getString(R.string.setting_file_name);
@@ -247,9 +312,25 @@ public class DownloadScheduleForGroup extends Fragment {
         return preferences.getString(schedulesName, "-");
     }
 
-    private boolean isAppropriateStudentGroup(String studentGroup){
+    private StudentGroup isAppropriateStudentGroup(String studentGroup){
         Integer countDigits = studentGroup.length();
-        return countDigits.equals(COUNT_DIGITS_IN_STUDENT_GROUP);
+        if (!studentGroup.isEmpty() && countDigits.equals(COUNT_DIGITS_IN_STUDENT_GROUP)) {
+            for (StudentGroup sg : getAvailableStudentGroups()) {
+                if (studentGroup.equalsIgnoreCase(sg.getStudentGroupName())) {
+                    return sg;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String getStudentGroupIdNameFromString(String passedString){
+        Pattern pattern = Pattern.compile(PATTERN);
+        Matcher matcher = pattern.matcher(passedString);
+        if(matcher.find()){
+            return matcher.group(0);
+        }
+        return "Not found matches";
     }
 
     @Override
@@ -269,11 +350,39 @@ public class DownloadScheduleForGroup extends Fragment {
         mListener = null;
     }
 
-    private class DownloadFilesTask extends AsyncTask<String, String, String> {
+    private class DownloadStudentGroupXML extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground(Void... parameters) {
+            try {
+                List<StudentGroup> loadedStudentGroups = LoadSchedule.loadAvailableStudentGroups();
+                setAvailableStudentGroups(loadedStudentGroups);
+                return null;
+            } catch (Exception e){
+                return e.toString();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            try {
+                if(result == null) {
+                    String[] employeesAsArray = convertEmployeeToArray(getAvailableStudentGroups());
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_1, employeesAsArray);
+                    AutoCompleteTextView textView = (AutoCompleteTextView) currentView.findViewById(R.id.editTextForEnterGroup);
+                    textView.setAdapter(adapter);
+                }
+            } catch (Exception e){
+                Log.v(TAG, "Exception occurred" + e.toString());
+            }
+        }
+    }
+
+    private class DownloadStudentGroupScheduleTask extends AsyncTask<StudentGroup, String, String> {
         private File fileDir;
 
-        protected String doInBackground(String... urls) {
-            return LoadSchedule.loadScheduleForStudentGroup(urls[0], fileDir);
+        protected String doInBackground(StudentGroup... urls) {
+            return LoadSchedule.loadScheduleForStudentGroupById(urls[0], fileDir);
         }
 
         protected void onPostExecute(String result) {
@@ -288,6 +397,7 @@ public class DownloadScheduleForGroup extends Fragment {
             }
         }
     }
+
 
     public List<String> getDownloadedSchedulesForGroup() {
         return downloadedSchedulesForGroup;
@@ -311,5 +421,21 @@ public class DownloadScheduleForGroup extends Fragment {
 
     public void setIsDownloadingNewSchedule(boolean isDownloadingNewSchedule) {
         this.isDownloadingNewSchedule = isDownloadingNewSchedule;
+    }
+
+    public View getCurrentView() {
+        return currentView;
+    }
+
+    public void setCurrentView(View currentView) {
+        this.currentView = currentView;
+    }
+
+    public List<StudentGroup> getAvailableStudentGroups() {
+        return availableStudentGroups;
+    }
+
+    public void setAvailableStudentGroups(List<StudentGroup> availableStudentGroups) {
+        this.availableStudentGroups = availableStudentGroups;
     }
 }
