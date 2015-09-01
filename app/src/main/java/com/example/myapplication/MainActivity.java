@@ -102,7 +102,7 @@ public class MainActivity extends ActionBarActivity
             onChangeFragment(AvailableFragments.ShowSchedules);
         }
         mProgressDialog = new ProgressDialog(this);
-        mProgressDialog.setMessage("A message");
+        mProgressDialog.setMessage(getString(R.string.downloading));
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         mProgressDialog.setCancelable(true);

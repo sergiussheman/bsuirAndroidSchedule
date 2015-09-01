@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -11,6 +12,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.os.PowerManager;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.Gravity;
@@ -41,16 +43,14 @@ import java.util.regex.Pattern;
 
 public class DownloadScheduleForEmployee extends Fragment {
     private static final String TAG = "employeeDownloadTAG";
-    private static final String AVAILABLE_EMPLOYEES_PARAM = "availableEmployees";
-    private static final String DOWNLOADED_SCHEDULES_PARAM = "downloadScheduls";
     private static final String PATTERN = "^[а-яА-ЯёЁ]+";
-
 
     private List<Employee> availableEmployeeList;
     private List<String> downloadedSchedules;
     private  View currentView;
     private boolean isDownloadingNewSchedule;
     private TableLayout tableLayoutForDownloadedSchedules;
+    ProgressDialog mProgressDialog;
 
     private OnFragmentInteractionListener mListener;
 
@@ -115,11 +115,16 @@ public class DownloadScheduleForEmployee extends Fragment {
         setDownloadedSchedules(FileUtil.getAllDownloadedSchedules(getActivity(), false));
         populateTableLayout(getTableLayoutForDownloadedSchedules(), downloadedSchedules);
 
+        mProgressDialog = new ProgressDialog(getActivity());
+        mProgressDialog.setMessage(getString(R.string.downloading));
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgressDialog.setCancelable(true);
         return currentView;
     }
 
     public void downloadOrUpdateScheduleForEmployee(String employeeNameForDownload){
-        DownloadFilesTask task = new DownloadFilesTask();
+        DownloadFilesTask task = new DownloadFilesTask(getActivity());
         task.filesDir = getActivity().getFilesDir();
         task.execute(employeeNameForDownload);
     }
@@ -398,14 +403,39 @@ public class DownloadScheduleForEmployee extends Fragment {
         }
     }
 
-    private class DownloadFilesTask extends AsyncTask<String, String, String> {
+    private class DownloadFilesTask extends AsyncTask<String, Integer, String> {
         private File filesDir;
+        private Context context;
+        private PowerManager.WakeLock mWakeLock;
+
+        public DownloadFilesTask(Context context) {
+            this.context = context;
+        }
 
         protected String doInBackground(String... employeeName) {
             return LoadSchedule.loadScheduleForEmployee(employeeName[0], filesDir);
         }
 
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    getClass().getName());
+            mWakeLock.acquire();
+            mProgressDialog.show();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            super.onProgressUpdate(progress);
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setProgress(progress[0]);
+        }
+
         protected void onPostExecute(String result) {
+            mWakeLock.release();
+            mProgressDialog.dismiss();
             if(result != null) {
                 Toast.makeText(getActivity(), getString(R.string.error_while_downloading_schedule), Toast.LENGTH_LONG).show();
             } else {

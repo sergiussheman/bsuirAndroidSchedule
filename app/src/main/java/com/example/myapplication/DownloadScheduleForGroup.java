@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
@@ -11,6 +12,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -34,14 +36,11 @@ import com.example.myapplication.Model.AvailableFragments;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class DownloadScheduleForGroup extends Fragment {
     private static final String TAG = "downScheForGroupTAG";
     private static final Integer COUNT_DIGITS_IN_STUDENT_GROUP = 6;
-    private static final String PATTERN = "^[0-9мМ]+";
 
     private OnFragmentInteractionListener mListener;
     private List<String> downloadedSchedulesForGroup;
@@ -49,6 +48,7 @@ public class DownloadScheduleForGroup extends Fragment {
     private View currentView;
     private TableLayout tableLayoutForDownloadedSchedules;
     private List<StudentGroup> availableStudentGroups;
+    ProgressDialog mProgressDialog;
 
     public static DownloadScheduleForGroup newInstance() {
         DownloadScheduleForGroup fragment = new DownloadScheduleForGroup();
@@ -102,6 +102,12 @@ public class DownloadScheduleForGroup extends Fragment {
         setTableLayoutForDownloadedSchedules(tableLayout);
         setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
         populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());
+
+        mProgressDialog = new ProgressDialog(getActivity());
+        mProgressDialog.setMessage(getString(R.string.downloading));
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        mProgressDialog.setCancelable(true);
         return currentView;
     }
 
@@ -109,7 +115,7 @@ public class DownloadScheduleForGroup extends Fragment {
         ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         if(networkInfo != null && networkInfo.isConnected()){
-            DownloadStudentGroupScheduleTask downloadTask = new DownloadStudentGroupScheduleTask();
+            DownloadStudentGroupScheduleTask downloadTask = new DownloadStudentGroupScheduleTask(getActivity());
             downloadTask.fileDir = getActivity().getFilesDir();
             downloadTask.execute(sg);
             updateDefaultGroup(sg.getStudentGroupName() + sg.getStudentGroupId(), true);
@@ -123,7 +129,7 @@ public class DownloadScheduleForGroup extends Fragment {
         NetworkInfo networkInfo = connectMan.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected()) {
             StudentGroup  sg = instantiateStudentGroup(passedStudentGroup);
-            DownloadStudentGroupScheduleTask downloadFilesTask = new DownloadStudentGroupScheduleTask();
+            DownloadStudentGroupScheduleTask downloadFilesTask = new DownloadStudentGroupScheduleTask(getActivity());
             downloadFilesTask.fileDir = getActivity().getFilesDir();
             downloadFilesTask.execute(sg);
             updateDefaultGroup(passedStudentGroup, true);
@@ -324,15 +330,6 @@ public class DownloadScheduleForGroup extends Fragment {
         return null;
     }
 
-    private String getStudentGroupIdNameFromString(String passedString){
-        Pattern pattern = Pattern.compile(PATTERN);
-        Matcher matcher = pattern.matcher(passedString);
-        if(matcher.find()){
-            return matcher.group(0);
-        }
-        return "Not found matches";
-    }
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -378,14 +375,39 @@ public class DownloadScheduleForGroup extends Fragment {
         }
     }
 
-    private class DownloadStudentGroupScheduleTask extends AsyncTask<StudentGroup, String, String> {
+    private class DownloadStudentGroupScheduleTask extends AsyncTask<StudentGroup, Integer, String> {
         private File fileDir;
+        private Context context;
+        private PowerManager.WakeLock mWakeLock;
+
+        public DownloadStudentGroupScheduleTask(Context context) {
+            this.context = context;
+        }
 
         protected String doInBackground(StudentGroup... urls) {
             return LoadSchedule.loadScheduleForStudentGroupById(urls[0], fileDir);
         }
 
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    getClass().getName());
+            mWakeLock.acquire();
+            mProgressDialog.show();
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            super.onProgressUpdate(progress);
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setProgress(progress[0]);
+        }
+
         protected void onPostExecute(String result) {
+            mWakeLock.release();
+            mProgressDialog.dismiss();
             if(result != null) {
                 Toast.makeText(getActivity(), getString(R.string.error_while_downloading_schedule), Toast.LENGTH_LONG).show();
             } else {
@@ -396,6 +418,7 @@ public class DownloadScheduleForGroup extends Fragment {
                 }
             }
         }
+
     }
 
 

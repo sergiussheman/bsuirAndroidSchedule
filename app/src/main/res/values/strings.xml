@@ -53,6 +53,7 @@
     <string name="email_for_reports">mailto:iis-support@bsuir.by</string>
     <string name="chooser_title">Выберите приложение</string>
     <string name="email_report_title">Отзыв</string>
+    <string name="downloading">Скачивание</string>
 
     <string name="empty_lessons">Сегодня занятий нет</string>
     <string name="empty_exams">Расписание экзаменов отсутствует. Попробуйте обновить расписание</string>
