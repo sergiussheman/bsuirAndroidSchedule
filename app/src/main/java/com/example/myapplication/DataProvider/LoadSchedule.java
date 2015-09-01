@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LoadSchedule {
-    private static final String BSUIR = "http://bsuir.by/schedule/rest/schedule/";
+    private static final String BSUIR = "http://bsuir.by/schedule/rest/schedule/android/";
     private static final String STUDENT_GROUP_SCHEDULE_BY_ID_REST = "http://www.bsuir.by/schedule/rest/schedule/android/";
     private static final String EXAM_SCHEDULE = "http://www.bsuir.by/schedule/rest/examSchedule/android/";
     private static final String ACTUAL_APPLICATION_VERSION_URL = "http://www.bsuir.by/schedule/rest/android/actualAndroidVersion";
