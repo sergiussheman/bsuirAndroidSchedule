@@ -25,7 +25,6 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
-import com.example.myapplication.Adapters.ScheduleViewPagerAdapter;
 import com.example.myapplication.DataProvider.LoadSchedule;
 import com.example.myapplication.Utils.FileUtil;
 import com.example.myapplication.DataProvider.XmlDataProvider;
@@ -73,6 +72,8 @@ public class MainActivity extends ActionBarActivity
     private ScheduleViewPagerFragment scheduleViewPagerFragment;
     private List<SchoolDay> examSchedules;
     private List<SchoolDay> daySchedules;
+
+    private boolean changedDayFromViewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -225,22 +226,26 @@ public class MainActivity extends ActionBarActivity
                 actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
                 selectedWeekNumber = WeekNumberEnum.ALL;
                 selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
-                ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                         R.layout.row_layout, R.id.text1, this.getResources().getStringArray(R.array.day_of_week));
                 actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
                     @Override
                     public boolean onNavigationItemSelected(int itemPosition, long itemId) {
-                        if(itemPosition == 0){
-                            Calendar calendar = GregorianCalendar.getInstance();
-                            int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
-                            if(currentDay == 1){
-                                currentDay = 8;
+                        if(!changedDayFromViewPager) {
+                            if (itemPosition == 0) {
+                                Calendar calendar = GregorianCalendar.getInstance();
+                                int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+                                if (currentDay == 1) {
+                                    currentDay = 8;
+                                }
+                                scheduleViewPagerFragment.updateFiltersForViewPager(currentDay - 2, selectedWeekNumber, selectedSubGroup);
+                                selectedDayPosition = itemPosition;
+                            } else {
+                                scheduleViewPagerFragment.updateFiltersForViewPager(itemPosition - 1, selectedWeekNumber, selectedSubGroup);
+                                selectedDayPosition = itemPosition;
                             }
-                            showScheduleFragmentForGroup.filterScheduleList(currentDay - 2, selectedWeekNumber, selectedSubGroup);
-                            selectedDayPosition = itemPosition;
-                        } else {
-                            showScheduleFragmentForGroup.filterScheduleList(itemPosition - 1, selectedWeekNumber, selectedSubGroup);
-                            selectedDayPosition = itemPosition;
+                        } else{
+                            changedDayFromViewPager = false;
                         }
                         return false;
                     }
@@ -250,7 +255,7 @@ public class MainActivity extends ActionBarActivity
                 setVisibilityForSubMenus(true, menu);
             } else if(examScheduleFragment.isAdded()){
                 actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-                ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.row_layout, R.id.text1, getTitleArrayForActionBar());
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.row_layout, R.id.text1, getTitleArrayForActionBar());
                 actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
                     @Override
                     public boolean onNavigationItemSelected(int itemPosition, long l) {
@@ -269,6 +274,17 @@ public class MainActivity extends ActionBarActivity
             invalidateOptionsMenu();
         }
     }
+
+    @Override
+    public void onChangeDay(Integer dayPosition) {
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null && dayPosition != null && actionBar.getNavigationMode() == ActionBar.NAVIGATION_MODE_LIST) {
+            changedDayFromViewPager = true;
+            selectedDayPosition = dayPosition + 1;
+            actionBar.setSelectedNavigationItem(dayPosition + 1);
+        }
+    }
+
 
     public void setVisibilityForSubMenus(boolean visible, Menu menu){
         MenuItem weekNumberSubMenu = menu.findItem(R.id.subMenuWeekNumber);
@@ -315,23 +331,6 @@ public class MainActivity extends ActionBarActivity
                     fragmentTransaction.commit();
                     getFragmentManager().executePendingTransactions();
                     scheduleViewPagerFragment.setAllWeekSchedules(getScheduleFromFile(defaultSchedule, false));
-
-                   /* fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
-                    fragmentTransaction.commit();
-                    getFragmentManager().executePendingTransactions();
-
-                    showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule, false));
-                    if(selectedDayPosition != null && selectedDayPosition > 1) {
-                        showScheduleFragmentForGroup.filterScheduleList(selectedDayPosition - 1, selectedWeekNumber, selectedSubGroup);
-                    } else {
-                        Calendar calendar = GregorianCalendar.getInstance();
-                        int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
-                        //1 is code for sunday. But it lies in the array at index 6
-                        if(currentDay  == 1) {
-                            currentDay = 8;
-                        }
-                        showScheduleFragmentForGroup.filterScheduleList(currentDay - 2, selectedWeekNumber, selectedSubGroup);
-                    }*/
                 }
                 invalidateOptionsMenu();
                 break;
@@ -387,7 +386,7 @@ public class MainActivity extends ActionBarActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-       /* int id = item.getItemId();
+        int id = item.getItemId();
         ActionMenuItemView weekNumberSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuWeekNumber);
         ActionMenuItemView subGroupSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuSubGroup);
         int dayPositionForPass = selectedDayPosition;
@@ -401,45 +400,45 @@ public class MainActivity extends ActionBarActivity
         switch (id){
             case R.id.menuAllWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.ALL;
-                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
+                scheduleViewPagerFragment.updateFiltersForViewPager(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.all_week_number));
                 break;
             case R.id.menuFirstWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.FIRST;
-                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
+                scheduleViewPagerFragment.updateFiltersForViewPager(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.first_week_number));
                 break;
             case R.id.menuSecondWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.SECOND;
-                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
+                scheduleViewPagerFragment.updateFiltersForViewPager(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.second_week_number));
                 break;
             case R.id.menuThirdWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.THIRD;
-                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
+                scheduleViewPagerFragment.updateFiltersForViewPager(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.third_week_number));
                 break;
             case R.id.menuFourthWeekNumber:
                 selectedWeekNumber = WeekNumberEnum.FOURTH;
-                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
+                scheduleViewPagerFragment.updateFiltersForViewPager(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 weekNumberSubMenu.setTitle(getResources().getString(R.string.fourth_week_number));
                 break;
             case R.id.menuEntireGroup:
                 selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
-                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
+                scheduleViewPagerFragment.updateFiltersForViewPager(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 subGroupSubMenu.setTitle(getResources().getString(R.string.entire_group));
                 break;
             case R.id.menuFirstSubGroup:
                 selectedSubGroup = SubGroupEnum.FIRST_SUB_GROUP;
-                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
+                scheduleViewPagerFragment.updateFiltersForViewPager(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 subGroupSubMenu.setTitle(getResources().getString(R.string.first_sub_group));
                 break;
             case R.id.menuSecondSubGroup:
                 selectedSubGroup = SubGroupEnum.SECOND_SUB_GROUP;
-                showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
+                scheduleViewPagerFragment.updateFiltersForViewPager(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 subGroupSubMenu.setTitle(getResources().getString(R.string.second_sub_group));
                 break;
-        }*/
+        }
 
         return super.onOptionsItemSelected(item);
     }

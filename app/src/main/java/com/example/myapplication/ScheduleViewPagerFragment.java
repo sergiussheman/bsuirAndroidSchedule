@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -41,12 +42,38 @@ public class ScheduleViewPagerFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_schedule_view_pager, container, false);
         scheduleViewPager = (ViewPager) view.findViewById(R.id.scheduleViewPager);
-        adapter = new ScheduleViewPagerAdapter(getActivity().getSupportFragmentManager(), getActivity());
+        adapter = new ScheduleViewPagerAdapter(getActivity().getSupportFragmentManager());
         adapter.setWeekSchedules(getAllWeekSchedules());
         adapter.setSelectedWeekNumber(WeekNumberEnum.ALL);
         adapter.setSelectedSubGroupNumber(SubGroupEnum.ENTIRE_GROUP);
         scheduleViewPager.setAdapter(adapter);
+        scheduleViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                mListener.onChangeDay(position);
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
         return view;
+    }
+
+    public void updateFiltersForViewPager(Integer dayPosition, WeekNumberEnum weekNumber, SubGroupEnum subGroup){
+        adapter = new ScheduleViewPagerAdapter(getActivity().getSupportFragmentManager());
+        adapter.setWeekSchedules(getAllWeekSchedules());
+        adapter.setSelectedDayPosition(dayPosition);
+        adapter.setSelectedWeekNumber(weekNumber);
+        adapter.setSelectedSubGroupNumber(subGroup);
+        scheduleViewPager.setAdapter(adapter);
+        scheduleViewPager.setCurrentItem(dayPosition);
     }
 
     @Override

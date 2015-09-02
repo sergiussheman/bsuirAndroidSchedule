@@ -36,10 +36,14 @@ public class ScheduleFragmentForGroup extends Fragment {
     private String[] weekDays = new String[]{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"};
     private Context context;
     private Integer currentPosition;
+    private WeekNumberEnum selectedWeekNumber;
+    private SubGroupEnum selectedSubGroup;
 
-    public static ScheduleFragmentForGroup newInstance(List<SchoolDay> allSchedules,int position) {
+    public static ScheduleFragmentForGroup newInstance(List<SchoolDay> allSchedules,int position, WeekNumberEnum weekNumber, SubGroupEnum subGroup) {
         ScheduleFragmentForGroup fragment = new ScheduleFragmentForGroup();
         fragment.setAllScheduleForGroup(allSchedules);
+        fragment.selectedWeekNumber = weekNumber;
+        fragment.selectedSubGroup = subGroup;
         fragment.currentPosition = position;
         return fragment;
     }
@@ -61,7 +65,7 @@ public class ScheduleFragmentForGroup extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         currentView = inflater.inflate(R.layout.show_schedule_fragment_layout, container, false);
-        filterScheduleList(currentPosition, WeekNumberEnum.ALL, SubGroupEnum.ENTIRE_GROUP);
+        filterScheduleList(currentPosition, selectedWeekNumber, selectedSubGroup);
         return currentView;
     }
 

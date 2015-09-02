@@ -19,24 +19,21 @@ public class ScheduleViewPagerAdapter extends FragmentStatePagerAdapter {
     private Integer selectedDayPosition;
     private WeekNumberEnum selectedWeekNumber;
     private SubGroupEnum selectedSubGroupNumber;
-    private Context context;
 
     private List<SchoolDay> weekSchedules;
 
-    public ScheduleViewPagerAdapter(FragmentManager fm, Context context) {
+    public ScheduleViewPagerAdapter(FragmentManager fm) {
         super(fm);
-        this.context = context;
     }
 
     @Override
     public Fragment getItem(int i) {
-        ScheduleFragmentForGroup fragment = ScheduleFragmentForGroup.newInstance(getWeekSchedules(), i);
+        ScheduleFragmentForGroup fragment = ScheduleFragmentForGroup.newInstance(getWeekSchedules(), i, getSelectedWeekNumber(), getSelectedSubGroupNumber());
         return fragment;
     }
 
     @Override
     public int getCount() {
-        // For this contrived example, we have a 100-object collection.
         return 7;
     }
 
