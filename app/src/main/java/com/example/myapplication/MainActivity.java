@@ -238,10 +238,10 @@ public class MainActivity extends ActionBarActivity
                                 if (currentDay == 1) {
                                     currentDay = 8;
                                 }
-                                scheduleViewPagerFragment.updateFiltersForViewPager(currentDay - 2, selectedWeekNumber, selectedSubGroup);
+                                //scheduleViewPagerFragment.updateFiltersForViewPager(currentDay, selectedWeekNumber, selectedSubGroup);
                                 selectedDayPosition = itemPosition;
                             } else {
-                                scheduleViewPagerFragment.updateFiltersForViewPager(itemPosition - 1, selectedWeekNumber, selectedSubGroup);
+                                //scheduleViewPagerFragment.updateFiltersForViewPager(itemPosition - 1, selectedWeekNumber, selectedSubGroup);
                                 selectedDayPosition = itemPosition;
                             }
                         } else{
@@ -386,7 +386,7 @@ public class MainActivity extends ActionBarActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        /*int id = item.getItemId();
         ActionMenuItemView weekNumberSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuWeekNumber);
         ActionMenuItemView subGroupSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuSubGroup);
         int dayPositionForPass = selectedDayPosition;
@@ -439,7 +439,7 @@ public class MainActivity extends ActionBarActivity
                 subGroupSubMenu.setTitle(getResources().getString(R.string.second_sub_group));
                 break;
         }
-
+*/
         return super.onOptionsItemSelected(item);
     }
 

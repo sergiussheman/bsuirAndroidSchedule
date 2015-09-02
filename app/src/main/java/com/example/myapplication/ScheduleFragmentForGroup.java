@@ -118,10 +118,12 @@ public class ScheduleFragmentForGroup extends Fragment {
     }
 
     public List<Schedule> getListSchedules(int position){
-        String dayAsString = weekDays[position];
-        for(SchoolDay schoolDay : getAllScheduleForGroup()){
-            if(schoolDay.getDayName().equalsIgnoreCase(dayAsString)){
-                return schoolDay.getSchedules();
+        if(position >= 0 && position < weekDays.length) {
+            String dayAsString = weekDays[position];
+            for (SchoolDay schoolDay : getAllScheduleForGroup()) {
+                if (schoolDay.getDayName().equalsIgnoreCase(dayAsString)) {
+                    return schoolDay.getSchedules();
+                }
             }
         }
         return new ArrayList<>();

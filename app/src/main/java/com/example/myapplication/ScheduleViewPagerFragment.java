@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -21,6 +20,11 @@ public class ScheduleViewPagerFragment extends Fragment {
     private ScheduleViewPagerAdapter adapter;
     private List<SchoolDay> allWeekSchedules;
     private OnFragmentInteractionListener mListener;
+    private static final int PAGE_LEFT = 0;
+    private static final int PAGE_MIDDLE = 1;
+    private static final int PAGE_RIGHT = 2;
+    private Integer currentMiddleIndex = 2;
+    private Integer currentSelectedIndex;
 
     public static ScheduleViewPagerFragment newInstance(String param1, String param2) {
         ScheduleViewPagerFragment fragment = new ScheduleViewPagerFragment();
@@ -42,11 +46,6 @@ public class ScheduleViewPagerFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_schedule_view_pager, container, false);
         scheduleViewPager = (ViewPager) view.findViewById(R.id.scheduleViewPager);
-        adapter = new ScheduleViewPagerAdapter(getActivity().getSupportFragmentManager());
-        adapter.setWeekSchedules(getAllWeekSchedules());
-        adapter.setSelectedWeekNumber(WeekNumberEnum.ALL);
-        adapter.setSelectedSubGroupNumber(SubGroupEnum.ENTIRE_GROUP);
-        scheduleViewPager.setAdapter(adapter);
         scheduleViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -55,25 +54,46 @@ public class ScheduleViewPagerFragment extends Fragment {
 
             @Override
             public void onPageSelected(int position) {
-                mListener.onChangeDay(position);
+                currentSelectedIndex = position;
+                if (currentSelectedIndex == PAGE_LEFT) {
+                    if(currentMiddleIndex == 0){
+                        currentMiddleIndex = 6;
+                    } else {
+                        currentMiddleIndex--;
+                    }
+                    // user swiped to right direction
+                } else if (currentSelectedIndex == PAGE_RIGHT) {
+
+                    if(currentMiddleIndex == 6){
+                        currentMiddleIndex = 0;
+                    } else{
+                        currentMiddleIndex++;
+                    }
+
+                }
+                mListener.onChangeDay(currentMiddleIndex);
             }
 
             @Override
             public void onPageScrollStateChanged(int state) {
-
+                if (state == ViewPager.SCROLL_STATE_IDLE && currentSelectedIndex != null) {
+                    updateFiltersForViewPager(currentMiddleIndex, PAGE_MIDDLE, WeekNumberEnum.ALL, SubGroupEnum.ENTIRE_GROUP);
+                }
             }
         });
+
+        updateFiltersForViewPager(2, 1, WeekNumberEnum.ALL, SubGroupEnum.ENTIRE_GROUP);
         return view;
     }
 
-    public void updateFiltersForViewPager(Integer dayPosition, WeekNumberEnum weekNumber, SubGroupEnum subGroup){
+    public void updateFiltersForViewPager(Integer dayPosition, Integer pagePosition, WeekNumberEnum weekNumber, SubGroupEnum subGroup) {
         adapter = new ScheduleViewPagerAdapter(getActivity().getSupportFragmentManager());
         adapter.setWeekSchedules(getAllWeekSchedules());
         adapter.setSelectedDayPosition(dayPosition);
         adapter.setSelectedWeekNumber(weekNumber);
         adapter.setSelectedSubGroupNumber(subGroup);
         scheduleViewPager.setAdapter(adapter);
-        scheduleViewPager.setCurrentItem(dayPosition);
+        scheduleViewPager.setCurrentItem(pagePosition);
     }
 
     @Override

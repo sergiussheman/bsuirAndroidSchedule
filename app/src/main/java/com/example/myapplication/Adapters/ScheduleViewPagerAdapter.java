@@ -28,19 +28,40 @@ public class ScheduleViewPagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public Fragment getItem(int i) {
-        ScheduleFragmentForGroup fragment = ScheduleFragmentForGroup.newInstance(getWeekSchedules(), i, getSelectedWeekNumber(), getSelectedSubGroupNumber());
+        Integer calculatedDayPosition;
+        switch(i){
+            case 0:
+                if(selectedDayPosition == 0){
+                    calculatedDayPosition = 6;
+                } else {
+                    calculatedDayPosition = selectedDayPosition - 1;
+                }
+                break;
+            case 2:
+                if(selectedDayPosition == 6){
+                    calculatedDayPosition = 0;
+                } else {
+                    calculatedDayPosition = selectedDayPosition + 1;
+                }
+                break;
+            default:
+                calculatedDayPosition = selectedDayPosition;
+        }
+        ScheduleFragmentForGroup fragment = ScheduleFragmentForGroup.newInstance(getWeekSchedules(), calculatedDayPosition, getSelectedWeekNumber(), getSelectedSubGroupNumber());
         return fragment;
     }
 
     @Override
     public int getCount() {
-        return 7;
+        return 3;
     }
 
     @Override
     public CharSequence getPageTitle(int position) {
         return "OBJECT " + (position + 1);
     }
+
+
 
     public Integer getSelectedDayPosition() {
         return selectedDayPosition;
