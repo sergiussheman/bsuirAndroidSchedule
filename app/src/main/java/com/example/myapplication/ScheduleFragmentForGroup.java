@@ -1,8 +1,9 @@
 package com.example.myapplication;
 
-import android.app.Fragment;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,9 +33,13 @@ public class ScheduleFragmentForGroup extends Fragment {
     private Schedule[] schedulesForShow;
     private List<SchoolDay> allScheduleForGroup;
     private View currentView;
+    private Context context;
+    private Integer currentPosition;
 
-    public static ScheduleFragmentForGroup newInstance(String param1, String param2) {
+    public static ScheduleFragmentForGroup newInstance(List<SchoolDay> allSchedules,int position) {
         ScheduleFragmentForGroup fragment = new ScheduleFragmentForGroup();
+        fragment.setAllScheduleForGroup(allSchedules);
+        fragment.currentPosition = position;
         return fragment;
     }
 
@@ -51,11 +56,10 @@ public class ScheduleFragmentForGroup extends Fragment {
 
     }
 
-    @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         currentView = inflater.inflate(R.layout.show_schedule_fragment_layout, container, false);
-
+        filterScheduleList(currentPosition, WeekNumberEnum.ALL, SubGroupEnum.ENTIRE_GROUP);
         return currentView;
     }
 
@@ -125,5 +129,13 @@ public class ScheduleFragmentForGroup extends Fragment {
 
     public void setAllScheduleForGroup(List<SchoolDay> allScheduleForGroup) {
         this.allScheduleForGroup = allScheduleForGroup;
+    }
+
+    public Context getContext() {
+        return context;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
     }
 }

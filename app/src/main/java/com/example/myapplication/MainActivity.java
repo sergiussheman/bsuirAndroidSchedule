@@ -1,7 +1,6 @@
 package com.example.myapplication;
 
 import android.app.AlertDialog;
-import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,6 +13,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -25,6 +25,7 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
+import com.example.myapplication.Adapters.ScheduleViewPagerAdapter;
 import com.example.myapplication.DataProvider.LoadSchedule;
 import com.example.myapplication.Utils.FileUtil;
 import com.example.myapplication.DataProvider.XmlDataProvider;
@@ -69,6 +70,7 @@ public class MainActivity extends ActionBarActivity
     private SubGroupEnum selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
     private Integer selectedDayPosition;
 
+    private ScheduleViewPagerFragment scheduleViewPagerFragment;
     private List<SchoolDay> examSchedules;
     private List<SchoolDay> daySchedules;
 
@@ -94,6 +96,7 @@ public class MainActivity extends ActionBarActivity
         downloadScheduleForEmployeeFragment = new DownloadScheduleForEmployee();
         showScheduleFragmentForGroup = new ScheduleFragmentForGroup();
         examScheduleFragment = new ExamScheduleFragment();
+        scheduleViewPagerFragment = new ScheduleViewPagerFragment();
         String defaultSchedule = FileUtil.getDefaultSchedule(this);
         if(defaultSchedule == null) {
             onChangeFragment(AvailableFragments.WhoAreYou);
@@ -218,7 +221,7 @@ public class MainActivity extends ActionBarActivity
     public void restoreActionBar(Menu menu) {
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null) {
-            if (showScheduleFragmentForGroup.isAdded()) {
+            if (scheduleViewPagerFragment.isAdded()) {
                 actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
                 selectedWeekNumber = WeekNumberEnum.ALL;
                 selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
@@ -288,7 +291,7 @@ public class MainActivity extends ActionBarActivity
 
     @Override
     public void onChangeFragment(AvailableFragments passedFragment) {
-        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         switch (passedFragment){
             case DownloadScheduleForEmployee:
                 fragmentTransaction.replace(R.id.fragment_container, downloadScheduleForEmployeeFragment);
@@ -308,7 +311,12 @@ public class MainActivity extends ActionBarActivity
                 if(defaultSchedule == null) {
                     onChangeFragment(AvailableFragments.WhoAreYou);
                 } else {
-                    fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
+                    fragmentTransaction.replace(R.id.fragment_container, scheduleViewPagerFragment);
+                    fragmentTransaction.commit();
+                    getFragmentManager().executePendingTransactions();
+                    scheduleViewPagerFragment.setAllWeekSchedules(getScheduleFromFile(defaultSchedule, false));
+
+                   /* fragmentTransaction.replace(R.id.fragment_container, showScheduleFragmentForGroup);
                     fragmentTransaction.commit();
                     getFragmentManager().executePendingTransactions();
 
@@ -323,7 +331,7 @@ public class MainActivity extends ActionBarActivity
                             currentDay = 8;
                         }
                         showScheduleFragmentForGroup.filterScheduleList(currentDay - 2, selectedWeekNumber, selectedSubGroup);
-                    }
+                    }*/
                 }
                 invalidateOptionsMenu();
                 break;
@@ -379,7 +387,7 @@ public class MainActivity extends ActionBarActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+       /* int id = item.getItemId();
         ActionMenuItemView weekNumberSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuWeekNumber);
         ActionMenuItemView subGroupSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuSubGroup);
         int dayPositionForPass = selectedDayPosition;
@@ -431,7 +439,7 @@ public class MainActivity extends ActionBarActivity
                 showScheduleFragmentForGroup.filterScheduleList(dayPositionForPass - 1, selectedWeekNumber, selectedSubGroup);
                 subGroupSubMenu.setTitle(getResources().getString(R.string.second_sub_group));
                 break;
-        }
+        }*/
 
         return super.onOptionsItemSelected(item);
     }
