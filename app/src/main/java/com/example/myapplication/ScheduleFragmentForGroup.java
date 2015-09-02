@@ -32,6 +32,7 @@ public class ScheduleFragmentForGroup extends Fragment {
     private Schedule[] schedulesForShow;
     private List<SchoolDay> allScheduleForGroup;
     private View currentView;
+    private String[] weekDays = new String[]{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"};
 
     public static ScheduleFragmentForGroup newInstance(String param1, String param2) {
         ScheduleFragmentForGroup fragment = new ScheduleFragmentForGroup();
@@ -74,41 +75,47 @@ public class ScheduleFragmentForGroup extends Fragment {
 
     public void filterScheduleList(Integer dayPosition, WeekNumberEnum weekNumber, SubGroupEnum subGroupEnum){
         List<Schedule> result = new ArrayList<>();
-        if(getAllScheduleForGroup().size() > dayPosition) {
-            SchoolDay selectedSchoolDay = getAllScheduleForGroup().get(dayPosition);
-            if (selectedSchoolDay.getSchedules() != null) {
-                for (Schedule schedule : selectedSchoolDay.getSchedules()) {
-                    boolean matchWeekNumber = false;
-                    boolean matchSubGroup = false;
-                    if (weekNumber.getOrder().equals(WeekNumberEnum.ALL.getOrder())) {
+        List<Schedule> selectedSchoolDay = getListSchedules(dayPosition);
+        for (Schedule schedule : selectedSchoolDay) {
+            boolean matchWeekNumber = false;
+            boolean matchSubGroup = false;
+            if (weekNumber.getOrder().equals(WeekNumberEnum.ALL.getOrder())) {
+                matchWeekNumber = true;
+            } else {
+                for (String weekNumberFromSchedule : schedule.getWeekNumbers()) {
+                    if (weekNumberFromSchedule.equalsIgnoreCase(weekNumber.getOrder().toString())) {
                         matchWeekNumber = true;
-                    } else {
-                        for (String weekNumberFromSchedule : schedule.getWeekNumbers()) {
-                            if (weekNumberFromSchedule.equalsIgnoreCase(weekNumber.getOrder().toString())) {
-                                matchWeekNumber = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (subGroupEnum.getOrder().equals(SubGroupEnum.ENTIRE_GROUP.getOrder())) {
-                        matchSubGroup = true;
-                    } else if (schedule.getSubGroup().isEmpty()) {
-                        matchSubGroup = true;
-                    } else {
-                        if (schedule.getSubGroup().equalsIgnoreCase(subGroupEnum.getOrder().toString())) {
-                            matchSubGroup = true;
-                        }
-                    }
-
-                    if (matchSubGroup && matchWeekNumber) {
-                        result.add(schedule);
+                        break;
                     }
                 }
+            }
+
+            if (subGroupEnum.getOrder().equals(SubGroupEnum.ENTIRE_GROUP.getOrder())) {
+                matchSubGroup = true;
+            } else if (schedule.getSubGroup().isEmpty()) {
+                matchSubGroup = true;
+            } else {
+                if (schedule.getSubGroup().equalsIgnoreCase(subGroupEnum.getOrder().toString())) {
+                    matchSubGroup = true;
+                }
+            }
+
+            if (matchSubGroup && matchWeekNumber) {
+                result.add(schedule);
             }
         }
         schedulesForShow = result.toArray(new Schedule[result.size()]);
         updateListView();
+    }
+
+    public List<Schedule> getListSchedules(int position){
+        String dayAsString = weekDays[position];
+        for(SchoolDay schoolDay : getAllScheduleForGroup()){
+            if(schoolDay.getDayName().equalsIgnoreCase(dayAsString)){
+                return schoolDay.getSchedules();
+            }
+        }
+        return new ArrayList<>();
     }
 
     public Schedule[] getSchedulesForShow() {
