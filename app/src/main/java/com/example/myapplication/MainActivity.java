@@ -241,7 +241,7 @@ public class MainActivity extends ActionBarActivity
                                 if (currentDay == Calendar.SUNDAY) {
                                     currentDay = 8;
                                 }
-                                actionBar.setSelectedNavigationItem(currentDay);
+                                actionBar.setSelectedNavigationItem(currentDay - 1);
                             } else {
                                 scheduleViewPagerFragment.updateFiltersForViewPager(itemPosition - 1, selectedWeekNumber, selectedSubGroup);
                                 selectedDayPosition = itemPosition;
