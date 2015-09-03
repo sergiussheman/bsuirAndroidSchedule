@@ -2,11 +2,28 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/currentWeekNumber"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="italic"
+        android:textColor="@color/red"
+        android:gravity="center_horizontal"/>
+
+    <View
+        android:id="@+id/lineBelowWeekNumber"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#b3b3b3"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_below="@id/currentWeekNumber"/>
 
     <ListView
         android:id="@+id/showScheduleListView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_below="@id/lineBelowWeekNumber"/>
     <TextView
         android:id="@+id/emptyResults"
         android:layout_width="match_parent"

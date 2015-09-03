@@ -16,9 +16,11 @@ import com.example.myapplication.Model.Schedule;
 import com.example.myapplication.Model.SchoolDay;
 import com.example.myapplication.Model.SubGroupEnum;
 import com.example.myapplication.Model.WeekNumberEnum;
+import com.example.myapplication.Utils.DateUtil;
 import com.example.myapplication.Utils.FileUtil;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 /**
@@ -71,6 +73,10 @@ public class ScheduleFragmentForGroup extends Fragment {
 
     public void updateListView(){
         if(currentView != null && getActivity() != null) {
+            Integer currentWeekNumber = DateUtil.getWeek(Calendar.getInstance().getTime());
+            TextView currentWeekTextView = (TextView) currentView.findViewById(R.id.currentWeekNumber);
+            currentWeekTextView.setText("Сейчас " + currentWeekNumber + "-я уч. неделя");
+
             ListView mainListView = (ListView) currentView.findViewById(R.id.showScheduleListView);
             if (FileUtil.isDefaultStudentGroup(getActivity())) {
                 mainListView.setAdapter(new ArrayAdapterGroupSchedule(getActivity(), R.layout.schedule_fragment_item_layout, schedulesForShow));

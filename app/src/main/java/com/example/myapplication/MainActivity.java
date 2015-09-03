@@ -349,6 +349,7 @@ public class MainActivity extends ActionBarActivity
                     scheduleViewPagerFragment.setSelectedSubGroup(selectedSubGroup);
                 }
                 showNavigationList = SHOW_ALL;
+                invalidateOptionsMenu();
                 break;
             case ExamSchedule:
                 String defaultScheduleFromPreference = FileUtil.getDefaultSchedule(this);
@@ -364,11 +365,12 @@ public class MainActivity extends ActionBarActivity
                     examScheduleFragment.updateSchedule(selectedDayPosition);
                     showNavigationList = SHOW_WITHOUT_FILTERS;
                 }
+                invalidateOptionsMenu();
                 break;
             default:
                 break;
         }
-        invalidateOptionsMenu();
+
     }
 
     @Override

@@ -89,16 +89,16 @@ public class ScheduleViewPagerFragment extends Fragment {
     }
 
     public Void updateFiltersForViewPager(Integer dayPosition, WeekNumberEnum weekNumber, SubGroupEnum subGroup) {
-        selectedWeekNumber = weekNumber;
-        selectedSubGroup = subGroup;
-        adapter = new ScheduleViewPagerAdapter(getActivity().getSupportFragmentManager());
-        adapter.setWeekSchedules(getAllWeekSchedules());
-        currentMiddleIndex = dayPosition;
-        adapter.setSelectedDayPosition(dayPosition);
-        adapter.setSelectedWeekNumber(weekNumber);
-        adapter.setSelectedSubGroupNumber(subGroup);
-        scheduleViewPager.setAdapter(adapter);
-        scheduleViewPager.setCurrentItem(PAGE_MIDDLE);
+            selectedWeekNumber = weekNumber;
+            selectedSubGroup = subGroup;
+            adapter = new ScheduleViewPagerAdapter(getActivity().getSupportFragmentManager());
+            adapter.setWeekSchedules(getAllWeekSchedules());
+            currentMiddleIndex = dayPosition;
+            adapter.setSelectedDayPosition(dayPosition);
+            adapter.setSelectedWeekNumber(weekNumber);
+            adapter.setSelectedSubGroupNumber(subGroup);
+            scheduleViewPager.setAdapter(adapter);
+            scheduleViewPager.setCurrentItem(PAGE_MIDDLE);
         return null;
     }
 
