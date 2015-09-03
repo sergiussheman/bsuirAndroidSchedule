@@ -330,26 +330,27 @@ public class MainActivity extends ActionBarActivity
                 showNavigationList = NOT_SHOW;
                 break;
             case ShowSchedules:
-                String defaultSchedule = FileUtil.getDefaultSchedule(this);
-                if(defaultSchedule == null) {
-                    onChangeFragment(AvailableFragments.WhoAreYou);
-                } else {
-                    fragmentTransaction.replace(R.id.fragment_container, scheduleViewPagerFragment);
-                    fragmentTransaction.commit();
-                    getFragmentManager().executePendingTransactions();
-                    scheduleViewPagerFragment.setAllWeekSchedules(getScheduleFromFile(defaultSchedule, false));
+                if(!scheduleViewPagerFragment.isAdded()) {
+                    String defaultSchedule = FileUtil.getDefaultSchedule(this);
+                    if (defaultSchedule == null) {
+                        onChangeFragment(AvailableFragments.WhoAreYou);
+                    } else {
+                        fragmentTransaction.replace(R.id.fragment_container, scheduleViewPagerFragment);
+                        fragmentTransaction.commit();
+                        scheduleViewPagerFragment.setAllWeekSchedules(getScheduleFromFile(defaultSchedule, false));
 
-                    Calendar calendar = GregorianCalendar.getInstance();
-                    int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
-                    if (currentDay == Calendar.SUNDAY) {
-                        currentDay = 8;
+                        Calendar calendar = GregorianCalendar.getInstance();
+                        int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+                        if (currentDay == Calendar.SUNDAY) {
+                            currentDay = 8;
+                        }
+                        scheduleViewPagerFragment.setCurrentMiddleIndex(currentDay - 1);
+                        scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
+                        scheduleViewPagerFragment.setSelectedSubGroup(selectedSubGroup);
                     }
-                    scheduleViewPagerFragment.setCurrentMiddleIndex(currentDay - 1);
-                    scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
-                    scheduleViewPagerFragment.setSelectedSubGroup(selectedSubGroup);
+                    showNavigationList = SHOW_ALL;
+                    invalidateOptionsMenu();
                 }
-                showNavigationList = SHOW_ALL;
-                invalidateOptionsMenu();
                 break;
             case ExamSchedule:
                 String defaultScheduleFromPreference = FileUtil.getDefaultSchedule(this);
@@ -377,7 +378,7 @@ public class MainActivity extends ActionBarActivity
     public void onBackPressed() {
         //TODO: determine why don't work fragmentTransaction.addToBackStack and rewrite this method
         String defaultSchedule = FileUtil.getDefaultSchedule(this);
-        if(showScheduleFragmentForGroup.isAdded()) {
+        if(scheduleViewPagerFragment.isAdded()) {
             System.exit(0);
         } else if(!whoAreYouFragment.isAdded()){
             onChangeFragment(AvailableFragments.ShowSchedules);
