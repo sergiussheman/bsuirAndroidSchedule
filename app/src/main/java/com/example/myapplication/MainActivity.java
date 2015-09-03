@@ -49,6 +49,9 @@ import java.util.NoSuchElementException;
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, OnFragmentInteractionListener, ActionBar.OnNavigationListener {
     private static final String TAG = "mainActivityTAG";
+    private static final Integer NOT_SHOW = 0;
+    private static final Integer SHOW_WITHOUT_FILTERS = 1;
+    private static final Integer SHOW_ALL = 2;
     private static final String URL_FOR_DOWNLOAD_APK = "http://www.bsuir.by/schedule/resources/android/BSUIR_Schedule.apk";
     private static final String ANDROID_APK_FILE_NAME = "/androidSchedule.apk";
     ProgressDialog mProgressDialog;
@@ -71,8 +74,8 @@ public class MainActivity extends ActionBarActivity
 
     private ScheduleViewPagerFragment scheduleViewPagerFragment;
     private List<SchoolDay> examSchedules;
-    private List<SchoolDay> daySchedules;
 
+    private int showNavigationList;
     private boolean changedDayFromViewPager;
 
     @Override
@@ -222,7 +225,7 @@ public class MainActivity extends ActionBarActivity
     public void restoreActionBar(Menu menu) {
         final ActionBar actionBar = getSupportActionBar();
         if(actionBar != null) {
-            if (scheduleViewPagerFragment.isAdded()) {
+            if (showNavigationList == SHOW_ALL) {
                 actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
                 selectedWeekNumber = WeekNumberEnum.ALL;
                 selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
@@ -253,7 +256,7 @@ public class MainActivity extends ActionBarActivity
 
                 actionBar.setDisplayShowTitleEnabled(false);
                 setVisibilityForSubMenus(true, menu);
-            } else if(examScheduleFragment.isAdded()){
+            } else if(showNavigationList == SHOW_WITHOUT_FILTERS){
                 actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.row_layout, R.id.text1, getTitleArrayForActionBar());
                 actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
@@ -278,8 +281,8 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onChangeDay(Integer dayPosition) {
         ActionBar actionBar = getSupportActionBar();
-        if(selectedDayPosition != null && (dayPosition + 1 != selectedDayPosition)) {
-            if (actionBar != null && dayPosition != null && actionBar.getNavigationMode() == ActionBar.NAVIGATION_MODE_LIST) {
+        if(selectedDayPosition != null && dayPosition != null && (dayPosition + 1 != selectedDayPosition)) {
+            if (actionBar != null && actionBar.getNavigationMode() == ActionBar.NAVIGATION_MODE_LIST) {
                 changedDayFromViewPager = true;
                 selectedDayPosition = dayPosition + 1;
                 actionBar.setSelectedNavigationItem(dayPosition + 1);
@@ -314,14 +317,17 @@ public class MainActivity extends ActionBarActivity
             case DownloadScheduleForEmployee:
                 fragmentTransaction.replace(R.id.fragment_container, downloadScheduleForEmployeeFragment);
                 fragmentTransaction.commit();
+                showNavigationList = NOT_SHOW;
                 break;
             case DownloadScheduleForGroup:
                 fragmentTransaction.replace(R.id.fragment_container, downloadScheduleForGroupFragment);
                 fragmentTransaction.commit();
+                showNavigationList = NOT_SHOW;
                 break;
             case WhoAreYou:
                 fragmentTransaction.replace(R.id.fragment_container, whoAreYouFragment);
                 fragmentTransaction.commit();
+                showNavigationList = NOT_SHOW;
                 break;
             case ShowSchedules:
                 String defaultSchedule = FileUtil.getDefaultSchedule(this);
@@ -342,7 +348,7 @@ public class MainActivity extends ActionBarActivity
                     scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
                     scheduleViewPagerFragment.setSelectedSubGroup(selectedSubGroup);
                 }
-                invalidateOptionsMenu();
+                showNavigationList = SHOW_ALL;
                 break;
             case ExamSchedule:
                 String defaultScheduleFromPreference = FileUtil.getDefaultSchedule(this);
@@ -356,11 +362,13 @@ public class MainActivity extends ActionBarActivity
                     examSchedules = week;
                     examScheduleFragment.setAllSchedules(week);
                     examScheduleFragment.updateSchedule(selectedDayPosition);
+                    showNavigationList = SHOW_WITHOUT_FILTERS;
                 }
                 break;
             default:
                 break;
         }
+        invalidateOptionsMenu();
     }
 
     @Override
@@ -451,6 +459,8 @@ public class MainActivity extends ActionBarActivity
         }
         return super.onOptionsItemSelected(item);
     }
+
+
 
     private class DownloadActualVersionTask extends AsyncTask<Void, String, String> {
 
