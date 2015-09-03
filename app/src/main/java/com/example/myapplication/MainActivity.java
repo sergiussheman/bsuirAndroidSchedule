@@ -220,7 +220,7 @@ public class MainActivity extends ActionBarActivity
     }
 
     public void restoreActionBar(Menu menu) {
-        ActionBar actionBar = getSupportActionBar();
+        final ActionBar actionBar = getSupportActionBar();
         if(actionBar != null) {
             if (scheduleViewPagerFragment.isAdded()) {
                 actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
@@ -235,14 +235,14 @@ public class MainActivity extends ActionBarActivity
                             if (itemPosition == 0) {
                                 Calendar calendar = GregorianCalendar.getInstance();
                                 int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
-                                if (currentDay == 1) {
+                                if (currentDay == Calendar.SUNDAY) {
                                     currentDay = 8;
                                 }
-                                //scheduleViewPagerFragment.updateFiltersForViewPager(currentDay, selectedWeekNumber, selectedSubGroup);
-                                selectedDayPosition = itemPosition;
+                                actionBar.setSelectedNavigationItem(currentDay);
                             } else {
-                                //scheduleViewPagerFragment.updateFiltersForViewPager(itemPosition - 1, selectedWeekNumber, selectedSubGroup);
+                                scheduleViewPagerFragment.updateFiltersForViewPager(itemPosition - 1, selectedWeekNumber, selectedSubGroup);
                                 selectedDayPosition = itemPosition;
+                                changedDayFromViewPager = false;
                             }
                         } else{
                             changedDayFromViewPager = false;
@@ -278,10 +278,12 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onChangeDay(Integer dayPosition) {
         ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null && dayPosition != null && actionBar.getNavigationMode() == ActionBar.NAVIGATION_MODE_LIST) {
-            changedDayFromViewPager = true;
-            selectedDayPosition = dayPosition + 1;
-            actionBar.setSelectedNavigationItem(dayPosition + 1);
+        if(selectedDayPosition != null && (dayPosition + 1 != selectedDayPosition)) {
+            if (actionBar != null && dayPosition != null && actionBar.getNavigationMode() == ActionBar.NAVIGATION_MODE_LIST) {
+                changedDayFromViewPager = true;
+                selectedDayPosition = dayPosition + 1;
+                actionBar.setSelectedNavigationItem(dayPosition + 1);
+            }
         }
     }
 
@@ -322,7 +324,6 @@ public class MainActivity extends ActionBarActivity
                 fragmentTransaction.commit();
                 break;
             case ShowSchedules:
-
                 String defaultSchedule = FileUtil.getDefaultSchedule(this);
                 if(defaultSchedule == null) {
                     onChangeFragment(AvailableFragments.WhoAreYou);
@@ -331,6 +332,15 @@ public class MainActivity extends ActionBarActivity
                     fragmentTransaction.commit();
                     getFragmentManager().executePendingTransactions();
                     scheduleViewPagerFragment.setAllWeekSchedules(getScheduleFromFile(defaultSchedule, false));
+
+                    Calendar calendar = GregorianCalendar.getInstance();
+                    int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+                    if (currentDay == Calendar.SUNDAY) {
+                        currentDay = 8;
+                    }
+                    scheduleViewPagerFragment.setCurrentMiddleIndex(currentDay - 1);
+                    scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
+                    scheduleViewPagerFragment.setSelectedSubGroup(selectedSubGroup);
                 }
                 invalidateOptionsMenu();
                 break;
@@ -386,7 +396,7 @@ public class MainActivity extends ActionBarActivity
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        /*int id = item.getItemId();
+        int id = item.getItemId();
         ActionMenuItemView weekNumberSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuWeekNumber);
         ActionMenuItemView subGroupSubMenu = (ActionMenuItemView) findViewById(R.id.subMenuSubGroup);
         int dayPositionForPass = selectedDayPosition;
@@ -439,7 +449,6 @@ public class MainActivity extends ActionBarActivity
                 subGroupSubMenu.setTitle(getResources().getString(R.string.second_sub_group));
                 break;
         }
-*/
         return super.onOptionsItemSelected(item);
     }
 
