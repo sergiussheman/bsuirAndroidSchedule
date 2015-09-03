@@ -18,12 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LoadSchedule {
-    private static final String BSUIR = "http://bsuir.by/schedule/rest/schedule/android/";
     private static final String STUDENT_GROUP_SCHEDULE_BY_ID_REST = "http://www.bsuir.by/schedule/rest/schedule/android/";
     private static final String EXAM_SCHEDULE = "http://www.bsuir.by/schedule/rest/examSchedule/android/";
     private static final String ACTUAL_APPLICATION_VERSION_URL = "http://www.bsuir.by/schedule/rest/android/actualAndroidVersion";
     private static final String EMPLOYEE_LIST_REST = "http://www.bsuir.by/schedule/rest/employee";
-    private static final String SCHEDULE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/employee/";
+    private static final String SCHEDULE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/employee/android/";
     private static final String STUDENT_GROUP_REST = "http://www.bsuir.by/schedule/rest/studentGroup/";
     private static final String TAG = "Load";
 
@@ -41,24 +40,6 @@ public class LoadSchedule {
         } catch (IOException e) {
             Log.v("logs", e.toString());
             return "Группа " + sg.getStudentGroupName() + " не найдена. Проверьте соединение с интернетом." + e.toString();
-        }
-    }
-
-    public static String loadScheduleForStudentGroup(String group, File filesDir) {
-        try {
-            //loading daily schedule
-            URL url = new URL(BSUIR + group);
-            loadSchedule(url, filesDir, group);
-
-            //loading exam schedule
-            url = new URL(EXAM_SCHEDULE + group);
-            loadSchedule(url, filesDir, group + "exam");
-            return null;
-        } catch (SocketTimeoutException e) {
-            return "Ошибка подключения. Сервер не отвечает.";
-        } catch (IOException e) {
-            Log.v("logs", e.toString());
-            return "Группа " + group + " не найдена. Проверьте соединение с интернетом." + e.toString();
         }
     }
 

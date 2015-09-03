@@ -7,4 +7,5 @@ import com.example.myapplication.Model.AvailableFragments;
  */
 public interface OnFragmentInteractionListener {
     void onChangeFragment(AvailableFragments passedFragment);
+    void onChangeDay(Integer dayPosition);
 }
