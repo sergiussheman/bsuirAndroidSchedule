@@ -5,4 +5,8 @@
     <color name="green">#12ff09</color>
     <color name="yellow">#fff801</color>
     <color name="blue">#0b32ff</color>
+    <color name="widget_background">#ffffff</color>
+    <color name="widget_text_color">#000000</color>
+    <color name="widget_underlying_line_color">#0b32ff</color>
+    <color name="widget_background_light">#56eaffce</color>
 </resources>
