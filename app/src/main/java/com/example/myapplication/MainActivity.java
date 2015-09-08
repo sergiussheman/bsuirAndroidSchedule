@@ -26,6 +26,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.example.myapplication.DataProvider.LoadSchedule;
+import com.example.myapplication.Utils.DateUtil;
 import com.example.myapplication.Utils.FileUtil;
 import com.example.myapplication.DataProvider.XmlDataProvider;
 import com.example.myapplication.Model.AvailableFragments;
@@ -222,7 +223,7 @@ public class MainActivity extends ActionBarActivity
         }
     }
 
-    public void restoreActionBar(Menu menu) {
+    public void restoreActionBar(final Menu menu) {
         final ActionBar actionBar = getSupportActionBar();
         if(actionBar != null) {
             if (showNavigationList == SHOW_ALL) {
@@ -240,6 +241,32 @@ public class MainActivity extends ActionBarActivity
                                 int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
                                 if (currentDay == Calendar.SUNDAY) {
                                     currentDay = 8;
+                                }
+                                MenuItem subMenuWeekNumber = menu.findItem(R.id.subMenuWeekNumber);
+                                Integer currentWeekNumber = DateUtil.getWeek(calendar.getTime());
+                                if(currentWeekNumber != null) {
+                                    switch (currentWeekNumber) {
+                                        case 1:
+                                            subMenuWeekNumber.setTitle(R.string.first_week_number);
+                                            selectedWeekNumber = WeekNumberEnum.FIRST;
+                                            break;
+                                        case 2:
+                                            subMenuWeekNumber.setTitle(R.string.second_week_number);
+                                            selectedWeekNumber = WeekNumberEnum.SECOND;
+                                            break;
+                                        case 3:
+                                            subMenuWeekNumber.setTitle(R.string.third_week_number);
+                                            selectedWeekNumber = WeekNumberEnum.THIRD;
+                                            break;
+                                        case 4:
+                                            subMenuWeekNumber.setTitle(R.string.fourth_week_number);
+                                            selectedWeekNumber = WeekNumberEnum.FOURTH;
+                                            break;
+                                        default:
+                                            subMenuWeekNumber.setTitle(R.string.all_week_number);
+                                            selectedWeekNumber = WeekNumberEnum.ALL;
+                                            break;
+                                    }
                                 }
                                 actionBar.setSelectedNavigationItem(currentDay - 1);
                             } else {
@@ -344,11 +371,12 @@ public class MainActivity extends ActionBarActivity
                         if (currentDay == Calendar.SUNDAY) {
                             currentDay = 8;
                         }
-                        scheduleViewPagerFragment.setCurrentMiddleIndex(currentDay - 1);
+                        scheduleViewPagerFragment.setCurrentMiddleIndex(currentDay - 2);
                         scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
                         scheduleViewPagerFragment.setSelectedSubGroup(selectedSubGroup);
                     }
                     showNavigationList = SHOW_ALL;
+                    changedDayFromViewPager = false;
                     invalidateOptionsMenu();
                 }
                 break;
