@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -49,6 +50,10 @@ import java.util.NoSuchElementException;
 
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, OnFragmentInteractionListener, ActionBar.OnNavigationListener {
+    public static final String LAST_USING_SCHEDULE = "lastUsingSchedule";
+    public static final String LAST_USING_DAILY_SCHEDULE_TAG = "usingDailyScheduleTag";
+    public static final String LAST_USING_EXAM_SCHEDULE_TAG = "usingExamScheduleTag";
+
     private static final String TAG = "mainActivityTAG";
     private static final Integer NOT_SHOW = 0;
     private static final Integer SHOW_WITHOUT_FILTERS = 1;
@@ -375,6 +380,7 @@ public class MainActivity extends ActionBarActivity
                         scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
                         scheduleViewPagerFragment.setSelectedSubGroup(selectedSubGroup);
                     }
+                    updateLastUsingSchedule(LAST_USING_DAILY_SCHEDULE_TAG);
                     showNavigationList = SHOW_ALL;
                     changedDayFromViewPager = false;
                     invalidateOptionsMenu();
@@ -394,12 +400,19 @@ public class MainActivity extends ActionBarActivity
                     examScheduleFragment.updateSchedule(selectedDayPosition);
                     showNavigationList = SHOW_WITHOUT_FILTERS;
                 }
+                updateLastUsingSchedule(LAST_USING_EXAM_SCHEDULE_TAG);
                 invalidateOptionsMenu();
                 break;
             default:
                 break;
         }
+    }
 
+    public void updateLastUsingSchedule(String tag){
+        final SharedPreferences preferences = getSharedPreferences(getString(R.string.setting_file_name), 0);
+        final SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(LAST_USING_SCHEDULE, tag);
+        editor.apply();
     }
 
     @Override

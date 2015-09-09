@@ -67,7 +67,9 @@ public class ScheduleFragmentForGroup extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         currentView = inflater.inflate(R.layout.show_schedule_fragment_layout, container, false);
-        filterScheduleList(currentPosition, selectedWeekNumber, selectedSubGroup);
+        if(currentPosition != null) {
+            filterScheduleList(currentPosition, selectedWeekNumber, selectedSubGroup);
+        }
         return currentView;
     }
 

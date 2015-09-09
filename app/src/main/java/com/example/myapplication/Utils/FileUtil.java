@@ -3,6 +3,7 @@ package com.example.myapplication.Utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
 
 import java.io.File;
@@ -63,6 +64,17 @@ public class FileUtil {
         return null;
     }
 
+    public static Integer getDefaultSubgroup(Context context){
+        String settingFileName = context.getString(R.string.setting_file_name);
+        final SharedPreferences preferences = context.getSharedPreferences(settingFileName, 0);
+        Integer defaultSubgroup = preferences.getInt(context.getString(R.string.default_subgroup), 0);
+        if(defaultSubgroup != 0){
+            return defaultSubgroup;
+        } else {
+            return null;
+        }
+    }
+
 
     public static boolean isDefaultStudentGroup(Context context){
         String settingFileName = context.getString(R.string.setting_file_name);
@@ -72,6 +84,20 @@ public class FileUtil {
             return false;
         } else{
             return true;
+        }
+    }
+
+    public static Boolean isLastUsingDailySchedule(Context context){
+        String settingFileName = context.getString(R.string.setting_file_name);
+        final SharedPreferences preferences = context.getSharedPreferences(settingFileName, 0);
+        String lastUsingSchedule = preferences.getString(MainActivity.LAST_USING_SCHEDULE, "none");
+        switch (lastUsingSchedule){
+            case MainActivity.LAST_USING_DAILY_SCHEDULE_TAG:
+                return true;
+            case MainActivity.LAST_USING_EXAM_SCHEDULE_TAG:
+                return false;
+            default:
+                return null;
         }
     }
 }

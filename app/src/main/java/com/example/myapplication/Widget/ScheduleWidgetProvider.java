@@ -17,6 +17,8 @@ import com.example.myapplication.Utils.FileUtil;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Implementation of App Widget functionality.
@@ -25,12 +27,12 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
     private static final String NEXT_DAY = "nextDay";
     private static final String PREVIOUS_DAY = "previousDay";
     private static final String GO_TO_TODAY = "goToToday";
+    private static final String PATTERN = "^[а-яА-ЯёЁ]+";
     private static Integer offset = 0;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
         // There may be multiple widgets active, so update all of them
-        final int N = appWidgetIds.length;
         for (int appWidgetId : appWidgetIds) {
             updateAppWidget(context, appWidgetManager, appWidgetId);
         }
@@ -75,17 +77,15 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
         Intent intent = new Intent(context, ScheduleWidgetService.class);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         intent.putExtra(ListRemoteViewsFactory.OFFSET_EXTRA_NAME, offset);
+        intent.putExtra(ListRemoteViewsFactory.DEFAULT_SUBGROUP, FileUtil.getDefaultSubgroup(context));
 
         intent.setData(Uri.parse(intent.toUri(Intent.URI_INTENT_SCHEME)));
         // Construct the RemoteViews object
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.schedule_widget);
         rv.setRemoteAdapter(appWidgetId, R.id.listViewWidget, intent);
-        String defaultSchedule = FileUtil.getDefaultSchedule(context);
         rv.setEmptyView(R.id.listViewWidget, R.id.empty_view_widget);
-        if(defaultSchedule != null) {
-            rv.setTextViewText(R.id.scheduleWidgetTitle, defaultSchedule.substring(0, 6));
-        }
-        rv.setTextViewText(R.id.secondWidgetTitle, getSecondTitle(context));
+        rv.setTextViewText(R.id.scheduleWidgetTitle, getFirstTitle(context));
+        rv.setTextViewText(R.id.secondWidgetTitle, getSecondTitle());
         rv.setTextViewText(R.id.secondWidgetSubTitle, getSecondSubTitle(context));
 
         rv.setOnClickPendingIntent(R.id.previousWidgetButton, getPendingSelfIntent(context, PREVIOUS_DAY));
@@ -95,7 +95,34 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
         appWidgetManager.updateAppWidget(appWidgetId, rv);
     }
 
-    private static String getSecondTitle(Context context){
+    private static String getFirstTitle(Context context){
+        String result = "";
+        String defaultSchedule = FileUtil.getDefaultSchedule(context);
+        if(defaultSchedule != null) {
+            if (FileUtil.isDefaultStudentGroup(context)) {
+                result = defaultSchedule.substring(0, 6);
+                Integer defaultSubGroup = FileUtil.getDefaultSubgroup(context);
+                if(defaultSubGroup != null) {
+                    result += " - " + defaultSubGroup + " подгр.";
+                }
+            } else {
+                Pattern pattern = Pattern.compile(PATTERN);
+                Matcher matcher = pattern.matcher(defaultSchedule);
+                if (matcher.find()) {
+                    result = matcher.group(0);
+                    String initials = result.substring(result.length() - 2, result.length());
+                    if(initials.length() == 2) {
+                        result = result.substring(0, result.length() - 2) + " " + initials.charAt(0) + ". " + initials.charAt(1) + ".";
+                    }
+                } else {
+                    result = "not found";
+                }
+            }
+        }
+        return result;
+    }
+
+    private static String getSecondTitle(){
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, offset);
         DateFormat df = new SimpleDateFormat("dd/MM");

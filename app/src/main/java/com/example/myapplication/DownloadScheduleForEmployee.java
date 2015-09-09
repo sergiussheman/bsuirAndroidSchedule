@@ -3,8 +3,11 @@ package com.example.myapplication;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
@@ -33,6 +36,7 @@ import com.example.myapplication.Utils.FileUtil;
 import com.example.myapplication.DataProvider.LoadSchedule;
 import com.example.myapplication.Model.AvailableFragments;
 import com.example.myapplication.Model.Employee;
+import com.example.myapplication.Widget.ScheduleWidgetProvider;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -274,6 +278,7 @@ public class DownloadScheduleForEmployee extends Fragment {
             editor.putString(employeeForPreferences, DateUtil.getCurrentDateAsString());
         }
         editor.apply();
+        updateWidgets();
     }
 
     private void updateDefaultEmployee(String defaultEmployee, boolean isDownloadedSchedule){
@@ -294,6 +299,7 @@ public class DownloadScheduleForEmployee extends Fragment {
             editor.putString(defaultEmployee, DateUtil.getCurrentDateAsString());
         }
         editor.apply();
+        updateWidgets();
     }
 
     private String getLastUpdateFromPreference(String schedulesName){
@@ -314,6 +320,16 @@ public class DownloadScheduleForEmployee extends Fragment {
 
     private String getFileNameForEmployeeSchedule(Employee employee){
         return employee.getLastName() + employee.getFirstName().charAt(0) + employee.getMiddleName().charAt(0) + employee.getId();
+    }
+
+    private void updateWidgets(){
+        Context context = getActivity().getApplicationContext();
+        ComponentName name = new ComponentName(context, ScheduleWidgetProvider.class);
+        int [] ids = AppWidgetManager.getInstance(context).getAppWidgetIds(name);
+
+        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE, null, getActivity(), ScheduleWidgetProvider.class);
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+        getActivity().sendBroadcast(intent);
     }
 
     @Nullable
