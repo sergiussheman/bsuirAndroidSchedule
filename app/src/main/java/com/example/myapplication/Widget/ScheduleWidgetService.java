@@ -44,6 +44,10 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
 
     @Override
     public void onCreate(){
+        updateScheduleList();
+    }
+
+    public void updateScheduleList(){
         String defaultSchedule = FileUtil.getDefaultSchedule(savedContext);
         if(defaultSchedule != null) {
             Boolean isLastUsingDailySchedule = FileUtil.isLastUsingDailySchedule(savedContext);
@@ -187,6 +191,6 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
 
     @Override
     public void onDataSetChanged(){
-
+        updateScheduleList();
     }
 }

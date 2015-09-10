@@ -330,6 +330,11 @@ public class DownloadScheduleForEmployee extends Fragment {
         Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE, null, getActivity(), ScheduleWidgetProvider.class);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
         getActivity().sendBroadcast(intent);
+
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        int appWidgetIds[] = appWidgetManager.getAppWidgetIds(
+                new ComponentName(context, ScheduleWidgetProvider.class));
+        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.listViewWidget);
     }
 
     @Nullable

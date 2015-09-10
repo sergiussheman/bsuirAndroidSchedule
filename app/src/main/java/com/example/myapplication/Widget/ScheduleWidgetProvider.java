@@ -37,6 +37,7 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
             updateAppWidget(context, appWidgetManager, appWidgetId);
         }
         super.onUpdate(context, appWidgetManager, appWidgetIds);
+        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.listViewWidget);
     }
 
     @Override
@@ -93,6 +94,7 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
         rv.setOnClickPendingIntent(R.id.todayWidgetButton, getPendingSelfIntent(context, GO_TO_TODAY));
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, rv);
+
     }
 
     private static String getFirstTitle(Context context){
