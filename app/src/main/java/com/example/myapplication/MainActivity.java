@@ -53,6 +53,7 @@ public class MainActivity extends ActionBarActivity
     public static final String LAST_USING_SCHEDULE = "lastUsingSchedule";
     public static final String LAST_USING_DAILY_SCHEDULE_TAG = "usingDailyScheduleTag";
     public static final String LAST_USING_EXAM_SCHEDULE_TAG = "usingExamScheduleTag";
+    private static final String MESSAGE_ABOUT_WIDGET_TAG = "messageAboutWidget";
 
     private static final String TAG = "mainActivityTAG";
     private static final Integer NOT_SHOW = 0;
@@ -73,8 +74,7 @@ public class MainActivity extends ActionBarActivity
     private ScheduleFragmentForGroup showScheduleFragmentForGroup;
     private ExamScheduleFragment examScheduleFragment;
 
-
-    private WeekNumberEnum selectedWeekNumber = WeekNumberEnum.ALL;
+    private WeekNumberEnum selectedWeekNumber = null;
     private SubGroupEnum selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
     private Integer selectedDayPosition;
 
@@ -88,7 +88,6 @@ public class MainActivity extends ActionBarActivity
     protected void onCreate(Bundle savedInstanceState) {
         getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         super.onCreate(savedInstanceState);
-        selectedWeekNumber = WeekNumberEnum.ALL;
         selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
         setContentView(R.layout.activity_main);
 
@@ -119,6 +118,7 @@ public class MainActivity extends ActionBarActivity
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         mProgressDialog.setCancelable(true);
+        showMessageAboutWidget();
         checkForUpdated();
     }
 
@@ -201,6 +201,26 @@ public class MainActivity extends ActionBarActivity
             Log.v(TAG, e.toString());
         }
     }
+
+    public void showMessageAboutWidget(){
+        final SharedPreferences preferences = getSharedPreferences(getString(R.string.setting_file_name), 0);
+        String messageWasShown = preferences.getString(MESSAGE_ABOUT_WIDGET_TAG, "none");
+        if("none".equals(messageWasShown)){
+            new AlertDialog.Builder(this)
+                    .setTitle(getString(R.string.warning))
+                    .setMessage(getString(R.string.message_about_widget))
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            final SharedPreferences.Editor editor = preferences.edit();
+                            editor.putString(MESSAGE_ABOUT_WIDGET_TAG, "true");
+                            editor.apply();
+                        }
+                    }).show();
+        }
+    }
+
     @Override
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
@@ -377,6 +397,10 @@ public class MainActivity extends ActionBarActivity
                             currentDay = 8;
                         }
                         scheduleViewPagerFragment.setCurrentMiddleIndex(currentDay - 2);
+                        if(selectedWeekNumber == null){
+                            selectedWeekNumber = WeekNumberEnum.getByOrder((int)DateUtil.getWeek(Calendar.getInstance().getTime()));
+                            scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
+                        }
                         scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
                         scheduleViewPagerFragment.setSelectedSubGroup(selectedSubGroup);
                     }

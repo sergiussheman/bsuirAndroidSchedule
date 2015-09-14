@@ -19,4 +19,13 @@ public enum WeekNumberEnum {
     public Integer getOrder(){
         return order;
     }
+
+    public static WeekNumberEnum getByOrder(int order){
+        for(WeekNumberEnum item : WeekNumberEnum.values()){
+            if(item.getOrder().equals(order)){
+                return item;
+            }
+        }
+        return WeekNumberEnum.ALL;
+    }
 }

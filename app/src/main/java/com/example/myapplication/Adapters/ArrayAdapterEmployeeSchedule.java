@@ -71,7 +71,13 @@ public class ArrayAdapterEmployeeSchedule extends ArrayAdapter<Schedule> {
             case "ПЗ":
                 view.setBackgroundResource(R.color.yellow);
                 break;
+            case "УПз":
+                view.setBackgroundResource(R.color.yellow);
+                break;
             case "ЛК":
+                view.setBackgroundResource(R.color.green);
+                break;
+            case "УЛк":
                 view.setBackgroundResource(R.color.green);
                 break;
             case "ЛР":

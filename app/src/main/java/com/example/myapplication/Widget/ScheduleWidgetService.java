@@ -31,6 +31,7 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
     public static final String OFFSET_EXTRA_NAME = "scheduleWidgetOffset";
     public static final String DEFAULT_SUBGROUP = "defaultSubgroup";
     private String[] weekDays = new String[]{"Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"};
+    private List<SchoolDay> weekSchedules;
     private Integer dayOffset;
     private Context savedContext;
     private List<Schedule> items;
@@ -56,47 +57,50 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
                     defaultSchedule = defaultSchedule.replace(".xml", "exam.xml");
                 }
             }
-            List<SchoolDay> weekSchedules = XmlDataProvider.parseScheduleXml(savedContext.getFilesDir(), defaultSchedule);
+            weekSchedules = XmlDataProvider.parseScheduleXml(savedContext.getFilesDir(), defaultSchedule);
+            updateCurrentDaySchedules();
+        }
+    }
 
-            Calendar calendar = Calendar.getInstance();
-            calendar.add(Calendar.DATE, dayOffset);
+    private void updateCurrentDaySchedules(){
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, dayOffset);
 
-            int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
-            if (currentDay == Calendar.SUNDAY) {
-                currentDay = 8;
-            }
-            List<Schedule> schedules = getSchedulesByDayOfWeek(currentDay - 2, weekSchedules);
-            Integer currentWeekNumber = DateUtil.getWeek(calendar.getTime());
-            boolean scheduleForGroup = FileUtil.isDefaultStudentGroup(savedContext);
-            items = new ArrayList<>();
-            if (currentWeekNumber != null) {
-                String weekNumberAsString = currentWeekNumber.toString();
-                for (Schedule schedule : schedules) {
-                    boolean matchWeekNumber = false;
-                    boolean matchSubgroupNumber = false;
-                    for (String weekNumber : schedule.getWeekNumbers()) {
-                        if (weekNumberAsString.equalsIgnoreCase(weekNumber)) {
-                            matchWeekNumber = true;
-                        }
+        int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+        if (currentDay == Calendar.SUNDAY) {
+            currentDay = 8;
+        }
+        List<Schedule> schedules = getSchedulesByDayOfWeek(currentDay - 2, weekSchedules);
+        Integer currentWeekNumber = DateUtil.getWeek(calendar.getTime());
+        boolean scheduleForGroup = FileUtil.isDefaultStudentGroup(savedContext);
+        items = new ArrayList<>();
+        if (currentWeekNumber != null) {
+            String weekNumberAsString = currentWeekNumber.toString();
+            for (Schedule schedule : schedules) {
+                boolean matchWeekNumber = false;
+                boolean matchSubgroupNumber = false;
+                for (String weekNumber : schedule.getWeekNumbers()) {
+                    if (weekNumberAsString.equalsIgnoreCase(weekNumber)) {
+                        matchWeekNumber = true;
                     }
+                }
 
-                    if (scheduleForGroup) {
-                        if (defaultSubGroup == 0) {
-                            matchSubgroupNumber = true;
-                        } else if (schedule.getSubGroup().isEmpty()) {
-                            matchSubgroupNumber = true;
-                        } else {
-                            if (defaultSubGroup.toString().equalsIgnoreCase(schedule.getSubGroup())) {
-                                matchSubgroupNumber = true;
-                            }
-                        }
-                    } else {
+                if (scheduleForGroup) {
+                    if (defaultSubGroup == 0) {
                         matchSubgroupNumber = true;
+                    } else if (schedule.getSubGroup().isEmpty()) {
+                        matchSubgroupNumber = true;
+                    } else {
+                        if (defaultSubGroup.toString().equalsIgnoreCase(schedule.getSubGroup())) {
+                            matchSubgroupNumber = true;
+                        }
                     }
+                } else {
+                    matchSubgroupNumber = true;
+                }
 
-                    if (matchSubgroupNumber && matchWeekNumber) {
-                        items.add(schedule);
-                    }
+                if (matchSubgroupNumber && matchWeekNumber) {
+                    items.add(schedule);
                 }
             }
         }
@@ -126,6 +130,8 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
 
     @Override
     public RemoteViews getViewAt(int position){
+        updateCurrentDaySchedules();
+
         Schedule currentSchedule = items.get(position);
         RemoteViews result = new RemoteViews(savedContext.getPackageName(), R.layout.schedule_widget_item_layout);
         String lessonTime = currentSchedule.getLessonTime();

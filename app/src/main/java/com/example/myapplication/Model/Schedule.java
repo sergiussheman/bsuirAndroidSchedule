@@ -11,12 +11,12 @@ public class Schedule {
     private List<Employee> employeeList = new ArrayList<>();
     private List<String> auditories = new ArrayList<>();
     private List<String> weekNumbers = new ArrayList<>();
-    private String lessonTime;
-    private String lessonType;
-    private String subject;
-    private String subGroup;
-    private String studentGroup;
-    private String note;
+    private String lessonTime = "";
+    private String lessonType = "";
+    private String subject = "";
+    private String subGroup = "";
+    private String studentGroup = "";
+    private String note = "";
 
     public List<String> getEmployees() {
         return employees;

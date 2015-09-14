@@ -16,6 +16,8 @@
     <string name="select_subgroup">Выберите подгруппу</string>
     <string name="default_subgroup">defaultSubGroup</string>
     <string name="should_select_subgroup">Необходимо выбрать подгруппу</string>
+    <string name="warning">Внимание</string>
+    <string name="message_about_widget">В тестовом режиме был добавлен виджет.</string>
 
     <string name="action_settings">Settings</string>
     <string name="for_today">На сегодня</string>
