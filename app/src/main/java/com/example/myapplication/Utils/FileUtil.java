@@ -87,7 +87,7 @@ public class FileUtil {
         }
     }
 
-    public static Boolean isLastUsingDailySchedule(Context context){
+    public static boolean isLastUsingDailySchedule(Context context){
         String settingFileName = context.getString(R.string.setting_file_name);
         final SharedPreferences preferences = context.getSharedPreferences(settingFileName, 0);
         String lastUsingSchedule = preferences.getString(MainActivity.LAST_USING_SCHEDULE, "none");
@@ -97,7 +97,7 @@ public class FileUtil {
             case MainActivity.LAST_USING_EXAM_SCHEDULE_TAG:
                 return false;
             default:
-                return null;
+                return true;
         }
     }
 }

@@ -43,6 +43,7 @@ public class ExamScheduleFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         currentView = inflater.inflate(R.layout.fragment_exam_schedule, container, false);
+        updateSchedule(0);
         return currentView;
     }
 
@@ -61,9 +62,11 @@ public class ExamScheduleFragment extends Fragment {
 
     public void updateSchedule(int position){
         try {
-            List<Schedule> scheduleList = new ArrayList<>();
+            List<Schedule> scheduleList;
             if(getAllSchedules().size() > position) {
                 scheduleList = getAllSchedules().get(position).getSchedules();
+            } else{
+                scheduleList = getAllSchedules().get(0).getSchedules();
             }
             Schedule[] schedules = scheduleList.toArray(new Schedule[scheduleList.size()]);
             setSchedulesForShow(schedules);

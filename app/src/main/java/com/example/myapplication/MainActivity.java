@@ -76,7 +76,7 @@ public class MainActivity extends ActionBarActivity
 
     private WeekNumberEnum selectedWeekNumber = null;
     private SubGroupEnum selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
-    private Integer selectedDayPosition;
+    private Integer selectedDayPosition = 0;
 
     private ScheduleViewPagerFragment scheduleViewPagerFragment;
     private List<SchoolDay> examSchedules;
@@ -110,8 +110,12 @@ public class MainActivity extends ActionBarActivity
         if(defaultSchedule == null) {
             onChangeFragment(AvailableFragments.WhoAreYou);
         } else{
-            showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule, false));
-            onChangeFragment(AvailableFragments.ShowSchedules);
+            if(FileUtil.isLastUsingDailySchedule(this)) {
+                showScheduleFragmentForGroup.setAllScheduleForGroup(getScheduleFromFile(defaultSchedule, false));
+                onChangeFragment(AvailableFragments.ShowSchedules);
+            } else{
+                onChangeFragment(AvailableFragments.ExamSchedule);
+            }
         }
         mProgressDialog = new ProgressDialog(this);
         mProgressDialog.setMessage(getString(R.string.downloading));
@@ -310,11 +314,11 @@ public class MainActivity extends ActionBarActivity
                 setVisibilityForSubMenus(true, menu);
             } else if(showNavigationList == SHOW_WITHOUT_FILTERS){
                 actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.row_layout, R.id.text1, getTitleArrayForActionBar());
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.row_layout_exam_schedule, R.id.text1, getTitleArrayForActionBar());
                 actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
                     @Override
                     public boolean onNavigationItemSelected(int itemPosition, long l) {
-                        examScheduleFragment.updateSchedule(itemPosition - 1);
+                        examScheduleFragment.updateSchedule(itemPosition);
                         selectedDayPosition = itemPosition;
                         return false;
                     }

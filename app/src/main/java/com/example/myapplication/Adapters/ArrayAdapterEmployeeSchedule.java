@@ -46,7 +46,11 @@ public class ArrayAdapterEmployeeSchedule extends ArrayAdapter<Schedule> {
         scheduleTimeTextView.setText(currentSchedule.getLessonTime());
 
         TextView subjectName = (TextView) convertView.findViewById(R.id.subjectNameListItem);
-        subjectName.setText(currentSchedule.getSubject() + " (" + currentSchedule.getLessonType() + ")");
+        String textForSubjectTextView = currentSchedule.getLessonType();
+        if(!currentSchedule.getLessonType().isEmpty()){
+            textForSubjectTextView += " (" + currentSchedule.getLessonType() + ")";
+        }
+        subjectName.setText(textForSubjectTextView);
         TextView noteTextView = (TextView) convertView.findViewById(R.id.scheduleNoteTextView);
         noteTextView.setText(currentSchedule.getNote());
         TextView employeeName = (TextView) convertView.findViewById(R.id.employeeNameListItem);
