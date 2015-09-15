@@ -2,6 +2,8 @@ package com.example.myapplication;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,6 +36,7 @@ import com.example.myapplication.Model.AvailableFragments;
 import com.example.myapplication.Model.SchoolDay;
 import com.example.myapplication.Model.SubGroupEnum;
 import com.example.myapplication.Model.WeekNumberEnum;
+import com.example.myapplication.Widget.ScheduleWidgetProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -72,13 +75,13 @@ public class MainActivity extends ActionBarActivity
     private DownloadScheduleForGroup downloadScheduleForGroupFragment;
     private DownloadScheduleForEmployee downloadScheduleForEmployeeFragment;
     private ScheduleFragmentForGroup showScheduleFragmentForGroup;
-    private ExamScheduleFragment examScheduleFragment;
 
     private WeekNumberEnum selectedWeekNumber = null;
     private SubGroupEnum selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
     private Integer selectedDayPosition = 0;
 
     private ScheduleViewPagerFragment scheduleViewPagerFragment;
+    private ScheduleExamViewPagerFragment scheduleExamViewPagerFragment;
     private List<SchoolDay> examSchedules;
 
     private int showNavigationList;
@@ -104,7 +107,7 @@ public class MainActivity extends ActionBarActivity
         downloadScheduleForGroupFragment = new DownloadScheduleForGroup();
         downloadScheduleForEmployeeFragment = new DownloadScheduleForEmployee();
         showScheduleFragmentForGroup = new ScheduleFragmentForGroup();
-        examScheduleFragment = new ExamScheduleFragment();
+        scheduleExamViewPagerFragment = new ScheduleExamViewPagerFragment();
         scheduleViewPagerFragment = new ScheduleViewPagerFragment();
         String defaultSchedule = FileUtil.getDefaultSchedule(this);
         if(defaultSchedule == null) {
@@ -134,7 +137,7 @@ public class MainActivity extends ActionBarActivity
                 }
                 break;
             case 2:
-                if(examScheduleFragment != null){
+                if(scheduleExamViewPagerFragment != null){
                     onChangeFragment(AvailableFragments.ExamSchedule);
                 }
                 break;
@@ -235,7 +238,7 @@ public class MainActivity extends ActionBarActivity
                 }
                 break;
             case 1:
-                if(examScheduleFragment != null){
+                if(scheduleExamViewPagerFragment != null){
                     onChangeFragment(AvailableFragments.ExamSchedule);
                 }
                 break;
@@ -318,8 +321,13 @@ public class MainActivity extends ActionBarActivity
                 actionBar.setListNavigationCallbacks(adapter, new ActionBar.OnNavigationListener() {
                     @Override
                     public boolean onNavigationItemSelected(int itemPosition, long l) {
-                        examScheduleFragment.updateSchedule(itemPosition);
-                        selectedDayPosition = itemPosition;
+                        if(!changedDayFromViewPager) {
+                            scheduleExamViewPagerFragment.updateFiltersForViewPager(itemPosition);
+                            selectedDayPosition = itemPosition;
+                            changedDayFromViewPager = false;
+                        } else{
+                            changedDayFromViewPager = false;
+                        }
                         return false;
                     }
                 });
@@ -337,11 +345,23 @@ public class MainActivity extends ActionBarActivity
     @Override
     public void onChangeDay(Integer dayPosition) {
         ActionBar actionBar = getSupportActionBar();
-        if(selectedDayPosition != null && dayPosition != null && (dayPosition + 1 != selectedDayPosition)) {
+        if(selectedDayPosition != null && dayPosition != null && dayPosition + 1 != selectedDayPosition) {
             if (actionBar != null && actionBar.getNavigationMode() == ActionBar.NAVIGATION_MODE_LIST) {
                 changedDayFromViewPager = true;
                 selectedDayPosition = dayPosition + 1;
-                actionBar.setSelectedNavigationItem(dayPosition + 1);
+                actionBar.setSelectedNavigationItem(selectedDayPosition);
+            }
+        }
+    }
+
+    @Override
+    public void onChangeExamDay(Integer dayPosition){
+        ActionBar actionBar = getSupportActionBar();
+        if(selectedDayPosition != null && dayPosition != null && !dayPosition.equals(selectedDayPosition)){
+            if(actionBar != null && actionBar.getNavigationMode() == ActionBar.NAVIGATION_MODE_LIST){
+                changedDayFromViewPager = true;
+                selectedDayPosition = dayPosition;
+                actionBar.setSelectedNavigationItem(selectedDayPosition);
             }
         }
     }
@@ -402,7 +422,7 @@ public class MainActivity extends ActionBarActivity
                         }
                         scheduleViewPagerFragment.setCurrentMiddleIndex(currentDay - 2);
                         if(selectedWeekNumber == null){
-                            selectedWeekNumber = WeekNumberEnum.getByOrder((int)DateUtil.getWeek(Calendar.getInstance().getTime()));
+                            selectedWeekNumber = WeekNumberEnum.getByOrder(DateUtil.getWeek(Calendar.getInstance().getTime()));
                             scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
                         }
                         scheduleViewPagerFragment.setSelectedWeekNumber(selectedWeekNumber);
@@ -412,28 +432,46 @@ public class MainActivity extends ActionBarActivity
                     showNavigationList = SHOW_ALL;
                     changedDayFromViewPager = false;
                     invalidateOptionsMenu();
+                    updateWidgets();
                 }
                 break;
             case ExamSchedule:
-                String defaultScheduleFromPreference = FileUtil.getDefaultSchedule(this);
-                if(defaultScheduleFromPreference == null){
-                    onChangeFragment(AvailableFragments.WhoAreYou);
-                } else {
-                    fragmentTransaction.replace(R.id.fragment_container, examScheduleFragment);
-                    fragmentTransaction.commit();
-                    getFragmentManager().executePendingTransactions();
-                    List<SchoolDay> week = getScheduleFromFile(defaultScheduleFromPreference, true);
-                    examSchedules = week;
-                    examScheduleFragment.setAllSchedules(week);
-                    examScheduleFragment.updateSchedule(selectedDayPosition);
-                    showNavigationList = SHOW_WITHOUT_FILTERS;
+                if(!scheduleExamViewPagerFragment.isAdded()) {
+                    String defaultScheduleFromPreference = FileUtil.getDefaultSchedule(this);
+                    if (defaultScheduleFromPreference == null) {
+                        onChangeFragment(AvailableFragments.WhoAreYou);
+                    } else {
+                        fragmentTransaction.replace(R.id.fragment_container, scheduleExamViewPagerFragment);
+                        fragmentTransaction.commit();
+                        List<SchoolDay> week = getScheduleFromFile(defaultScheduleFromPreference, true);
+                        examSchedules = week;
+                        scheduleExamViewPagerFragment.setAllSchedules(week);
+                        scheduleExamViewPagerFragment.setCurrentSelectedIndex(selectedDayPosition);
+                        showNavigationList = SHOW_WITHOUT_FILTERS;
+                    }
+                    updateLastUsingSchedule(LAST_USING_EXAM_SCHEDULE_TAG);
+                    invalidateOptionsMenu();
+                    updateWidgets();
                 }
-                updateLastUsingSchedule(LAST_USING_EXAM_SCHEDULE_TAG);
-                invalidateOptionsMenu();
                 break;
             default:
                 break;
         }
+    }
+
+    private void updateWidgets(){
+        Context context = getApplicationContext();
+        ComponentName name = new ComponentName(context, ScheduleWidgetProvider.class);
+        int [] ids = AppWidgetManager.getInstance(context).getAppWidgetIds(name);
+
+        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE, null, this, ScheduleWidgetProvider.class);
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+        sendBroadcast(intent);
+
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        int appWidgetIds[] = appWidgetManager.getAppWidgetIds(
+                new ComponentName(context, ScheduleWidgetProvider.class));
+        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.listViewWidget);
     }
 
     public void updateLastUsingSchedule(String tag){

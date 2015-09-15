@@ -55,6 +55,20 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    private void updateWidgetSecondMethos(Context context){
+        ComponentName name = new ComponentName(context, ScheduleWidgetProvider.class);
+        int [] ids = AppWidgetManager.getInstance(context).getAppWidgetIds(name);
+
+        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE, null, context, ScheduleWidgetProvider.class);
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+        context.sendBroadcast(intent);
+
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        int appWidgetIds[] = appWidgetManager.getAppWidgetIds(
+                new ComponentName(context, ScheduleWidgetProvider.class));
+        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.listViewWidget);
+    }
+
     public void updateWidget(Context context){
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         ComponentName thisAppWidget = new ComponentName(context.getPackageName(), ScheduleWidgetProvider.class.getName());
@@ -85,6 +99,7 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.schedule_widget);
         rv.setRemoteAdapter(appWidgetId, R.id.listViewWidget, intent);
         rv.setEmptyView(R.id.listViewWidget, R.id.empty_view_widget);
+
         rv.setTextViewText(R.id.scheduleWidgetTitle, getFirstTitle(context));
         rv.setTextViewText(R.id.secondWidgetTitle, getSecondTitle());
         rv.setTextViewText(R.id.secondWidgetSubTitle, getSecondSubTitle(context));

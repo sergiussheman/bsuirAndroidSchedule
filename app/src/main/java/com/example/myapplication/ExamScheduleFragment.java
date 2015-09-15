@@ -15,7 +15,6 @@ import com.example.myapplication.Model.Schedule;
 import com.example.myapplication.Model.SchoolDay;
 import com.example.myapplication.Utils.FileUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -24,9 +23,12 @@ public class ExamScheduleFragment extends Fragment {
     private View currentView;
     private List<SchoolDay> allSchedules;
     private Schedule[] schedulesForShow;
+    private Integer currentSelectedPosition;
 
-    public static ExamScheduleFragment newInstance() {
+    public static ExamScheduleFragment newInstance(List<SchoolDay> allSchedules,int position) {
         ExamScheduleFragment fragment = new ExamScheduleFragment();
+        fragment.setAllSchedules(allSchedules);
+        fragment.setCurrentSelectedPosition(position);
         return fragment;
     }
 
@@ -43,7 +45,7 @@ public class ExamScheduleFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         currentView = inflater.inflate(R.layout.fragment_exam_schedule, container, false);
-        updateSchedule(0);
+        updateSchedule(currentSelectedPosition);
         return currentView;
     }
 
@@ -90,5 +92,13 @@ public class ExamScheduleFragment extends Fragment {
 
     public void setSchedulesForShow(Schedule[] schedulesForShow) {
         this.schedulesForShow = schedulesForShow;
+    }
+
+    public Integer getCurrentSelectedPosition() {
+        return currentSelectedPosition;
+    }
+
+    public void setCurrentSelectedPosition(Integer currentSelectedPosition) {
+        this.currentSelectedPosition = currentSelectedPosition;
     }
 }

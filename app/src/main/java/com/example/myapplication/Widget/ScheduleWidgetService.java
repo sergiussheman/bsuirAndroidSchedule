@@ -36,6 +36,7 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
     private Context savedContext;
     private List<Schedule> items;
     private Integer defaultSubGroup;
+    private boolean isLastUsingDailySchedule;
 
     public ListRemoteViewsFactory(Context context, Intent intent){
         savedContext = context;
@@ -48,14 +49,18 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
         updateScheduleList();
     }
 
+    public void updateParameters(Context context, Intent intent){
+        savedContext = context;
+        dayOffset = intent.getIntExtra(OFFSET_EXTRA_NAME, 0);
+        defaultSubGroup = intent.getIntExtra(DEFAULT_SUBGROUP, 0);
+    }
+
     public void updateScheduleList(){
         String defaultSchedule = FileUtil.getDefaultSchedule(savedContext);
         if(defaultSchedule != null) {
-            Boolean isLastUsingDailySchedule = FileUtil.isLastUsingDailySchedule(savedContext);
-            if (isLastUsingDailySchedule != null) {
-                if (!isLastUsingDailySchedule) {
-                    defaultSchedule = defaultSchedule.replace(".xml", "exam.xml");
-                }
+            isLastUsingDailySchedule = FileUtil.isLastUsingDailySchedule(savedContext);
+            if (!isLastUsingDailySchedule) {
+                defaultSchedule = defaultSchedule.replace(".xml", "exam.xml");
             }
             weekSchedules = XmlDataProvider.parseScheduleXml(savedContext.getFilesDir(), defaultSchedule);
             updateCurrentDaySchedules();
@@ -65,24 +70,32 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
     private void updateCurrentDaySchedules(){
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DATE, dayOffset);
-
-        int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
-        if (currentDay == Calendar.SUNDAY) {
-            currentDay = 8;
+        List<Schedule> schedules;
+        if(isLastUsingDailySchedule) {
+            int currentDay = calendar.get(Calendar.DAY_OF_WEEK);
+            if (currentDay == Calendar.SUNDAY) {
+                currentDay = 8;
+            }
+            schedules = getSchedulesByDayOfWeek(currentDay - 2, weekSchedules);
+        } else{
+            schedules = getSchedulesByDate(weekSchedules, dayOffset);
         }
-        List<Schedule> schedules = getSchedulesByDayOfWeek(currentDay - 2, weekSchedules);
         Integer currentWeekNumber = DateUtil.getWeek(calendar.getTime());
         boolean scheduleForGroup = FileUtil.isDefaultStudentGroup(savedContext);
         items = new ArrayList<>();
         if (currentWeekNumber != null) {
             String weekNumberAsString = currentWeekNumber.toString();
             for (Schedule schedule : schedules) {
-                boolean matchWeekNumber = false;
                 boolean matchSubgroupNumber = false;
-                for (String weekNumber : schedule.getWeekNumbers()) {
-                    if (weekNumberAsString.equalsIgnoreCase(weekNumber)) {
-                        matchWeekNumber = true;
+                boolean matchWeekNumber = false;
+                if(isLastUsingDailySchedule) {
+                    for (String weekNumber : schedule.getWeekNumbers()) {
+                        if (weekNumberAsString.equalsIgnoreCase(weekNumber)) {
+                            matchWeekNumber = true;
+                        }
                     }
+                } else{
+                    matchWeekNumber = true;
                 }
 
                 if (scheduleForGroup) {
@@ -118,6 +131,26 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
         return new ArrayList<>();
     }
 
+    private List<Schedule> getSchedulesByDate(List<SchoolDay> dateSchedules, Integer dayOffset){
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DATE, dayOffset);
+        String currentDateAsString = calendar.get(Calendar.DATE) + ".";
+        //add 1 because month is zero-based
+        Integer monthOrder = calendar.get(Calendar.MONTH) + 1;
+        if(monthOrder < 10){
+            currentDateAsString += "0" + monthOrder + ".";
+        } else {
+            currentDateAsString += monthOrder + ".";
+        }
+        currentDateAsString += calendar.get(Calendar.YEAR);
+        for(SchoolDay schoolDay : dateSchedules){
+            if(schoolDay.getDayName().equalsIgnoreCase(currentDateAsString)){
+                return schoolDay.getSchedules();
+            }
+        }
+        return new ArrayList<>();
+    }
+
     @Override
     public void onDestroy(){
         items.clear();
@@ -131,17 +164,26 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
     @Override
     public RemoteViews getViewAt(int position){
         updateCurrentDaySchedules();
-
-        Schedule currentSchedule = items.get(position);
+        Schedule currentSchedule;
         RemoteViews result = new RemoteViews(savedContext.getPackageName(), R.layout.schedule_widget_item_layout);
-        String lessonTime = currentSchedule.getLessonTime();
-        String[] times = lessonTime.split("-");
-        result.setTextViewText(R.id.scheduleWidgetStartTime, times[0]);
-        result.setTextViewText(R.id.scheduleWidgetEndTime, times[1]);
-        updateLessonTypeViewBackground(currentSchedule, result);
+        if(items.size() > position) {
+            currentSchedule = items.get(position);
 
-        result.setTextViewText(R.id.scheduleWidgetSubjectName, currentSchedule.getSubject());
-        result.setTextViewText(R.id.scheduleWidgetAuditory, convertListString(currentSchedule.getAuditories(), ""));
+            String lessonTime = currentSchedule.getLessonTime();
+            String[] times = lessonTime.split("-");
+            if (times.length == 2) {
+                result.setTextViewText(R.id.scheduleWidgetStartTime, times[0]);
+                result.setTextViewText(R.id.scheduleWidgetEndTime, times[1]);
+            }
+            updateLessonTypeViewBackground(currentSchedule, result);
+
+            String subject = currentSchedule.getSubject();
+            if(!currentSchedule.getNote().isEmpty()){
+                subject += " " + currentSchedule.getNote();
+            }
+            result.setTextViewText(R.id.scheduleWidgetSubjectName, subject);
+            result.setTextViewText(R.id.scheduleWidgetAuditory, convertListString(currentSchedule.getAuditories(), ""));
+        }
         return result;
     }
 
@@ -150,7 +192,13 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
             case "ПЗ":
                 remoteViews.setInt(R.id.lessonTypeViewInWidget, "setBackgroundResource", R.color.yellow);
                 break;
+            case "УПз":
+                remoteViews.setInt(R.id.lessonTypeViewInWidget, "setBackgroundResource", R.color.yellow);
+                break;
             case "ЛК":
+                remoteViews.setInt(R.id.lessonTypeViewInWidget, "setBackgroundResource", R.color.green);
+                break;
+            case "УЛк":
                 remoteViews.setInt(R.id.lessonTypeViewInWidget, "setBackgroundResource", R.color.green);
                 break;
             case "ЛР":

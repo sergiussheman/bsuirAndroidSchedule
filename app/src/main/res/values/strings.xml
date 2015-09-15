@@ -110,7 +110,7 @@
     </string-array>
     <string-array name="navigation_labels_array">
         <item>Расписание на сегодня</item>
-        <item>Расписание экзаменов</item>
+        <item>Расписание экзаменов/заочников</item>
         <item>Выбрать расписание</item>
         <item>Отправить отзыв</item>
     </string-array>
