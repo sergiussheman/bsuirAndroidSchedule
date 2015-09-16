@@ -69,6 +69,7 @@
                 android:id="@+id/secondWidgetTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="12sp"
                 android:gravity="center"
                 android:textColor="@color/widget_text_color"/>
 
@@ -76,6 +77,7 @@
                 android:id="@+id/secondWidgetSubTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:textSize="@dimen/abc_text_size_small_material"
                 android:gravity="center"
                 android:textColor="@color/widget_text_color"/>
 
@@ -117,6 +119,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
+            android:textColor="@color/widget_no_lessons_color"
             android:text="@string/empty_lessons" />
 
     </LinearLayout>

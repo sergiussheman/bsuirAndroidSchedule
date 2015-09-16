@@ -87,6 +87,16 @@
         <item>Суббота</item>
         <item>Воскресенье</item>
     </string-array>
+    <string-array name="day_of_week_for_widget">
+        <item>Сегодня</item>
+        <item>Понедел</item>
+        <item>Вторник</item>
+        <item>Среда</item>
+        <item>Четверг</item>
+        <item>Пятница</item>
+        <item>Суббота</item>
+        <item>Воскрес</item>
+    </string-array>
     <string-array name="day_of_week_abbrev">
         <item>Пн</item>
         <item>Вт</item>

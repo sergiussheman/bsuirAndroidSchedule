@@ -24,6 +24,8 @@ public class LoadSchedule {
     private static final String EMPLOYEE_LIST_REST = "http://www.bsuir.by/schedule/rest/employee";
     private static final String SCHEDULE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/employee/android/";
     private static final String STUDENT_GROUP_REST = "http://www.bsuir.by/schedule/rest/studentGroup/";
+    private static final String LAST_UPDATE_DATE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/lastUpdateDate/employee/";
+    private static final String LAST_UPDATE_DATE_STUDENT_GROUP_REST = "http://www.bsuir.by/schedule/rest/lastUpdateDate/studentGroup/";
     private static final String TAG = "Load";
 
     public static String loadScheduleForStudentGroupById(StudentGroup sg, File fileDir){
@@ -167,4 +169,5 @@ public class LoadSchedule {
         }
         return null;
     }
+
 }

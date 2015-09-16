@@ -161,7 +161,7 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
         if(indexDayOfWeek == 1){
             indexDayOfWeek = 8;
         }
-        String[] dayOfWeekAbbrev = context.getResources().getStringArray(R.array.day_of_week);
+        String[] dayOfWeekAbbrev = context.getResources().getStringArray(R.array.day_of_week_for_widget);
         result += dayOfWeekAbbrev[indexDayOfWeek - 1];
         return  result;
     }
