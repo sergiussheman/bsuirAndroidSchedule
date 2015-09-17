@@ -141,6 +141,8 @@ public class XmlDataProvider {
             Log.v(TAG, "Ошибка при парсинге xml");
         } catch (IOException e){
             Log.v(TAG, "IO exception");
+        } catch (Exception e){
+            Log.v(TAG, "unknown exception");
         }
         return new ArrayList<>();
     }

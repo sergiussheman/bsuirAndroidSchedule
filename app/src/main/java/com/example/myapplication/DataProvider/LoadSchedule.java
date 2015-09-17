@@ -14,8 +14,12 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class LoadSchedule {
     private static final String STUDENT_GROUP_SCHEDULE_BY_ID_REST = "http://www.bsuir.by/schedule/rest/schedule/android/";
@@ -141,6 +145,74 @@ public class LoadSchedule {
             }
         }
         return new ArrayList<>();
+    }
+
+    public static Date loadLastUpdateDateForStudentGroup(String studentGroupName){
+        if(studentGroupName.substring(studentGroupName.length() - 4, studentGroupName.length()).equalsIgnoreCase(".xml")){
+            studentGroupName = studentGroupName.substring(0, studentGroupName.length() - 4);
+        }
+        String studentGroupId =  studentGroupName.substring(6, studentGroupName.length());
+        if(!studentGroupId.isEmpty()){
+            String url = LAST_UPDATE_DATE_STUDENT_GROUP_REST;
+            url += studentGroupId;
+            String lastUpdateDateAsString = loadLastUpdateDate(url);
+            if(lastUpdateDateAsString != null) {
+                try {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+                    return dateFormat.parse(lastUpdateDateAsString);
+                } catch (ParseException e) {
+                    Log.e(TAG, "error while parsing date");
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Date loadLastUpdateDateForEmployee(String employeeName){
+        String employeeId = employeeName.replaceAll("\\D+","");
+        if(employeeId != null && !employeeId.isEmpty()){
+            String url = LAST_UPDATE_DATE_EMPLOYEE_REST;
+            url += employeeId;
+            String lastUpdateDateAsString = loadLastUpdateDate(url);
+            if(lastUpdateDateAsString != null) {
+                try {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+                    return dateFormat.parse(lastUpdateDateAsString);
+                } catch (ParseException e) {
+                    Log.e(TAG, "error while parsing date");
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static String loadLastUpdateDate(String urlForDownload){
+        BufferedReader reader = null;
+        try{
+            URL url = new URL(urlForDownload);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(5000);
+            connection.connect();
+
+            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String line = reader.readLine();
+            if (line != null && !line.isEmpty()){
+                return line;
+            }
+        } catch (Exception e){
+            Log.v(TAG, e.toString());
+        } finally {
+            try {
+                if(reader != null){
+                    reader.close();
+                }
+            } catch (IOException e){
+                Log.v(TAG, e.toString());
+            }
+        }
+        return null;
     }
 
     public static String loadActualApplicationVersion(){

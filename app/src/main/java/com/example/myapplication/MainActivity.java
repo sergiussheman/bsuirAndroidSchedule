@@ -45,8 +45,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -127,6 +130,7 @@ public class MainActivity extends ActionBarActivity
         mProgressDialog.setCancelable(true);
         showMessageAboutWidget();
         checkForUpdated();
+        checkForUpdateSchedule();
     }
 
     public boolean onNavigationItemSelected(int position, long id) {
@@ -176,6 +180,50 @@ public class MainActivity extends ActionBarActivity
         if(networkInfo != null && networkInfo.isConnected()) {
             DownloadActualVersionTask task = new DownloadActualVersionTask();
             task.execute();
+        }
+    }
+
+    public void checkForUpdateSchedule(){
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        if(networkInfo != null && networkInfo.isConnected()){
+            DownloadLastUpdateDate task = new DownloadLastUpdateDate();
+            task.execute(FileUtil.getDefaultSchedule(this));
+        }
+    }
+
+    public void showDialogForUpdateSchedule(Date lastUpdateDate){
+        SharedPreferences preferences = getSharedPreferences(getString(R.string.setting_file_name), 0);
+        String defaultSchedule = FileUtil.getDefaultSchedule(this);
+        if(defaultSchedule != null && ".xml".equalsIgnoreCase(defaultSchedule.substring(defaultSchedule.length() - 4, defaultSchedule.length()))){
+            defaultSchedule = defaultSchedule.substring(0, defaultSchedule.length() - 4);
+        }
+        String downloadDateForDefaultScheduleAsString = preferences.getString(defaultSchedule, "none");
+        if(!"none".equalsIgnoreCase(downloadDateForDefaultScheduleAsString)) {
+            Date downloadDateForDefaultSchedule = null;
+            try {
+                DateFormat df = DateFormat.getDateInstance();
+                downloadDateForDefaultSchedule = df.parse(downloadDateForDefaultScheduleAsString);
+            } catch (ParseException e) {
+                Log.e(TAG, "error while parsing date");
+            }
+            if (downloadDateForDefaultSchedule != null && downloadDateForDefaultSchedule.before(lastUpdateDate)) {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.update_needed)
+                        .setMessage(R.string.update_schedule_message)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (FileUtil.isDefaultStudentGroup(MainActivity.this)) {
+                                    onChangeFragment(AvailableFragments.DownloadScheduleForGroup);
+                                } else {
+                                    onChangeFragment(AvailableFragments.DownloadScheduleForEmployee);
+                                }
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, null).show();
+            }
         }
     }
 
@@ -581,6 +629,25 @@ public class MainActivity extends ActionBarActivity
         protected void onPostExecute(String result) {
             if(result != null){
                 showDialogForUpdateApplication(result);
+            }
+        }
+    }
+
+    private class DownloadLastUpdateDate extends AsyncTask<String, Date, Date>{
+
+        @Override
+        protected Date doInBackground(String... parameters){
+            if(FileUtil.isDefaultStudentGroup(MainActivity.this)){
+                return LoadSchedule.loadLastUpdateDateForStudentGroup(parameters[0]);
+            } else{
+                return LoadSchedule.loadLastUpdateDateForEmployee(parameters[0]);
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Date result){
+            if(result != null){
+                showDialogForUpdateSchedule(result);
             }
         }
     }

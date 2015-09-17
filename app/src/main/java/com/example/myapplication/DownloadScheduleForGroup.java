@@ -262,12 +262,16 @@ public class DownloadScheduleForGroup extends Fragment {
             refreshImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    TableRow selectedRow = (TableRow) v.getParent();
-                    Integer rowNumber = (Integer) selectedRow.getTag();
-                    String fileNameForRefresh = schedulesForGroup.get(rowNumber);
-                    fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
-                    setIsDownloadingNewSchedule(false);
-                    downloadOrUpdateSchedule(fileNameForRefresh);
+                    try {
+                        TableRow selectedRow = (TableRow) v.getParent();
+                        Integer rowNumber = (Integer) selectedRow.getTag();
+                        String fileNameForRefresh = schedulesForGroup.get(rowNumber);
+                        fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
+                        setIsDownloadingNewSchedule(false);
+                        downloadOrUpdateSchedule(fileNameForRefresh);
+                    } catch (Exception e) {
+                        Toast.makeText(getActivity(), getActivity().getString(R.string.error_while_updating_schedule), Toast.LENGTH_LONG).show();
+                    }
                 }
             });
             rowForGroupSchedule.addView(refreshImageView);

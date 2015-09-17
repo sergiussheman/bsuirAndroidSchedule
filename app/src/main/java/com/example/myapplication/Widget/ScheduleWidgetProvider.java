@@ -145,7 +145,6 @@ public class ScheduleWidgetProvider extends AppWidgetProvider {
         DateFormat df = new SimpleDateFormat("dd/MM");
         String result = df.format(calendar.getTime());
 
-
         Integer currentWeekNumber = DateUtil.getWeek(calendar.getTime());
         if(currentWeekNumber != null){
             result += " (" + currentWeekNumber + " нед)";

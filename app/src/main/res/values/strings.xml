@@ -41,6 +41,7 @@
     <string name="application_deprecated">Доступна новая версия приложения. Обновить?</string>
     <string name="error_while_deleting_file">Ошибка при удалении файла</string>
     <string name="error_while_downloading_schedule">Проблема при загрузке расписания</string>
+    <string name="error_while_updating_schedule">Проблема при обновлении расписания. Необходимо удалить и скачать заново.</string>
 
     <string name="not_appropriate_student_group">Неправильный номер группы</string>
 
@@ -51,6 +52,7 @@
     <string name="should_select_employee">Необходимо выбрать преподавателя!</string>
     <string name="update_needed">Обновление</string>
     <string name="update_message">Доступно обновление. Обновить?</string>
+    <string name="update_schedule_message">В вашем расписании произошли изменения. Обновить расписание?</string>
 
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_schedule_for_group">Расписание БГУИР</string>
