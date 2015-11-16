@@ -3,6 +3,7 @@ package com.example.myapplication;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,23 +21,33 @@ import com.example.myapplication.Model.AvailableFragments;
  * create an instance of this fragment.
  */
 public class WhoAreYou extends Fragment {
+    private static final String TAG = "whoAreYouTag";
 
-    private OnFragmentInteractionListener mListener;
+    private OnFragmentInteractionListener listener;
 
-    public static WhoAreYou newInstance() {
-        WhoAreYou fragment = new WhoAreYou();
-        return fragment;
-    }
-
+    /**
+     * Фрагмент предоставляющий пользователю выбор какое расписание скачивать: расписание группы
+     * или преподавтеля
+     */
     public WhoAreYou() {
         // Required empty public constructor
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    /**
+     * Метод для создания экземпляра фрагмента
+     * @return возвращает созданный фрагмент
+     */
+    public static WhoAreYou newInstance() {
+        return new WhoAreYou();
     }
 
+    /**
+     * Метод для создания View которое отображается пользователю
+     * @param inflater Объект для создания View
+     * @param container родительское View
+     * @param savedInstanceState Сохраненное состояние фрагмента
+     * @return Возвращает созданное view
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -49,14 +60,14 @@ public class WhoAreYou extends Fragment {
         buttonForStudentSchedule.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onChangeFragment(AvailableFragments.DownloadScheduleForGroup);
+                listener.onChangeFragment(AvailableFragments.DOWNLOAD_SCHEDULE_FOR_GROUP);
             }
         });
 
         buttonForEmployeeSchedule.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mListener.onChangeFragment(AvailableFragments.DownloadScheduleForEmployee);
+                listener.onChangeFragment(AvailableFragments.DOWNLOAD_SCHEDULE_FOR_EMPLOYEE);
             }
         });
         return view;
@@ -66,8 +77,9 @@ public class WhoAreYou extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            listener = (OnFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
+            Log.v(TAG, e.getMessage(), e);
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
@@ -76,7 +88,7 @@ public class WhoAreYou extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
+        listener = null;
     }
 
 }

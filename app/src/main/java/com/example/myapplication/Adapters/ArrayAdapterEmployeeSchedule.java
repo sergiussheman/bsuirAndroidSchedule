@@ -2,51 +2,53 @@ package com.example.myapplication.Adapters;
 
 import android.app.Activity;
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.example.myapplication.Model.Employee;
-import com.example.myapplication.Model.Schedule;
 import com.example.myapplication.R;
-import com.example.myapplication.Utils.EmployeeUtil;
-
-import java.util.List;
+import com.example.myapplication.Model.Schedule;
 
 /**
  * Created by iChrome on 14.08.2015.
  */
-public class ArrayAdapterEmployeeSchedule extends ArrayAdapter<Schedule> {
-    Context context;
-    int layoutID;
-    Schedule[] data = null;
+public class ArrayAdapterEmployeeSchedule extends BaseArrayAdapterSchedule {
 
+    /**
+     * Адаптер для списка расписания преподавателя
+     * @param context контекст
+     * @param layoutResourceId id listView в котором отображаются занятия преподавателя
+     * @param data данные которые необходимо отобразить в listView
+     */
     public ArrayAdapterEmployeeSchedule(Context context, int layoutResourceId, Schedule[] data){
         super(context, layoutResourceId, data);
-        this.context = context;
-        this.layoutID = layoutResourceId;
-        this.data = data;
     }
 
+    /**
+     * Метод возвращает view для выбранного занятия из списка занятий преподавателя выбранного пользователем дня
+     * @param position номер занятия для которого нужно создать view
+     * @param passedConvertView View которое нужно заполнить дабнными выбранного занятия
+     * @param parent родительское View
+     * @return возвращает результирующее view
+     */
     @Override
-    public View getView(int position, View convertView, ViewGroup parent){
+    public View getView(int position, View passedConvertView, ViewGroup parent){
+        View convertView = passedConvertView;
         if(convertView == null) {
             LayoutInflater inflater = ((Activity) context).getLayoutInflater();
             convertView = inflater.inflate(layoutID, parent, false);
         }
         Schedule currentSchedule = data[position];
 
-        View lessonTypeView = convertView.findViewById(R.id.lessonTypeView);
-        updateLessonTypeView(lessonTypeView, currentSchedule.getLessonType());
-
         TextView scheduleTimeTextView = (TextView) convertView.findViewById(R.id.scheduleTimeTextView);
         scheduleTimeTextView.setText(currentSchedule.getLessonTime());
 
+        View lessonTypeView = convertView.findViewById(R.id.lessonTypeView);
+        updateLessonTypeView(lessonTypeView, currentSchedule.getLessonType());
+
         TextView subjectName = (TextView) convertView.findViewById(R.id.subjectNameListItem);
-        String textForSubjectTextView = currentSchedule.getLessonType();
+        String textForSubjectTextView = currentSchedule.getSubject();
         if(!currentSchedule.getLessonType().isEmpty()){
             textForSubjectTextView += " (" + currentSchedule.getLessonType() + ")";
         }
@@ -56,64 +58,18 @@ public class ArrayAdapterEmployeeSchedule extends ArrayAdapter<Schedule> {
         TextView employeeName = (TextView) convertView.findViewById(R.id.employeeNameListItem);
         employeeName.setText(currentSchedule.getStudentGroup());
 
-        if(!currentSchedule.getSubGroup().isEmpty()) {
-            TextView subGroup = (TextView) convertView.findViewById(R.id.subGroupTextView);
-            subGroup.setText(currentSchedule.getSubGroup() + " подгр.");
-        }
         if(currentSchedule.getWeekNumbers().size() != 4) {
             TextView weekNumber = (TextView) convertView.findViewById(R.id.weekNumberTextView);
             weekNumber.setText(convertListString(currentSchedule.getWeekNumbers(), " неделя"));
         }
 
+        if(!currentSchedule.getSubGroup().isEmpty()) {
+            TextView subGroup = (TextView) convertView.findViewById(R.id.subGroupTextView);
+            subGroup.setText(currentSchedule.getSubGroup() + " подгр.");
+        }
+
         TextView auditoryName = (TextView) convertView.findViewById(R.id.auditoryNameListItem);
         auditoryName.setText(convertListString(currentSchedule.getAuditories(), ""));
         return convertView;
-    }
-
-    public void updateLessonTypeView(View view, String lessonType){
-        switch(lessonType){
-            case "ПЗ":
-                view.setBackgroundResource(R.color.yellow);
-                break;
-            case "УПз":
-                view.setBackgroundResource(R.color.yellow);
-                break;
-            case "ЛК":
-                view.setBackgroundResource(R.color.green);
-                break;
-            case "УЛк":
-                view.setBackgroundResource(R.color.green);
-                break;
-            case "ЛР":
-                view.setBackgroundResource(R.color.red);
-                break;
-            default:
-                view.setBackgroundResource(R.color.blue);
-                break;
-        }
-    }
-
-    @NonNull
-    private String convertListString(List<String> values, String addition){
-        StringBuilder result = new StringBuilder();
-        for(String value : values){
-            result.append(value);
-            result.append(", ");
-        }
-        if(result.length() > 2) {
-            result.delete(result.length() - 2, result.length());
-            result.append(addition);
-        }
-        return result.toString();
-    }
-
-    @Override
-    public boolean areAllItemsEnabled() {
-        return false;
-    }
-
-    @Override
-    public boolean isEnabled(int position) {
-        return false;
     }
 }

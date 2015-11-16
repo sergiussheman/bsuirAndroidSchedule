@@ -21,6 +21,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Класс предсотавляющий методы для загрузки расписаний
+ */
 public class LoadSchedule {
     private static final String STUDENT_GROUP_SCHEDULE_BY_ID_REST = "http://www.bsuir.by/schedule/rest/schedule/android/";
     private static final String EXAM_SCHEDULE = "http://www.bsuir.by/schedule/rest/examSchedule/android/";
@@ -32,6 +35,18 @@ public class LoadSchedule {
     private static final String LAST_UPDATE_DATE_STUDENT_GROUP_REST = "http://www.bsuir.by/schedule/rest/lastUpdateDate/studentGroup/";
     private static final String TAG = "Load";
 
+    /**
+     * Класс предоставляющий методы для загрузки расписаний
+     */
+    private LoadSchedule(){
+    }
+
+    /**
+     * Метод загружает расписание занятий для группы
+     * @param sg группа для которой нужно загрузить расписание занятий
+     * @param fileDir файл в который нужно сохранить скачанное расписание
+     * @return Возвращает null если скачивание прошло успешно, иначе возвращает сообщение об ошибке
+     */
     public static String loadScheduleForStudentGroupById(StudentGroup sg, File fileDir){
         try{
             URL url = new URL(STUDENT_GROUP_SCHEDULE_BY_ID_REST + sg.getStudentGroupId().toString());
@@ -42,13 +57,20 @@ public class LoadSchedule {
 
             return null;
         } catch (SocketTimeoutException e) {
+            Log.v(TAG, e.getMessage(), e);
             return "Ошибка подключения. Сервер не отвечает.";
         } catch (IOException e) {
-            Log.v("logs", e.toString());
+            Log.v("logs", e.toString(), e);
             return "Группа " + sg.getStudentGroupName() + " не найдена. Проверьте соединение с интернетом." + e.toString();
         }
     }
 
+    /**
+     * Скачивает расписание занятий для преподавателя
+     * @param employeeName Имя преподавателя для которого нужно скачать расписание занятий
+     * @param filesDir имя файла в который нужно сохранить скачанное расписание
+     * @return Возвращает null если скачивание прошло успешно, иначе возвращает сообщение об ошибке
+     */
     public static String loadScheduleForEmployee(String employeeName, File filesDir){
         try {
             //employeeName contains last name and id
@@ -59,13 +81,21 @@ public class LoadSchedule {
             loadSchedule(url, filesDir, employeeName);
             return null;
         } catch (SocketTimeoutException e) {
+            Log.v(TAG, e.getMessage(), e);
             return "Ошибка подключения. Сервер не отвечает.";
         } catch (IOException e) {
-            Log.v("logs", e.toString());
+            Log.v("logs", e.toString(), e);
             return "Расписание для " + employeeName + " не найдено." + e.toString();
         }
     }
 
+    /**
+     * Метод скачивает расписание и сохраняет его в файл
+     * @param url url  по которому скачивается расписание
+     * @param fileDir папка в которой сохраняется скачанное расписание
+     * @param fileName файл в который сохранятеся скачанное расписание
+     * @throws IOException
+     */
     private static void loadSchedule(URL url, File fileDir, String fileName) throws IOException{
         HttpURLConnection urlConnection = (HttpURLConnection) url
                 .openConnection();
@@ -86,6 +116,10 @@ public class LoadSchedule {
         Log.v(TAG, "Расписание успешно загружено!");
     }
 
+    /**
+     * Скачивает список всех студенченских групп у которых есть расписание
+     * @return Возвращает список групп у которых есть расписание
+     */
     public static List<StudentGroup> loadAvailableStudentGroups(){
         BufferedReader reader = null;
         try{
@@ -103,19 +137,23 @@ public class LoadSchedule {
             }
             return XmlDataProvider.parseListStudentGroupXml(result.toString());
         } catch (Exception e){
-            Log.v(TAG, e.toString());
+            Log.v(TAG, e.toString(), e);
         } finally {
             try{
                 if(reader != null){
                     reader.close();
                 }
             } catch (IOException e){
-                Log.v(TAG, e.toString());
+                Log.v(TAG, e.toString(), e);
             }
         }
         return new ArrayList<>();
     }
 
+    /**
+     * Скачивает список всех преподавателей у которых есть расписание
+     * @return Возвращает список преподавателей у которых есть расписание
+     */
     public static List<Employee> loadListEmployee() {
         BufferedReader reader = null;
         try {
@@ -133,7 +171,7 @@ public class LoadSchedule {
             }
             return XmlDataProvider.parseListEmployeeXml(result.toString());
         } catch (Exception e){
-            Log.v(TAG, e.toString());
+            Log.v(TAG, e.toString(), e);
         } finally {
             try {
                 if (reader != null) {
@@ -141,14 +179,20 @@ public class LoadSchedule {
                 }
 
             } catch (IOException e){
-                Log.v(TAG, e.toString());
+                Log.v(TAG, e.toString(), e);
             }
         }
         return new ArrayList<>();
     }
 
-    public static Date loadLastUpdateDateForStudentGroup(String studentGroupName){
-        if(studentGroupName.substring(studentGroupName.length() - 4, studentGroupName.length()).equalsIgnoreCase(".xml")){
+    /**
+     * Получает через веб сервис дату последнего обновления расписания для студенченской группы
+     * @param passedStudentGroupName группа для которой нужно скачать дату обновления
+     * @return возвращает дату последнего обновления
+     */
+    public static Date loadLastUpdateDateForStudentGroup(String passedStudentGroupName){
+        String studentGroupName = passedStudentGroupName;
+        if(".xml".equalsIgnoreCase(studentGroupName.substring(studentGroupName.length() - 4, studentGroupName.length()))){
             studentGroupName = studentGroupName.substring(0, studentGroupName.length() - 4);
         }
         String studentGroupId =  studentGroupName.substring(6, studentGroupName.length());
@@ -161,7 +205,7 @@ public class LoadSchedule {
                     SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
                     return dateFormat.parse(lastUpdateDateAsString);
                 } catch (ParseException e) {
-                    Log.e(TAG, "error while parsing date");
+                    Log.e(TAG, "error while parsing date", e);
                     return null;
                 }
             }
@@ -169,8 +213,13 @@ public class LoadSchedule {
         return null;
     }
 
+    /**
+     * Получает через веб сервис дату последнего обновления расписания для преподавателя
+     * @param employeeName Имя преподавателя для которого нужно скачать дату последнего обновления расписания
+     * @return Возвращает дату последнего обновления расписания для преподавателя
+     */
     public static Date loadLastUpdateDateForEmployee(String employeeName){
-        String employeeId = employeeName.replaceAll("\\D+","");
+        String employeeId = employeeName.replaceAll("\\D+", "");
         if(employeeId != null && !employeeId.isEmpty()){
             String url = LAST_UPDATE_DATE_EMPLOYEE_REST;
             url += employeeId;
@@ -180,7 +229,7 @@ public class LoadSchedule {
                     SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
                     return dateFormat.parse(lastUpdateDateAsString);
                 } catch (ParseException e) {
-                    Log.e(TAG, "error while parsing date");
+                    Log.e(TAG, "error while parsing date", e);
                     return null;
                 }
             }
@@ -188,37 +237,32 @@ public class LoadSchedule {
         return null;
     }
 
+    /**
+     * Использует веб сервис для получения даты последнего обновления расписания
+     * @param urlForDownload url веб сервиса
+     * @return возвращает дату последнего обновления ввиде строки
+     */
     public static String loadLastUpdateDate(String urlForDownload){
-        BufferedReader reader = null;
-        try{
-            URL url = new URL(urlForDownload);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setConnectTimeout(5000);
-            connection.connect();
-
-            reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String line = reader.readLine();
-            if (line != null && !line.isEmpty()){
-                return line;
-            }
-        } catch (Exception e){
-            Log.v(TAG, e.toString());
-        } finally {
-            try {
-                if(reader != null){
-                    reader.close();
-                }
-            } catch (IOException e){
-                Log.v(TAG, e.toString());
-            }
-        }
-        return null;
+        return loadStringFromWebService(urlForDownload);
     }
 
+    /**
+     * Скачивает актуальную версию приложения
+     * @return возвращает актуальную версию андроид приложения
+     */
     public static String loadActualApplicationVersion(){
+        return loadStringFromWebService(ACTUAL_APPLICATION_VERSION_URL);
+    }
+
+    /**
+     * Базовый метод для загрузки информации через веб сервис
+     * @param serviceURL url веб сервиса
+     * @return возвращает скачанную строку
+     */
+    public static String loadStringFromWebService(String serviceURL){
         BufferedReader reader = null;
         try{
-            URL url = new URL(ACTUAL_APPLICATION_VERSION_URL);
+            URL url = new URL(serviceURL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(5000);
             connection.connect();
@@ -229,17 +273,16 @@ public class LoadSchedule {
                 return line;
             }
         } catch (Exception e){
-            Log.v(TAG, e.toString());
+            Log.v(TAG, e.toString(), e);
         } finally {
             try {
                 if(reader != null){
                     reader.close();
                 }
             } catch (IOException e){
-                Log.v(TAG, e.toString());
+                Log.v(TAG, e.toString(), e);
             }
         }
         return null;
     }
-
 }

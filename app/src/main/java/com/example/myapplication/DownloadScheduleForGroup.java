@@ -3,11 +3,8 @@ package com.example.myapplication;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.net.ConnectivityManager;
@@ -30,23 +27,26 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.myapplication.DataProvider.LoadSchedule;
+import com.example.myapplication.Model.AvailableFragments;
 import com.example.myapplication.Model.StudentGroup;
 import com.example.myapplication.Utils.DateUtil;
 import com.example.myapplication.Utils.FileUtil;
-import com.example.myapplication.DataProvider.LoadSchedule;
-import com.example.myapplication.Model.AvailableFragments;
-import com.example.myapplication.Widget.ScheduleWidgetProvider;
+import com.example.myapplication.Utils.WidgetUtil;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 
+/**
+ * Фрагмент для скачивания расписания студенченской группы
+ */
 public class DownloadScheduleForGroup extends Fragment {
     private static final String TAG = "downScheForGroupTAG";
     private static final Integer COUNT_DIGITS_IN_STUDENT_GROUP = 6;
 
-    private OnFragmentInteractionListener mListener;
+    private OnFragmentInteractionListener parentActivity;
     private List<String> downloadedSchedulesForGroup;
     private boolean isDownloadingNewSchedule;
     private View currentView;
@@ -54,20 +54,30 @@ public class DownloadScheduleForGroup extends Fragment {
     private List<StudentGroup> availableStudentGroups;
     ProgressDialog mProgressDialog;
 
-    public static DownloadScheduleForGroup newInstance() {
-        DownloadScheduleForGroup fragment = new DownloadScheduleForGroup();
-        return fragment;
-    }
-
+    /**
+     * Фрагмент для скачивания расписания студенченской группы
+     */
     public DownloadScheduleForGroup() {
         // Required empty public constructor
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    /**
+     * статический метод для создания экземпляра данного фрагмента
+     * @return созданный фрагмент
+     */
+    public static DownloadScheduleForGroup newInstance() {
+        return new DownloadScheduleForGroup();
     }
 
+
+    /**
+     * Метод вызывается для того чтобы fragment создал view которую будет показано пользователю.
+     * @param inflater объект служащий для создания view
+     * @param container ссылка на view, к которому фрагмент будет присоединен
+     * @param savedInstanceState Если фрагмент был пересоздан, то в savedInstanceState будут
+     *                           хранится его сохраненные параметры
+     * @return Возвращает View которое будет показано пользователю
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -82,6 +92,7 @@ public class DownloadScheduleForGroup extends Fragment {
             }
         } catch (Exception e){
             Toast.makeText(getActivity(), R.string.can_not_load_list_of_student_groups, Toast.LENGTH_LONG).show();
+            Log.v(TAG, e.getMessage(), e);
         }
 
         Button button = (Button) currentView.findViewById(R.id.buttonForDownloadSchedule);
@@ -93,7 +104,7 @@ public class DownloadScheduleForGroup extends Fragment {
                 String studentGroup = editText.getText().toString();
                 StudentGroup selectedStudentGroup = isAppropriateStudentGroup(studentGroup);
                 if (selectedStudentGroup == null) {
-                    Toast toast =  Toast.makeText(getActivity(), R.string.not_appropriate_student_group, Toast.LENGTH_LONG);
+                    Toast toast =  Toast.makeText(getActivity(), R.string.not_schedule_for_your_group, Toast.LENGTH_LONG);
                     toast.setGravity(Gravity.TOP, 0, 30);
                     toast.show();
                 } else {
@@ -115,6 +126,11 @@ public class DownloadScheduleForGroup extends Fragment {
         return currentView;
     }
 
+    /**
+     * Метод для скачивания или обновления расписания для группы
+     * @param sg группа для которой необходимо скачать или обновить расписание. Представляется
+     *           объектом StudentGroup
+     */
     private void downloadOrUpdateSchedule(StudentGroup sg){
         ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
@@ -128,21 +144,11 @@ public class DownloadScheduleForGroup extends Fragment {
         }
     }
 
-    private void updateWidgets(){
-        Context context = getActivity().getApplicationContext();
-        ComponentName name = new ComponentName(context, ScheduleWidgetProvider.class);
-        int [] ids = AppWidgetManager.getInstance(context).getAppWidgetIds(name);
-
-        Intent intent = new Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE, null, getActivity(), ScheduleWidgetProvider.class);
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
-        getActivity().sendBroadcast(intent);
-
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-        int appWidgetIds[] = appWidgetManager.getAppWidgetIds(
-                new ComponentName(context, ScheduleWidgetProvider.class));
-        appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.listViewWidget);
-    }
-
+    /**
+     * Метод для скачивания или обновления расписания для группы
+     * @param passedStudentGroup группа для которой необходимо скачать или обновить расписание.
+     *                           Представляется строкой с номером группы
+     */
     private void downloadOrUpdateSchedule(String passedStudentGroup){
         ConnectivityManager connectMan = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectMan.getActiveNetworkInfo();
@@ -157,6 +163,12 @@ public class DownloadScheduleForGroup extends Fragment {
         }
     }
 
+    /**
+     * В метод передается строка, в которой соединены номер группы и ее id. Метод из этих данных
+     * формирует объект studentGroup
+     * @param studentGroupAsString строка в которой соединены номер группы и ее id
+     * @return возвращает объект studentGroup
+     */
     private StudentGroup instantiateStudentGroup(String studentGroupAsString){
         StudentGroup result = new StudentGroup();
         try {
@@ -165,11 +177,16 @@ public class DownloadScheduleForGroup extends Fragment {
             result.setStudentGroupName(studentGroupAsString.substring(0, 6));
             result.setStudentGroupId(Long.parseLong(studentGroupAsString.substring(6, studentGroupAsString.length())));
         } catch (Exception e){
-            Log.v(TAG, "error while instantiateStudentGroup");
+            Log.v(TAG, "error while instantiateStudentGroup", e);
         }
         return result;
     }
 
+    /**
+     * Метод наполняет таблицу списком групп для которых скачано расписание
+     * @param tableLayout таблица которую нужно заполнить
+     * @param schedulesForGroup список групп, расписание для которых было ранее скачано
+     */
     public void populateTableLayout(final TableLayout tableLayout, final List<String> schedulesForGroup){
         Integer currentRowNumber = 0;
         tableLayout.removeAllViews();
@@ -224,42 +241,16 @@ public class DownloadScheduleForGroup extends Fragment {
 
             ImageView deleteImageView = new ImageView(getActivity());
             deleteImageView.setImageDrawable(getResources().getDrawable(R.drawable.ic_action_remove));
-            deleteImageView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(final View v) {
-                    new AlertDialog.Builder(getActivity())
-                            .setTitle(getResources().getString(R.string.delete))
-                            .setMessage(getResources().getString(R.string.confirm_delete_message))
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    TableRow selectedRow = (TableRow) v.getParent();
-                                    Integer rowNumber = (Integer) selectedRow.getTag();
-                                    StringBuilder fileNameForDelete = new StringBuilder(schedulesForGroup.get(rowNumber));
-
-                                    File file = new File(getActivity().getFilesDir(), fileNameForDelete.toString());
-                                    if (!file.delete()) {
-                                        Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
-                                    }
-                                    file = new File(getActivity().getFilesDir(), fileNameForDelete.insert(fileNameForDelete.length() - 4, "exam").toString());
-                                    if (!file.delete()) {
-                                        Log.v(TAG, "file not deleted");
-                                    }
-
-                                    deleteDefaultGroupIfNeed(fileNameForDelete.toString());
-                                    setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
-                                    populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());
-                                }
-                            })
-                            .setNegativeButton(android.R.string.no, null).show();
-                }
-            });
+            deleteImageView.setOnClickListener(new ViewClickListener(tableLayout, schedulesForGroup));
             rowForGroupSchedule.addView(deleteImageView);
 
             ImageView refreshImageView = new ImageView(getActivity());
             refreshImageView.setImageDrawable(getActivity().getResources().getDrawable(R.drawable.ic_action_refresh));
             refreshImageView.setOnClickListener(new View.OnClickListener() {
+                /**
+                 * Обрабтчик на нажатию кнопку обновления расписания
+                 * @param v Ссылка на нажатую кнопку
+                 */
                 @Override
                 public void onClick(View v) {
                     try {
@@ -271,19 +262,26 @@ public class DownloadScheduleForGroup extends Fragment {
                         downloadOrUpdateSchedule(fileNameForRefresh);
                     } catch (Exception e) {
                         Toast.makeText(getActivity(), getActivity().getString(R.string.error_while_updating_schedule), Toast.LENGTH_LONG).show();
+                        Log.v(TAG, e.getMessage(), e);
                     }
                 }
             });
             rowForGroupSchedule.addView(refreshImageView);
 
             rowForGroupSchedule.setOnClickListener(new View.OnClickListener() {
+                /**
+                 * Обработчик нажатий на row в таблице со списком групп, расписание для которых было
+                 * ранее скачано. При нажатии делаем выбранное расписание дефолтным, и открываем
+                 * расписание занятий для выбранной группы
+                 * @param v Ссылка на выбранный ряд
+                 */
                 @Override
                 public void onClick(View v) {
                     TableRow selectedTableRow = (TableRow) v;
                     Integer rowNumber = (Integer) selectedTableRow.getTag();
                     String selectedGroup = schedulesForGroup.get(rowNumber);
                     updateDefaultGroup(selectedGroup, false);
-                    mListener.onChangeFragment(AvailableFragments.ShowSchedules);
+                    parentActivity.onChangeFragment(AvailableFragments.SHOW_SCHEDULES);
                 }
             });
 
@@ -293,13 +291,18 @@ public class DownloadScheduleForGroup extends Fragment {
         }
     }
 
-    private void deleteDefaultGroupIfNeed(String groupName){
+    /**
+     * Метод вызывается при удалении расписания группы. В методе проверяется является ли
+     * переданная группа дефолтной, и если так то устанавливает дефолтное расписание в null
+     * @param passedGroupName група для удаления
+     */
+    private void deleteDefaultGroupIfNeed(String passedGroupName){
         String settingFileName = getActivity().getString(R.string.setting_file_name);
         final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
         final SharedPreferences.Editor editor = preferences.edit();
         String groupFiledInSettings = getActivity().getString(R.string.default_group_field_in_settings);
         String defaultGroupName = preferences.getString(groupFiledInSettings, "none");
-        groupName = groupName.substring(0, groupName.length() - 4);
+        String groupName = passedGroupName.substring(0, passedGroupName.length() - 4);
         if(groupName.equalsIgnoreCase(defaultGroupName)){
             editor.remove(groupFiledInSettings);
         }
@@ -307,7 +310,14 @@ public class DownloadScheduleForGroup extends Fragment {
         editor.apply();
     }
 
-    private void updateDefaultGroup(String studentGroup, boolean isDownloadedSchedule){
+    /**
+     * Метод обновляет дефолтное расписание переданной группой.
+     * @param passedStudentGroup Группа которую нужно сделать дефолтной
+     * @param isDownloadedSchedule Переменная указывает расписание было скачано или же просто
+     *                             выбрано из списка уже скачанных
+     */
+    private void updateDefaultGroup(String passedStudentGroup, boolean isDownloadedSchedule){
+        String studentGroup = passedStudentGroup;
         if(".xml".equalsIgnoreCase(studentGroup.substring(studentGroup.length() - 4))){
             studentGroup = studentGroup.substring(0, studentGroup.length() - 4);
         }
@@ -322,9 +332,14 @@ public class DownloadScheduleForGroup extends Fragment {
             editor.putString(studentGroup, DateUtil.getCurrentDateAsString());
         }
         editor.apply();
-        updateWidgets();
+        WidgetUtil.updateWidgets(getActivity());
     }
 
+    /**
+     * Конвертит лист студенченских групп в массив групп
+     * @param studentGroups Лист групп которые нужно сконвертировать
+     * @return возвращает массив групп
+     */
     private String[] convertEmployeeToArray(List<StudentGroup> studentGroups){
         List<String> resultList = new ArrayList<>();
         for(StudentGroup sg : studentGroups){
@@ -335,13 +350,23 @@ public class DownloadScheduleForGroup extends Fragment {
         return resultArray;
     }
 
-    private String getLastUpdateFromPreference(String schedulesName){
-        schedulesName = schedulesName.substring(0, schedulesName.length() - 4);
+    /**
+     * Возвращает дату обновления расписания для переданной группы
+     * @param passedSchedulesName Группа для которой нужно вернуть дату последнего обновления
+     * @return Возвращает дату последнего обновления
+     */
+    private String getLastUpdateFromPreference(String passedSchedulesName){
+        String schedulesName = passedSchedulesName.substring(0, passedSchedulesName.length() - 4);
         String settingFileName = getActivity().getString(R.string.setting_file_name);
         final SharedPreferences preferences = getActivity().getSharedPreferences(settingFileName, 0);
         return preferences.getString(schedulesName, "-");
     }
 
+    /**
+     * Проверяет введенную группу на валидность
+     * @param studentGroup Введенная пользователем группа
+     * @return Возвращает группу, если валидация прошла успешно, иначе возвращается null
+     */
     private StudentGroup isAppropriateStudentGroup(String studentGroup){
         Integer countDigits = studentGroup.length();
         if (!studentGroup.isEmpty() && countDigits.equals(COUNT_DIGITS_IN_STUDENT_GROUP)) {
@@ -354,25 +379,42 @@ public class DownloadScheduleForGroup extends Fragment {
         return null;
     }
 
+    /**
+     * Метод вызывается когда фрагмент присоединяется к активити
+     * @param activity activity к которой присоединяется фрагмент
+     */
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            parentActivity = (OnFragmentInteractionListener) activity;
         } catch (ClassCastException e) {
+            Log.v(TAG, e.getMessage(), e);
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
     }
 
+    /**
+     * Метод вызывается при отсоединении фрагмента от активити.
+     */
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
+        parentActivity = null;
     }
 
+    /**
+     * Асинхронный таск для загрузки всех студенченских групп у которых есть расписание
+     */
     private class DownloadStudentGroupXML extends AsyncTask<Void, Void, String> {
 
+        /**
+         * Метод в фоне скачивает список всех студенченских расписаний у которых есть расписание
+         * @param parameters null
+         * @return Возвращает null если скачивание прошло успешно, иначе возвращает сообщение
+         * об ошибке
+         */
         @Override
         protected String doInBackground(Void... parameters) {
             try {
@@ -380,10 +422,16 @@ public class DownloadScheduleForGroup extends Fragment {
                 setAvailableStudentGroups(loadedStudentGroups);
                 return null;
             } catch (Exception e){
+                Log.v(TAG, e.getMessage(), e);
                 return e.toString();
             }
         }
 
+        /**
+         * Метод вызывается после скачивания всех доступных групп. В методе конфигурируется
+         * AutoCompleteTextView, для того чтобы пользователю показывались доступные группы
+         * @param result Результат скачивания
+         */
         @Override
         protected void onPostExecute(String result) {
             try {
@@ -394,7 +442,7 @@ public class DownloadScheduleForGroup extends Fragment {
                     textView.setAdapter(adapter);
                 }
             } catch (Exception e){
-                Log.v(TAG, "Exception occurred" + e.toString());
+                Log.v(TAG, "Exception occurred" + e.toString(), e);
             }
         }
     }
@@ -404,14 +452,28 @@ public class DownloadScheduleForGroup extends Fragment {
         private Context context;
         private PowerManager.WakeLock mWakeLock;
 
+        /**
+         * Асинхронный таск для скачивания расписания для введенной пользователем группы
+         * @param context контекст
+         */
         public DownloadStudentGroupScheduleTask(Context context) {
             this.context = context;
         }
 
+        /**
+         * Метод в фоне скачивает расписание для введенной пользователем группы
+         * @param urls Группа для которой необходимо скачать расписание
+         * @return Возвращает null если скачивание прошло успешно, иначе возвращает сообщение
+         * об ошибке
+         */
         protected String doInBackground(StudentGroup... urls) {
             return LoadSchedule.loadScheduleForStudentGroupById(urls[0], fileDir);
         }
 
+        /**
+         * Метод вызывается перед началом скачивания. Здесь создается прогресс бар отображающий
+         * процесс скачивания расписания
+         */
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -422,6 +484,10 @@ public class DownloadScheduleForGroup extends Fragment {
             mProgressDialog.show();
         }
 
+        /**
+         * Метод обновляет процент уже скачанного расписания
+         * @param progress Прогресс скачивания расписания
+         */
         @Override
         protected void onProgressUpdate(Integer... progress) {
             super.onProgressUpdate(progress);
@@ -429,6 +495,11 @@ public class DownloadScheduleForGroup extends Fragment {
             mProgressDialog.setProgress(progress[0]);
         }
 
+        /**
+         * Метод вызывается после завершения скачивания. Метод открывает фрагмент для просмотра
+         * расписания, или показывает сообщение об ошибке, если расписание не было скачано.
+         * @param result Результат скачивания
+         */
         protected void onPostExecute(String result) {
             mWakeLock.release();
             mProgressDialog.dismiss();
@@ -436,7 +507,7 @@ public class DownloadScheduleForGroup extends Fragment {
                 Toast.makeText(getActivity(), getString(R.string.error_while_downloading_schedule), Toast.LENGTH_LONG).show();
             } else {
                 if(isDownloadingNewSchedule()) {
-                    mListener.onChangeFragment(AvailableFragments.ShowSchedules);
+                    parentActivity.onChangeFragment(AvailableFragments.SHOW_SCHEDULES);
                 } else{
                     populateTableLayout(getTableLayoutForDownloadedSchedules(), getDownloadedSchedulesForGroup());
                 }
@@ -446,43 +517,115 @@ public class DownloadScheduleForGroup extends Fragment {
     }
 
 
+    /**
+     * Метод для получения списка групп для которых было скачано расписание
+     * @return Возвращает список групп
+     */
     public List<String> getDownloadedSchedulesForGroup() {
         return downloadedSchedulesForGroup;
     }
 
+    /**
+     * Устанавливает список групп для которых было скачано расписание
+     * @param downloadedSchedulesForGroup Список групп для которых скачано расписание
+     */
     public void setDownloadedSchedulesForGroup(List<String> downloadedSchedulesForGroup) {
         this.downloadedSchedulesForGroup = downloadedSchedulesForGroup;
     }
 
+    /**
+     * Метод для получения ссылки на таблицу со списком групп для которых было скачано расписание
+     * @return Возвращает ссылку на таблицу
+     */
     public TableLayout getTableLayoutForDownloadedSchedules() {
         return tableLayoutForDownloadedSchedules;
     }
 
+    /**
+     * Устанавливает ссылку на таблицу со списком групп для которых было скачано расписание
+     * @param tableLayoutForDownloadedSchedules Ссылка на таблицу со списком групп
+     */
     public void setTableLayoutForDownloadedSchedules(TableLayout tableLayoutForDownloadedSchedules) {
         this.tableLayoutForDownloadedSchedules = tableLayoutForDownloadedSchedules;
     }
 
+    /**
+     * Метод возвращает переменную указывающую скачиваем мы новое расписание, или же обновляем
+     * ранее скачанное
+     * @return Возвращает true, если скачиваем новое, а если обновляем ранее скачанное то вернет false
+     */
     public boolean isDownloadingNewSchedule() {
         return isDownloadingNewSchedule;
     }
 
+    /**
+     * Устанавливает флаг, скачиваемый мы новое расписание или обновляем ранее скачанное
+     * @param isDownloadingNewSchedule флаг определяющий скачиваем новое или обновляем ранее скачанное расписание
+     */
     public void setIsDownloadingNewSchedule(boolean isDownloadingNewSchedule) {
         this.isDownloadingNewSchedule = isDownloadingNewSchedule;
     }
 
-    public View getCurrentView() {
-        return currentView;
-    }
-
-    public void setCurrentView(View currentView) {
-        this.currentView = currentView;
-    }
-
+    /**
+     * Метод возвращает список всех групп у которых есть расписание
+     * @return Возвращает список групп
+     */
     public List<StudentGroup> getAvailableStudentGroups() {
         return availableStudentGroups;
     }
 
+    /**
+     * Устанавливает список групп у которых есть расписание
+     * @param availableStudentGroups список групп у которых есть расписание
+     */
     public void setAvailableStudentGroups(List<StudentGroup> availableStudentGroups) {
         this.availableStudentGroups = availableStudentGroups;
+    }
+
+    private class ViewClickListener implements View.OnClickListener {
+        private TableLayout tableLayout;
+        private List<String> schedulesForGroup;
+
+        /**
+         * Обработчик нажатий на кнопку
+         * @param passedTableLayout таблицу которую нужно обновить после удаления расписания
+         * @param passedSchedulesForGroup список групп расписание для которых уже было скачано
+         */
+        public ViewClickListener(final TableLayout passedTableLayout, final List<String> passedSchedulesForGroup){
+            tableLayout = passedTableLayout;
+            schedulesForGroup = passedSchedulesForGroup;
+        }
+
+        /**
+         * Обработчик нажатия на кнопку удаления расписания.
+         * @param v Ссылка на нажатый View
+         */
+        @Override
+        public void onClick(final View v) {
+            new AlertDialog.Builder(getActivity())
+                    .setTitle(getResources().getString(R.string.delete))
+                    .setMessage(getResources().getString(R.string.confirm_delete_message))
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            TableRow selectedRow = (TableRow) v.getParent();
+                            Integer rowNumber = (Integer) selectedRow.getTag();
+                            StringBuilder fileNameForDelete = new StringBuilder(schedulesForGroup.get(rowNumber));
+                            File file = new File(getActivity().getFilesDir(), fileNameForDelete.toString());
+                            if (!file.delete()) {
+                                Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
+                            }
+                            file = new File(getActivity().getFilesDir(), fileNameForDelete.insert(fileNameForDelete.length() - 4, "exam").toString());
+                            if (!file.delete()) {
+                                Log.v(TAG, "file n  ot deleted");
+                            }
+                            deleteDefaultGroupIfNeed(fileNameForDelete.toString());
+                            setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
+                            populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, null).show();
+        }
     }
 }

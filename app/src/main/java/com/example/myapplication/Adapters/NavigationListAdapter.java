@@ -25,6 +25,12 @@ public class NavigationListAdapter extends ArrayAdapter<String> {
                               R.drawable.ic_action_email};
 
 
+    /**
+     * Адаптер для отображения элементов в левом выдвигающемся меню
+     * @param context контекс
+     * @param layoutResourceId id ListView в котором необходимо отобразить доступные пункты меню
+     * @param data список элементов меню
+     */
     public NavigationListAdapter(Context context, int layoutResourceId, String[] data){
         super(context, layoutResourceId, data);
         this.context = context;
@@ -33,8 +39,16 @@ public class NavigationListAdapter extends ArrayAdapter<String> {
         context.getResources().getDrawable(R.drawable.ic_action_go_to_today);
     }
 
+    /**
+     * Метод возвращающий view для элементов, которые будут отображаться в боковом выдвигающемся меню
+     * @param position позиция элемента для которого нужно создать view
+     * @param passedConvertView view которое нужно заполнить данными
+     * @param parent родительское view
+     * @return возвращает результируещее view
+     */
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(int position, View passedConvertView, ViewGroup parent) {
+        View convertView = passedConvertView;
         try {
             if (convertView == null) {
                 LayoutInflater inflater = ((Activity) context).getLayoutInflater();
@@ -48,10 +62,8 @@ public class NavigationListAdapter extends ArrayAdapter<String> {
             label.setText(data[position]);
 
         } catch (Exception e){
-            Log.e("navigationAdapter", e.toString());
+            Log.e("navigationAdapter", e.toString(), e);
         }
         return convertView;
     }
-
-
 }

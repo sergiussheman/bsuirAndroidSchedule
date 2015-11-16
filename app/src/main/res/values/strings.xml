@@ -44,12 +44,14 @@
     <string name="error_while_updating_schedule">Проблема при обновлении расписания. Необходимо удалить и скачать заново.</string>
 
     <string name="not_appropriate_student_group">Неправильный номер группы</string>
+    <string name="not_schedule_for_your_group">Не найдено расписание для вашей группы</string>
 
     <string name="connection_timeout">Не удалось загрузить расписание</string>
     <string name="no_connection_to_network">Для скачивания расписания необходимо подключиться к сети</string>
     <string name="can_not_load_list_of_employees">Не удалось загрузить список преподавателей</string>
     <string name="can_not_load_list_of_student_groups">Не удалось загрузить список групп</string>
     <string name="should_select_employee">Необходимо выбрать преподавателя!</string>
+    <string name="not_found_schedule_for_you">Не найдено расписание для Вас</string>
     <string name="update_needed">Обновление</string>
     <string name="update_message">Доступно обновление. Обновить?</string>
     <string name="update_schedule_message">В вашем расписании произошли изменения. Обновить расписание?</string>

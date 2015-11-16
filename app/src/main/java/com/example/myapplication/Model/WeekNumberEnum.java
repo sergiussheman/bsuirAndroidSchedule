@@ -20,6 +20,11 @@ public enum WeekNumberEnum {
         return order;
     }
 
+    /**
+     * Получаем WeekNumberEnum по переданному номеру учебной недели
+     * @param order номер учебной недели для которой нужно получить WeekNumberEnum
+     * @return возвращает WeekNumberEnum
+     */
     public static WeekNumberEnum getByOrder(int order){
         for(WeekNumberEnum item : WeekNumberEnum.values()){
             if(item.getOrder().equals(order)){

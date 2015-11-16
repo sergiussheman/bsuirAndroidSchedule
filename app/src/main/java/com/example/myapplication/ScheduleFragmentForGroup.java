@@ -2,7 +2,6 @@ package com.example.myapplication;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,7 +30,6 @@ import java.util.List;
  * interface.
  */
 public class ScheduleFragmentForGroup extends Fragment {
-    private final static String TAG = "scheduleShowFragTAG";
     private Schedule[] schedulesForShow;
     private List<SchoolDay> allScheduleForGroup;
     private View currentView;
@@ -41,6 +39,22 @@ public class ScheduleFragmentForGroup extends Fragment {
     private WeekNumberEnum selectedWeekNumber;
     private SubGroupEnum selectedSubGroup;
 
+    /**
+     * Фрагмент для отображения списка занятий для студенченской группы
+     */
+    public ScheduleFragmentForGroup() {
+         // Mandatory empty constructor for the fragment manager to instantiate the
+         // fragment (e.g. upon screen orientation changes).
+    }
+
+    /**
+     * Статический метод для создания экземпляра фрагмента с заданными параметрами
+     * @param allSchedules лист всех занятий на неделю
+     * @param position текущий выбранный день недели
+     * @param weekNumber текущая выбранная учебная неделя
+     * @param subGroup текущая выбранная подгруппа
+     * @return возвращает созданный фрагмент
+     */
     public static ScheduleFragmentForGroup newInstance(List<SchoolDay> allSchedules,int position, WeekNumberEnum weekNumber, SubGroupEnum subGroup) {
         ScheduleFragmentForGroup fragment = new ScheduleFragmentForGroup();
         fragment.setAllScheduleForGroup(allSchedules);
@@ -51,19 +65,12 @@ public class ScheduleFragmentForGroup extends Fragment {
     }
 
     /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
+     * Метод для создания view которую будет отбражаться пользователю
+     * @param inflater Объект служащий создания view
+     * @param container Родительское view
+     * @param savedInstanceState Сохраненное состояние фрагмента
+     * @return Возвращает view для отображения пользователю
      */
-    public ScheduleFragmentForGroup() {
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-    }
-
-    @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         currentView = inflater.inflate(R.layout.show_schedule_fragment_layout, container, false);
@@ -73,6 +80,9 @@ public class ScheduleFragmentForGroup extends Fragment {
         return currentView;
     }
 
+    /**
+     * Обновляет listView со списком занятий на выбранный день недели
+     */
     public void updateListView(){
         if(currentView != null && getActivity() != null) {
             Integer currentWeekNumber = DateUtil.getWeek(Calendar.getInstance().getTime());
@@ -90,32 +100,18 @@ public class ScheduleFragmentForGroup extends Fragment {
         }
     }
 
+    /**
+     * Обновляет лист со списком занятий на основе выбранных пользователем фильтров
+     * @param dayPosition номере дня недели
+     * @param weekNumber номер учебной недели
+     * @param subGroupEnum номер подгруппы
+     */
     public void filterScheduleList(Integer dayPosition, WeekNumberEnum weekNumber, SubGroupEnum subGroupEnum){
         List<Schedule> result = new ArrayList<>();
         List<Schedule> selectedSchoolDay = getListSchedules(dayPosition);
         for (Schedule schedule : selectedSchoolDay) {
-            boolean matchWeekNumber = false;
-            boolean matchSubGroup = false;
-            if (weekNumber.getOrder().equals(WeekNumberEnum.ALL.getOrder())) {
-                matchWeekNumber = true;
-            } else {
-                for (String weekNumberFromSchedule : schedule.getWeekNumbers()) {
-                    if (weekNumberFromSchedule.equalsIgnoreCase(weekNumber.getOrder().toString())) {
-                        matchWeekNumber = true;
-                        break;
-                    }
-                }
-            }
-
-            if (subGroupEnum.getOrder().equals(SubGroupEnum.ENTIRE_GROUP.getOrder())) {
-                matchSubGroup = true;
-            } else if (schedule.getSubGroup().isEmpty()) {
-                matchSubGroup = true;
-            } else {
-                if (schedule.getSubGroup().equalsIgnoreCase(subGroupEnum.getOrder().toString())) {
-                    matchSubGroup = true;
-                }
-            }
+            boolean matchWeekNumber = isMatchWeekNumber(weekNumber, schedule);
+            boolean matchSubGroup = isMatchSubGroup(subGroupEnum, schedule);
 
             if (matchSubGroup && matchWeekNumber) {
                 result.add(schedule);
@@ -125,6 +121,52 @@ public class ScheduleFragmentForGroup extends Fragment {
         updateListView();
     }
 
+    /**
+     * Фильтруем занятие на основе введенной пользователем подгруппы
+     * @param subGroupEnum подгруппа введенная пользователем
+     * @param schedule занятие которое нужно проверить
+     * @return Возвращает false, если занятие не для выбранной подгруппы, иначе возвращает true
+     */
+    private static boolean isMatchSubGroup(SubGroupEnum subGroupEnum, Schedule schedule){
+        boolean result = false;
+        if (subGroupEnum.getOrder().equals(SubGroupEnum.ENTIRE_GROUP.getOrder())) {
+            result = true;
+        } else if (schedule.getSubGroup().isEmpty()) {
+            result = true;
+        } else {
+            if (schedule.getSubGroup().equalsIgnoreCase(subGroupEnum.getOrder().toString())) {
+                result = true;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Проверяет занятие на соответствие введенной пользователем учебной недели
+     * @param weekNumber Номер учебной недели введенной пользователем
+     * @param schedule Занятие для проверки
+     * @return Возвращает false, если занятие не проводится на выбранной неделе, иначе возвращает true
+     */
+    private static boolean isMatchWeekNumber(WeekNumberEnum weekNumber, Schedule schedule){
+        boolean result = false;
+        if (weekNumber.getOrder().equals(WeekNumberEnum.ALL.getOrder())) {
+            result = true;
+        } else {
+            for (String weekNumberFromSchedule : schedule.getWeekNumbers()) {
+                if (weekNumberFromSchedule.equalsIgnoreCase(weekNumber.getOrder().toString())) {
+                    result = true;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Возвращает список занятий для определенного дня недели
+     * @param position номер дня недели
+     * @return Возвращает список занятий в переданный день недели
+     */
     public List<Schedule> getListSchedules(int position){
         if(position >= 0 && position < weekDays.length) {
             String dayAsString = weekDays[position];

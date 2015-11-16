@@ -6,8 +6,14 @@ import com.example.myapplication.Model.Employee;
  * Created by iChrome on 18.08.2015.
  */
 public class EmployeeUtil {
-    private EmployeeUtil(){}
+    private EmployeeUtil(){
+    }
 
+    /**
+     * Метод формирует ФИО для переданного преподавателя
+     * @param employee Объект преподавателя из которого нужно сформировать ФИО
+     * @return Возвращает ФИО
+     */
     public static String getEmployeeFIO(Employee employee) {
         String fio = employee.getLastName();
         if (employee.getFirstName() != null && (employee.getFirstName().length() > 0)) {

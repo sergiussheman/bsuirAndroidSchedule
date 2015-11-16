@@ -1,97 +1,1 @@
-package com.example.myapplication.Adapters;
-
-import android.content.Context;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-
-import com.example.myapplication.Model.SchoolDay;
-import com.example.myapplication.Model.SubGroupEnum;
-import com.example.myapplication.Model.WeekNumberEnum;
-import com.example.myapplication.ScheduleFragmentForGroup;
-
-import java.util.List;
-
-/**
- * Created by iChrome on 01.09.2015.
- */
-public class ScheduleViewPagerAdapter extends FragmentStatePagerAdapter {
-    private Integer selectedDayPosition;
-    private WeekNumberEnum selectedWeekNumber;
-    private SubGroupEnum selectedSubGroupNumber;
-
-    private List<SchoolDay> weekSchedules;
-
-    public ScheduleViewPagerAdapter(FragmentManager fm) {
-        super(fm);
-    }
-
-    @Override
-    public Fragment getItem(int i) {
-        Integer calculatedDayPosition;
-        switch(i){
-            case 0:
-                if(selectedDayPosition == 0){
-                    calculatedDayPosition = 6;
-                } else {
-                    calculatedDayPosition = selectedDayPosition - 1;
-                }
-                break;
-            case 2:
-                if(selectedDayPosition == 6){
-                    calculatedDayPosition = 0;
-                } else {
-                    calculatedDayPosition = selectedDayPosition + 1;
-                }
-                break;
-            default:
-                calculatedDayPosition = selectedDayPosition;
-        }
-        ScheduleFragmentForGroup fragment = ScheduleFragmentForGroup.newInstance(getWeekSchedules(), calculatedDayPosition, getSelectedWeekNumber(), getSelectedSubGroupNumber());
-        return fragment;
-    }
-
-    @Override
-    public int getCount() {
-        return 3;
-    }
-
-    @Override
-    public CharSequence getPageTitle(int position) {
-        return "OBJECT " + (position + 1);
-    }
-
-
-
-    public Integer getSelectedDayPosition() {
-        return selectedDayPosition;
-    }
-
-    public void setSelectedDayPosition(Integer selectedDayPosition) {
-        this.selectedDayPosition = selectedDayPosition;
-    }
-
-    public WeekNumberEnum getSelectedWeekNumber() {
-        return selectedWeekNumber;
-    }
-
-    public void setSelectedWeekNumber(WeekNumberEnum selectedWeekNumber) {
-        this.selectedWeekNumber = selectedWeekNumber;
-    }
-
-    public SubGroupEnum getSelectedSubGroupNumber() {
-        return selectedSubGroupNumber;
-    }
-
-    public void setSelectedSubGroupNumber(SubGroupEnum selectedSubGroupNumber) {
-        this.selectedSubGroupNumber = selectedSubGroupNumber;
-    }
-
-    public List<SchoolDay> getWeekSchedules() {
-        return weekSchedules;
-    }
-
-    public void setWeekSchedules(List<SchoolDay> weekSchedules) {
-        this.weekSchedules = weekSchedules;
-    }
-}
+package com.example.myapplication.Adapters;import android.support.v4.app.Fragment;import android.support.v4.app.FragmentManager;import com.example.myapplication.ScheduleFragmentForGroup;/** * Created by iChrome on 01.09.2015. */public class ScheduleViewPagerAdapter extends BaseViewPagerAdapter {    /**     * адаптер для ViewPager  в расписании занятий     * @param fm переменная для хранения списка фрагментов     */    public ScheduleViewPagerAdapter(FragmentManager fm) {        super(fm);    }    /**     * Метод создает фрагмент по переданному номеру     * @param i позиция во ViewPager для которой нужно создать фрагмент     * @return возвращает созданный фрагмент     */    @Override    public Fragment getItem(int i) {        Integer calculatedDayPosition;        switch(i){            case LEFT:                calculatedDayPosition = calculateDayPositionForLeftScreen(selectedDayPosition);                break;            case RIGHT:                calculatedDayPosition = calculateDayPositionForRightScreen(selectedDayPosition);                break;            default:                calculatedDayPosition = selectedDayPosition;        }        return ScheduleFragmentForGroup.newInstance(getAllSchedules(), calculatedDayPosition, getSelectedWeekNumber(), getSelectedSubGroupNumber());    }    /**     * Высчитываем день недели который будет отображаться во ViewPager если пользователь сделал свап влево.     * Если день недели равен 0, то возвращаем последний день недели. Это сделано для того чтобы     * ViewPager был зациклен     * @param selectedDayPosition текущий день недели     * @return возвращает будущий день недели     */    protected static Integer calculateDayPositionForLeftScreen(Integer selectedDayPosition){        Integer result;        if(selectedDayPosition == 0){            result = 6;        } else {            result = selectedDayPosition - 1;        }        return result;    }    /**     * Высчитываем день недели который будет отображаться во ViewPager если пользователь сделал свап вправо.     * Если день недели равен последнему дню недели, то возвращаем ноль. Это сделано для того чтобы     * ViewPager был зациклен     * @param selectedDayPosition текущий день недели     * @return возвращает будущий день недели     */    protected static Integer calculateDayPositionForRightScreen(Integer selectedDayPosition){        Integer result;        if(selectedDayPosition == 6){            result = 0;        } else{            result = selectedDayPosition + 1;        }        return result;    }    /**     * Количество элементов во ViewPager     * @return количетсво доступных страниц во ViewPager     */    @Override    public int getCount() {        return 3;    }}
