@@ -28,12 +28,12 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.myapplication.DataProvider.LoadSchedule;
-import com.example.myapplication.Model.AvailableFragments;
-import com.example.myapplication.Model.Employee;
-import com.example.myapplication.Utils.DateUtil;
-import com.example.myapplication.Utils.FileUtil;
-import com.example.myapplication.Utils.WidgetUtil;
+import com.example.myapplication.dataprovider.LoadSchedule;
+import com.example.myapplication.model.AvailableFragments;
+import com.example.myapplication.model.Employee;
+import com.example.myapplication.utils.DateUtil;
+import com.example.myapplication.utils.FileUtil;
+import com.example.myapplication.utils.WidgetUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -63,15 +63,6 @@ public class DownloadScheduleForEmployee extends Fragment {
      */
     public DownloadScheduleForEmployee() {
         // Required empty public constructor
-    }
-
-    /**
-     * Статический метод для создания экземпляра фрагмента
-     * @return возвращает созданный фрагмент
-     */
-    //TODO: create bundle with list of employees
-    public static DownloadScheduleForEmployee newInstance() {
-        return new DownloadScheduleForEmployee();
     }
 
     /**

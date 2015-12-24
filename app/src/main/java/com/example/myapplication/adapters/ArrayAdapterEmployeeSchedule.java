@@ -1,4 +1,4 @@
-package com.example.myapplication.Adapters;
+package com.example.myapplication.adapters;
 
 import android.app.Activity;
 import android.content.Context;
@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.myapplication.R;
-import com.example.myapplication.Model.Schedule;
+import com.example.myapplication.model.Schedule;
 
 /**
  * Created by iChrome on 14.08.2015.

@@ -9,15 +9,16 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.example.myapplication.Adapters.ArrayAdapterEmployeeSchedule;
-import com.example.myapplication.Adapters.ArrayAdapterGroupSchedule;
-import com.example.myapplication.Model.Schedule;
-import com.example.myapplication.Model.SchoolDay;
-import com.example.myapplication.Model.SubGroupEnum;
-import com.example.myapplication.Model.WeekNumberEnum;
-import com.example.myapplication.Utils.DateUtil;
-import com.example.myapplication.Utils.FileUtil;
+import com.example.myapplication.adapters.ArrayAdapterEmployeeSchedule;
+import com.example.myapplication.adapters.ArrayAdapterGroupSchedule;
+import com.example.myapplication.model.Schedule;
+import com.example.myapplication.model.SchoolDay;
+import com.example.myapplication.model.SubGroupEnum;
+import com.example.myapplication.model.WeekNumberEnum;
+import com.example.myapplication.utils.DateUtil;
+import com.example.myapplication.utils.FileUtil;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -30,6 +31,10 @@ import java.util.List;
  * interface.
  */
 public class ScheduleFragmentForGroup extends Fragment {
+    private static final String ARG_ALL_SCHEDULES = "groupAllSchedules";
+    private static final String ARG_CURRENT_POSITION = "currentPosition";
+    private static final String ARG_SELECTED_WEEK_NUMBER = "selectedWeekNumber";
+    private static final String ARG_SELECTED_SUB_GROUP = "selectedSubGroup";
     private Schedule[] schedulesForShow;
     private List<SchoolDay> allScheduleForGroup;
     private View currentView;
@@ -57,11 +62,26 @@ public class ScheduleFragmentForGroup extends Fragment {
      */
     public static ScheduleFragmentForGroup newInstance(List<SchoolDay> allSchedules,int position, WeekNumberEnum weekNumber, SubGroupEnum subGroup) {
         ScheduleFragmentForGroup fragment = new ScheduleFragmentForGroup();
-        fragment.setAllScheduleForGroup(allSchedules);
-        fragment.selectedWeekNumber = weekNumber;
-        fragment.selectedSubGroup = subGroup;
-        fragment.currentPosition = position;
+        Bundle args = new Bundle();
+        args.putSerializable(ARG_ALL_SCHEDULES, (Serializable) allSchedules);
+        args.putInt(ARG_CURRENT_POSITION, position);
+        args.putSerializable(ARG_SELECTED_WEEK_NUMBER, weekNumber);
+        args.putSerializable(ARG_SELECTED_SUB_GROUP, subGroup);
+        fragment.setArguments(args);
         return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Bundle args = getArguments();
+        if(args != null) {
+            List<SchoolDay> allSchedules = (List<SchoolDay>) args.getSerializable(ARG_ALL_SCHEDULES);
+            setAllScheduleForGroup(allSchedules);
+            setCurrentPosition(args.getInt(ARG_CURRENT_POSITION));
+            setSelectedWeekNumber((WeekNumberEnum) args.getSerializable(ARG_SELECTED_WEEK_NUMBER));
+            setSelectedSubGroup((SubGroupEnum) args.getSerializable(ARG_SELECTED_SUB_GROUP));
+        }
     }
 
     /**
@@ -201,5 +221,45 @@ public class ScheduleFragmentForGroup extends Fragment {
 
     public void setContext(Context context) {
         this.context = context;
+    }
+
+    public View getCurrentView() {
+        return currentView;
+    }
+
+    public void setCurrentView(View currentView) {
+        this.currentView = currentView;
+    }
+
+    public String[] getWeekDays() {
+        return weekDays;
+    }
+
+    public void setWeekDays(String[] weekDays) {
+        this.weekDays = weekDays;
+    }
+
+    public Integer getCurrentPosition() {
+        return currentPosition;
+    }
+
+    public void setCurrentPosition(Integer currentPosition) {
+        this.currentPosition = currentPosition;
+    }
+
+    public WeekNumberEnum getSelectedWeekNumber() {
+        return selectedWeekNumber;
+    }
+
+    public void setSelectedWeekNumber(WeekNumberEnum selectedWeekNumber) {
+        this.selectedWeekNumber = selectedWeekNumber;
+    }
+
+    public SubGroupEnum getSelectedSubGroup() {
+        return selectedSubGroup;
+    }
+
+    public void setSelectedSubGroup(SubGroupEnum selectedSubGroup) {
+        this.selectedSubGroup = selectedSubGroup;
     }
 }

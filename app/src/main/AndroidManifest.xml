@@ -25,14 +25,14 @@
         </activity>
 
         <activity
-            android:name=".Widget.ScheduleWidgetConfigureActivity"
+            android:name=".widget.ScheduleWidgetConfigureActivity"
             android:label="@string/title_activity_schedule_widget_configure" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
             </intent-filter>
         </activity>
 
-        <receiver android:name=".Widget.ScheduleWidgetProvider" >
+        <receiver android:name=".widget.ScheduleWidgetProvider" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -43,7 +43,7 @@
         </receiver>
 
         <service
-            android:name=".Widget.ScheduleWidgetService"
+            android:name=".widget.ScheduleWidgetService"
             android:exported="false"
             android:permission="android.permission.BIND_REMOTEVIEWS" />
     </application>

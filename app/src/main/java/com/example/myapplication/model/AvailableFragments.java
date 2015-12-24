@@ -1,4 +1,4 @@
-package com.example.myapplication.Model;
+package com.example.myapplication.model;
 
 /**
  * Created by iChrome on 13.08.2015.

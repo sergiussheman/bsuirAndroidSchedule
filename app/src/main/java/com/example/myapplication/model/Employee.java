@@ -1,9 +1,11 @@
-package com.example.myapplication.Model;
+package com.example.myapplication.model;
+
+import java.io.Serializable;
 
 /**
  * Created by Лол on 05.08.2015.
  */
-public class Employee {
+public class Employee implements Serializable{
     private String firstName;
     private String lastName;
     private String middleName;

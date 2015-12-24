@@ -27,12 +27,12 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.myapplication.DataProvider.LoadSchedule;
-import com.example.myapplication.Model.AvailableFragments;
-import com.example.myapplication.Model.StudentGroup;
-import com.example.myapplication.Utils.DateUtil;
-import com.example.myapplication.Utils.FileUtil;
-import com.example.myapplication.Utils.WidgetUtil;
+import com.example.myapplication.dataprovider.LoadSchedule;
+import com.example.myapplication.model.AvailableFragments;
+import com.example.myapplication.model.StudentGroup;
+import com.example.myapplication.utils.DateUtil;
+import com.example.myapplication.utils.FileUtil;
+import com.example.myapplication.utils.WidgetUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -60,15 +60,6 @@ public class DownloadScheduleForGroup extends Fragment {
     public DownloadScheduleForGroup() {
         // Required empty public constructor
     }
-
-    /**
-     * статический метод для создания экземпляра данного фрагмента
-     * @return созданный фрагмент
-     */
-    public static DownloadScheduleForGroup newInstance() {
-        return new DownloadScheduleForGroup();
-    }
-
 
     /**
      * Метод вызывается для того чтобы fragment создал view которую будет показано пользователю.

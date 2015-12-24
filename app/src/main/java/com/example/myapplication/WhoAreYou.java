@@ -9,7 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
-import com.example.myapplication.Model.AvailableFragments;
+import com.example.myapplication.model.AvailableFragments;
 
 
 /**

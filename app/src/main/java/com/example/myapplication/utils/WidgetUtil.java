@@ -1,4 +1,4 @@
-package com.example.myapplication.Utils;
+package com.example.myapplication.utils;
 
 import android.app.Activity;
 import android.appwidget.AppWidgetManager;
@@ -7,7 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.example.myapplication.R;
-import com.example.myapplication.Widget.ScheduleWidgetProvider;
+import com.example.myapplication.widget.ScheduleWidgetProvider;
 
 /**
  * Created by iChrome on 23.09.2015.

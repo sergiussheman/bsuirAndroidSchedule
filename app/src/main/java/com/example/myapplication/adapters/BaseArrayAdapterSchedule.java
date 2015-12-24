@@ -1,4 +1,4 @@
-package com.example.myapplication.Adapters;
+package com.example.myapplication.adapters;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -6,7 +6,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 
 import com.example.myapplication.R;
-import com.example.myapplication.Model.Schedule;
+import com.example.myapplication.model.Schedule;
 
 import java.util.List;
 

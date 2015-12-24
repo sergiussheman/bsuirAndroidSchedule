@@ -1,6 +1,6 @@
-package com.example.myapplication.Utils;
+package com.example.myapplication.utils;
 
-import com.example.myapplication.Model.Employee;
+import com.example.myapplication.model.Employee;
 
 /**
  * Created by iChrome on 18.08.2015.

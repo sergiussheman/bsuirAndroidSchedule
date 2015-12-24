@@ -1,11 +1,12 @@
-package com.example.myapplication.Model;
+package com.example.myapplication.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by Лол on 05.08.2015.
  */
-public class SchoolDay {
+public class SchoolDay implements Serializable{
     private String dayName;
     private List<Schedule> schedules;
 

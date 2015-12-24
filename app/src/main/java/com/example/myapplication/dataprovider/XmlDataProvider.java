@@ -1,11 +1,11 @@
-package com.example.myapplication.DataProvider;
+package com.example.myapplication.dataprovider;
 
 import android.util.Log;
 
-import com.example.myapplication.Model.Employee;
-import com.example.myapplication.Model.Schedule;
-import com.example.myapplication.Model.SchoolDay;
-import com.example.myapplication.Model.StudentGroup;
+import com.example.myapplication.model.Employee;
+import com.example.myapplication.model.Schedule;
+import com.example.myapplication.model.SchoolDay;
+import com.example.myapplication.model.StudentGroup;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;

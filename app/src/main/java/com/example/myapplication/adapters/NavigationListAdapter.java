@@ -1,4 +1,4 @@
-package com.example.myapplication.Adapters;
+package com.example.myapplication.adapters;
 
 import android.app.Activity;
 import android.content.Context;

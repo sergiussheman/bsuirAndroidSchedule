@@ -1,12 +1,13 @@
-package com.example.myapplication.Model;
+package com.example.myapplication.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Лол on 05.08.2015.
  */
-public class Schedule {
+public class Schedule implements Serializable{
     private List<String> employees = new ArrayList<>();
     private List<Employee> employeeList = new ArrayList<>();
     private List<String> auditories = new ArrayList<>();

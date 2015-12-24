@@ -1,11 +1,11 @@
-package com.example.myapplication.Adapters;
+package com.example.myapplication.adapters;
 
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
-import com.example.myapplication.Model.SchoolDay;
-import com.example.myapplication.Model.SubGroupEnum;
-import com.example.myapplication.Model.WeekNumberEnum;
+import com.example.myapplication.model.SchoolDay;
+import com.example.myapplication.model.SubGroupEnum;
+import com.example.myapplication.model.WeekNumberEnum;
 
 import java.util.List;
 

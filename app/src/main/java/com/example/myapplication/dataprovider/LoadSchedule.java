@@ -1,9 +1,9 @@
-package com.example.myapplication.DataProvider;
+package com.example.myapplication.dataprovider;
 
 import android.util.Log;
 
-import com.example.myapplication.Model.Employee;
-import com.example.myapplication.Model.StudentGroup;
+import com.example.myapplication.model.Employee;
+import com.example.myapplication.model.StudentGroup;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,6 +30,7 @@ public class LoadSchedule {
     private static final String ACTUAL_APPLICATION_VERSION_URL = "http://www.bsuir.by/schedule/rest/android/actualAndroidVersion";
     private static final String EMPLOYEE_LIST_REST = "http://www.bsuir.by/schedule/rest/employee";
     private static final String SCHEDULE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/employee/android/";
+    private static final String EXAM_SCHEDULE_EMPLOYEE = "http://www.bsuir.by/schedule/rest/examSchedule/employee/";
     private static final String STUDENT_GROUP_REST = "http://www.bsuir.by/schedule/rest/studentGroup/";
     private static final String LAST_UPDATE_DATE_EMPLOYEE_REST = "http://www.bsuir.by/schedule/rest/lastUpdateDate/employee/";
     private static final String LAST_UPDATE_DATE_STUDENT_GROUP_REST = "http://www.bsuir.by/schedule/rest/lastUpdateDate/studentGroup/";
@@ -66,8 +67,8 @@ public class LoadSchedule {
     }
 
     /**
-     * Скачивает расписание занятий для преподавателя
-     * @param employeeName Имя преподавателя для которого нужно скачать расписание занятий
+     * Скачивает расписание занятий и расписание экзаменов для преподавателя
+     * @param employeeName Имя преподавателя для которого нужно скачать расписание
      * @param filesDir имя файла в который нужно сохранить скачанное расписание
      * @return Возвращает null если скачивание прошло успешно, иначе возвращает сообщение об ошибке
      */
@@ -79,6 +80,9 @@ public class LoadSchedule {
             String employeeId = employeeName.replaceAll("\\D+","");
             URL url = new URL(SCHEDULE_EMPLOYEE_REST + employeeId);
             loadSchedule(url, filesDir, employeeName);
+
+            url = new URL(EXAM_SCHEDULE_EMPLOYEE + employeeId);
+            loadSchedule(url, filesDir, employeeName + "exam");
             return null;
         } catch (SocketTimeoutException e) {
             Log.v(TAG, e.getMessage(), e);
