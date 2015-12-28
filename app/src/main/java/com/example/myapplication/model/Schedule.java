@@ -2,6 +2,7 @@ package com.example.myapplication.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -12,6 +13,8 @@ public class Schedule implements Serializable{
     private List<Employee> employeeList = new ArrayList<>();
     private List<String> auditories = new ArrayList<>();
     private List<String> weekNumbers = new ArrayList<>();
+    private Long weekDay;
+    private String date;
     private String lessonTime = "";
     private String lessonType = "";
     private String subject = "";
@@ -97,5 +100,21 @@ public class Schedule implements Serializable{
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public Long getWeekDay() {
+        return weekDay;
+    }
+
+    public void setWeekDay(Long weekDay) {
+        this.weekDay = weekDay;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
     }
 }

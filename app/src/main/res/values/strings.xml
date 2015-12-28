@@ -130,9 +130,7 @@
     </string-array>
 
     <string name="in_progress">В разработке</string>
+    <string name="title_activity_schedule_widget_configure">Конфигурирование виджета</string>
 
-<!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="appwidget_text">EXAMPLE</string>
-    <string name="title_activity_schedule_widget_configure">ScheduleWidgetConfigureActivity</string>
+    <string name="date_format_template">dd.MM.yyyy</string>
 </resources>
