@@ -194,7 +194,7 @@ public class LoadSchedule {
      * @param passedStudentGroupName группа для которой нужно скачать дату обновления
      * @return возвращает дату последнего обновления
      */
-    public static Date loadLastUpdateDateForStudentGroup(String passedStudentGroupName){
+    public static Date loadLastUpdateDateForStudentGroup(String passedStudentGroupName, String dateFormatTemplate){
         String studentGroupName = passedStudentGroupName;
         if(".xml".equalsIgnoreCase(studentGroupName.substring(studentGroupName.length() - 4, studentGroupName.length()))){
             studentGroupName = studentGroupName.substring(0, studentGroupName.length() - 4);
@@ -206,7 +206,7 @@ public class LoadSchedule {
             String lastUpdateDateAsString = loadLastUpdateDate(url);
             if(lastUpdateDateAsString != null) {
                 try {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+                    SimpleDateFormat dateFormat = new SimpleDateFormat(dateFormatTemplate, Locale.getDefault());
                     return dateFormat.parse(lastUpdateDateAsString);
                 } catch (ParseException e) {
                     Log.e(TAG, "error while parsing date", e);
@@ -222,7 +222,7 @@ public class LoadSchedule {
      * @param employeeName Имя преподавателя для которого нужно скачать дату последнего обновления расписания
      * @return Возвращает дату последнего обновления расписания для преподавателя
      */
-    public static Date loadLastUpdateDateForEmployee(String employeeName){
+    public static Date loadLastUpdateDateForEmployee(String employeeName, String dateFormatTemplate){
         String employeeId = employeeName.replaceAll("\\D+", "");
         if(employeeId != null && !employeeId.isEmpty()){
             String url = LAST_UPDATE_DATE_EMPLOYEE_REST;
@@ -230,7 +230,7 @@ public class LoadSchedule {
             String lastUpdateDateAsString = loadLastUpdateDate(url);
             if(lastUpdateDateAsString != null) {
                 try {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+                    SimpleDateFormat dateFormat = new SimpleDateFormat(dateFormatTemplate, Locale.getDefault());
                     return dateFormat.parse(lastUpdateDateAsString);
                 } catch (ParseException e) {
                     Log.e(TAG, "error while parsing date", e);
