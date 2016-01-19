@@ -43,4 +43,7 @@ public class DBColumns {
     //schedule_auditory
     public static final String SA_SCHEDULE_ID_COLUMN = "SA_ID_SCHEDULE";
     public static final String SA_AUDITORY_ID_COLUMN = "SA_ID_AUDITORY";
+
+    //scheduleView
+
 }
