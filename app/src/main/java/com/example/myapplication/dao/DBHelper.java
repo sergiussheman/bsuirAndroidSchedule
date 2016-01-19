@@ -3,6 +3,8 @@ package com.example.myapplication.dao;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.MatrixCursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
@@ -10,6 +12,7 @@ import android.util.Log;
 
 import com.example.myapplication.model.Employee;
 import com.example.myapplication.model.Schedule;
+import com.example.myapplication.model.SchoolDay;
 import com.example.myapplication.utils.ListUtil;
 
 import java.util.ArrayList;
@@ -19,8 +22,9 @@ import java.util.List;
  * Created by iChrome on 24.12.2015.
  */
 public class DBHelper extends SQLiteOpenHelper {
-    private static final String DATABASE_TAG = "sqLiteHelper";
-    private static final Integer DATABASE_VERSION = 1;
+    private static DBHelper sInstance;
+
+    private static final Integer DATABASE_VERSION = 3;
     private static final String DATABASE_NAME = "scheduleDB";
     private static final String SUBJECT_TABLE_NAME = "subject";
     private static final String EMPLOYEE_TABLE_NAME = "employee";
@@ -34,8 +38,15 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String SCHEDULE_VIEW_NAME = "scheduleView";
 
 
-    public DBHelper(Context context){
+    private DBHelper(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    public static DBHelper getInstance(Context context){
+        if(sInstance == null){
+            sInstance = new DBHelper(context.getApplicationContext());
+        }
+        return sInstance;
     }
 
     @Override
@@ -102,43 +113,16 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(sql);
 
         //creating schedule view
-       /* sql = "CREATE VIEW " + SCHEDULE_VIEW_NAME + " AS SELECT " + SCHEDULE_TABLE_NAME + "." + BaseColumns._ID + ", " +
-                SUBJECT_TABLE_NAME + "." + DBColumns.SUBJECT_NAME_COLUMN + ", " + LESSON_TIME_TABLE_NAME + "." + DBColumns.LESSON_TIME_COLUMN + ", " +
-                SCHEDULE_TABLE_NAME + "." + DBColumns.AUDITORY_NAME_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.SUBGROUP_COLUMN + ", " +
-                SCHEDULE_TABLE_NAME + "." + DBColumns.WEEK_NUMBER_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.WEEK_DAY_COLUMN + ", " +
-                SCHEDULE_TABLE_NAME + "." + DBColumns.DATE_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.LESSON_TYPE_COLUMN + ", " +
-                SCHEDULE_TABLE_NAME + "." + DBColumns.NOTE_TEXT_COLUMN + ", " +
-                "GROUP_CONCAT(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.MIDDLE_NAME_COLUMN + ", ' ', " +
-                "LEFT(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.FIRST_NAME_COLUMN + ", 1), '.', " +
-                "LEFT(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.LAST_NAME_COLUMN + ", 1), '.'), " +
-                "GROUP CONCAT(" + AUDITORY_TABLE_NAME + "." + DBColumns.AUDITORY_NAME_COLUMN + ") " +
-                "FROM  (((((((" + SCHEDULE_TABLE_NAME + " LEFT JOIN " + LESSON_TIME_TABLE_NAME + " ON (" +
-                SCHEDULE_TABLE_NAME + "." + DBColumns.LESSON_TIME_ID_COLUMN + " = " +
-                LESSON_TIME_TABLE_NAME + "." + BaseColumns._ID + ")) " +
-                "LEFT JOIN " + SUBJECT_TABLE_NAME + " ON (" + SUBJECT_TABLE_NAME + "." + BaseColumns._ID + " = " +
-                SCHEDULE_TABLE_NAME + "." + DBColumns.SUBJECT_ID_COLUMN + ")) " +
-                "LEFT JOIN " + SCHEDULE_EMPLOYEE_TABLE_NAME + " ON (" + SCHEDULE_TABLE_NAME + "." + BaseColumns._ID + " = " +
-                SCHEDULE_EMPLOYEE_TABLE_NAME + "." + DBColumns.SE_SCHEDULE_ID_COLUMN + ")) " +
-                "LEFT JOIN " + EMPLOYEE_TABLE_NAME + " ON (" + SCHEDULE_EMPLOYEE_TABLE_NAME + "." + DBColumns.SE_EMPLOYEE_ID_COLUMN + " = " +
-                EMPLOYEE_TABLE_NAME + "." + BaseColumns._ID + ")) " +
-                "LEFT JOIN " + SCHEDULE_AUDITORY_TABLE_NAME + " ON (" + SCHEDULE_TABLE_NAME + "." + " = " +
-                SCHEDULE_AUDITORY_TABLE_NAME + "." + DBColumns.SA_SCHEDULE_ID_COLUMN + ")) " +
-                "LEFT JOIN " + AUDITORY_TABLE_NAME + " ON (" + SCHEDULE_AUDITORY_TABLE_NAME + "." + DBColumns.SA_AUDITORY_ID_COLUMN + " = " +
-                AUDITORY_TABLE_NAME + "." + BaseColumns._ID + ")) " +
-                "LEFT JOIN " + NOTE_TABLE_NAME + " ON (" + SCHEDULE_TABLE_NAME + "." + BaseColumns._ID + " = " +
-                NOTE_TABLE_NAME + "." + DBColumns.NOTE_SCHEDULE_ID_COLUMN + "));";
-        db.execSQL(sql);*/
-
         sql = "CREATE VIEW " + SCHEDULE_VIEW_NAME + " AS SELECT " + SCHEDULE_TABLE_NAME + "." + BaseColumns._ID + ", " +
                 SUBJECT_TABLE_NAME + "." + DBColumns.SUBJECT_NAME_COLUMN + ", " + LESSON_TIME_TABLE_NAME + "." + DBColumns.LESSON_TIME_COLUMN + ", " +
                 AUDITORY_TABLE_NAME + "." + DBColumns.AUDITORY_NAME_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.SUBGROUP_COLUMN + ", " +
                 SCHEDULE_TABLE_NAME + "." + DBColumns.WEEK_NUMBER_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.WEEK_DAY_COLUMN + ", " +
                 SCHEDULE_TABLE_NAME + "." + DBColumns.DATE_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.LESSON_TYPE_COLUMN + ", " +
                 NOTE_TABLE_NAME + "." + DBColumns.NOTE_TEXT_COLUMN + ", " + STUDENT_GROUP_TABLE_NAME + "." + DBColumns.STUDENT_GROUP_NAME_COLUMN + ", " +
-                "GROUP_CONCAT(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.MIDDLE_NAME_COLUMN + ", " +
-                "substr(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.FIRST_NAME_COLUMN + ", 0, 1), " +
-                "substr(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.LAST_NAME_COLUMN + ", 0, 1)), " +
-                "GROUP CONCAT(" + AUDITORY_TABLE_NAME + "." + DBColumns.AUDITORY_NAME_COLUMN + ") " +
+                "GROUP_CONCAT(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.MIDDLE_NAME_COLUMN + " + ' ' + " +
+                "substr(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.FIRST_NAME_COLUMN + ", 0, 1) + '. ' + " +
+                "substr(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.LAST_NAME_COLUMN + ", 0, 1) + '.'), " +
+                "GROUP_CONCAT(" + AUDITORY_TABLE_NAME + "." + DBColumns.AUDITORY_NAME_COLUMN + ") " +
                 "FROM " + SUBJECT_TABLE_NAME + ", " + LESSON_TIME_TABLE_NAME + ", " + SCHEDULE_TABLE_NAME + ", " +
                 SCHEDULE_EMPLOYEE_TABLE_NAME + ", " + SCHEDULE_AUDITORY_TABLE_NAME + ", " + EMPLOYEE_TABLE_NAME + ", " +
                 AUDITORY_TABLE_NAME + ", " + NOTE_TABLE_NAME + ", " + STUDENT_GROUP_TABLE_NAME +
@@ -165,54 +149,45 @@ public class DBHelper extends SQLiteOpenHelper {
     public void recreateTables(SQLiteDatabase db) {
         db.execSQL("DROP VIEW IF EXISTS " + SCHEDULE_VIEW_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + SCHEDULE_EMPLOYEE_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + SCHEDULE_AUDITORY_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + AUDITORY_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + NOTE_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + SCHEDULE_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + EMPLOYEE_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + SUBJECT_TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS " + LESSON_TIME_TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + STUDENT_GROUP_TABLE_NAME);
         onCreate(db);
     }
 
 
     public long getItemWithNameFromDataBase(String tableName, String column, String value){
-        try{
-            SQLiteDatabase database = this.getWritableDatabase();
-            Cursor cursor = database.query(tableName, new String[]{ BaseColumns._ID, column}, column + " = ?", new String[]{value}, null, null, null);
-            cursor.moveToFirst();
-            if(cursor.getCount() == 0){
-                cursor.close();
-                database.close();
-                return -1;
-            } else{
-                long result = cursor.getLong(cursor.getColumnIndex(BaseColumns._ID));
-                cursor.close();
-                database.close();
-                return result;
-            }
-        } catch (Exception e){
-            Log.d(DATABASE_TAG, e.getMessage());
+        SQLiteDatabase database = this.getWritableDatabase();
+        Cursor cursor = database.query(tableName, new String[]{ BaseColumns._ID, column}, column + " = ?", new String[]{value}, null, null, null);
+        cursor.moveToFirst();
+        if(cursor.getCount() == 0){
+            cursor.close();
             return -1;
+        } else{
+            long result = cursor.getLong(cursor.getColumnIndex(BaseColumns._ID));
+            cursor.close();
+            return result;
         }
     }
 
     public long getEmployeeFromDataBase(Employee employee){
-        try{
-            SQLiteDatabase database = this.getWritableDatabase();
-            Cursor cursor = database.query(EMPLOYEE_TABLE_NAME, new String[]{ BaseColumns._ID, DBColumns.FIRST_NAME_COLUMN, DBColumns.MIDDLE_NAME_COLUMN, DBColumns.LAST_NAME_COLUMN},
-                    DBColumns.FIRST_NAME_COLUMN + " = ? and " + DBColumns.MIDDLE_NAME_COLUMN + " = ? and " + DBColumns.LAST_NAME_COLUMN + " = ? ",
-                    new String[]{employee.getFirstName(), employee.getMiddleName(), employee.getLastName()}, null, null, null);
-            if(cursor.getCount() == 0){
-                cursor.close();
-                database.close();
-                return -1;
-            } else{
-                long result = cursor.getLong(cursor.getColumnIndex(BaseColumns._ID));
-                cursor.close();
-                database.close();
-                return result;
-            }
-        } catch (Exception e){
-            Log.d(DATABASE_TAG, e.getMessage());
+        SQLiteDatabase database = this.getWritableDatabase();
+        Cursor cursor = database.query(EMPLOYEE_TABLE_NAME, new String[]{ BaseColumns._ID, DBColumns.FIRST_NAME_COLUMN, DBColumns.MIDDLE_NAME_COLUMN, DBColumns.LAST_NAME_COLUMN},
+                DBColumns.FIRST_NAME_COLUMN + " = ? and " + DBColumns.MIDDLE_NAME_COLUMN + " = ? and " + DBColumns.LAST_NAME_COLUMN + " = ? ",
+                new String[]{employee.getFirstName(), employee.getMiddleName(), employee.getLastName()}, null, null, null);
+        cursor.moveToFirst();
+        if(cursor.getCount() == 0){
+            cursor.close();
             return -1;
+        } else{
+            long result = cursor.getLong(cursor.getColumnIndex(BaseColumns._ID));
+            cursor.close();
+            return result;
         }
     }
 
@@ -233,43 +208,42 @@ public class DBHelper extends SQLiteOpenHelper {
 
         selection.add(DBColumns.STUDENT_GROUP_ID_COLUMN);
         args.add(String.valueOf(contentValues.get(DBColumns.STUDENT_GROUP_ID_COLUMN)));
-        selectionArgs.append(String.valueOf(contentValues.get(DBColumns.STUDENT_GROUP_ID_COLUMN)));
+        selectionArgs.append(DBColumns.STUDENT_GROUP_ID_COLUMN + " = ? and ");
 
-        if(schedule.getSubGroup() != null){
+        if(schedule.getSubGroup() != null && !schedule.getSubGroup().isEmpty()){
             selection.add(DBColumns.SUBGROUP_COLUMN);
-            args.add(String.valueOf(DBColumns.SUBGROUP_COLUMN));
+            args.add(String.valueOf(contentValues.get(DBColumns.SUBGROUP_COLUMN)));
             selectionArgs.append(DBColumns.SUBGROUP_COLUMN + " = ? and ");
         }
         if(schedule.getWeekNumbers() != null){
             selection.add(DBColumns.WEEK_NUMBER_COLUMN);
-            args.add(String.valueOf(DBColumns.WEEK_NUMBER_COLUMN));
+            args.add(String.valueOf(contentValues.get(DBColumns.WEEK_NUMBER_COLUMN)));
             selectionArgs.append(DBColumns.WEEK_NUMBER_COLUMN + " = ? and ");
         }
         if(schedule.getWeekDay() != null){
             selection.add(DBColumns.WEEK_DAY_COLUMN);
-            args.add(String.valueOf(DBColumns.WEEK_DAY_COLUMN));
+            args.add(String.valueOf(contentValues.get(DBColumns.WEEK_DAY_COLUMN)));
             selectionArgs.append(DBColumns.WEEK_DAY_COLUMN + " = ? and ");
         }
         if(schedule.getDate() != null){
             selection.add(DBColumns.DATE_COLUMN);
-            args.add(String.valueOf(DBColumns.DATE_COLUMN));
+            args.add(String.valueOf(contentValues.get(DBColumns.DATE_COLUMN)));
             selectionArgs.append(DBColumns.DATE_COLUMN + " = ? and ");
         }
         if(schedule.getLessonType() != null){
             selection.add(DBColumns.LESSON_TYPE_COLUMN);
-            args.add(String.valueOf(DBColumns.LESSON_TYPE_COLUMN));
+            args.add(String.valueOf(contentValues.get(DBColumns.LESSON_TYPE_COLUMN)));
             selectionArgs.append(DBColumns.LESSON_TYPE_COLUMN + " = ?");
         }
 
         Cursor cursor = database.query(SCHEDULE_TABLE_NAME, selection.toArray(new String[selection.size()]), selectionArgs.toString(), args.toArray(new String[args.size()]), null, null, null);
+        cursor.moveToFirst();
         if(cursor.getCount() == 0){
             cursor.close();
-            database.close();
             return -1;
         } else{
             long result = cursor.getLong(cursor.getColumnIndex(BaseColumns._ID));
             cursor.close();
-            database.close();
             return result;
         }
     }
@@ -281,7 +255,6 @@ public class DBHelper extends SQLiteOpenHelper {
             ContentValues contentValues = new ContentValues();
             contentValues.put(DBColumns.SUBJECT_NAME_COLUMN, subjectName);
             itemId = database.insert(SUBJECT_TABLE_NAME, null, contentValues);
-            database.close();
             return itemId;
         } else{
             //item already exists
@@ -298,7 +271,6 @@ public class DBHelper extends SQLiteOpenHelper {
             contentValues.put(DBColumns.MIDDLE_NAME_COLUMN, employee.getMiddleName());
             contentValues.put(DBColumns.LAST_NAME_COLUMN, employee.getLastName());
             resultId = database.insert(EMPLOYEE_TABLE_NAME, null, contentValues);
-            database.close();
             return resultId;
         } else{
             //employee already exists
@@ -313,7 +285,6 @@ public class DBHelper extends SQLiteOpenHelper {
             ContentValues contentValues = new ContentValues();
             contentValues.put(DBColumns.LESSON_TIME_COLUMN, lessonTime);
             resultId = database.insert(LESSON_TIME_TABLE_NAME, null, contentValues);
-            database.close();
             return resultId;
         } else{
             //lessonTime already exists
@@ -328,7 +299,6 @@ public class DBHelper extends SQLiteOpenHelper {
             ContentValues contentValues = new ContentValues();
             contentValues.put(DBColumns.STUDENT_GROUP_NAME_COLUMN, studentGroupName);
             resultId = database.insert(STUDENT_GROUP_TABLE_NAME, null, contentValues);
-            database.close();
             return resultId;
         } else{
             //studentGroup already exists
@@ -343,7 +313,6 @@ public class DBHelper extends SQLiteOpenHelper {
             ContentValues contentValues = new ContentValues();
             contentValues.put(DBColumns.AUDITORY_NAME_COLUMN, auditoryName);
             resultId = database.insert(AUDITORY_TABLE_NAME, null, contentValues);
-            database.close();
             return resultId;
         } else{
             //auditory already exists
@@ -362,31 +331,48 @@ public class DBHelper extends SQLiteOpenHelper {
             contentValues.put(DBColumns.SA_SCHEDULE_ID_COLUMN, scheduleID);
             database.insert(SCHEDULE_AUDITORY_TABLE_NAME, null, contentValues);
             cursor.close();
-            database.close();
         }
     }
 
     public void addScheduleEmployeeToDataBase(Long scheduleID, Long employeeID){
         SQLiteDatabase database = this.getWritableDatabase();
-        Cursor cursor = database.query(SCHEDULE_EMPLOYEE_TABLE_NAME, new String[] {DBColumns.SE_EMPLOYEE_ID_COLUMN, DBColumns.SE_SCHEDULE_ID_COLUMN},
+        Cursor cursor = database.query(SCHEDULE_EMPLOYEE_TABLE_NAME, new String[]{DBColumns.SE_EMPLOYEE_ID_COLUMN, DBColumns.SE_SCHEDULE_ID_COLUMN},
                 DBColumns.SE_EMPLOYEE_ID_COLUMN + " = ? and " + DBColumns.SE_SCHEDULE_ID_COLUMN + " = ?",
-                new String[] {employeeID.toString(), scheduleID.toString()}, null, null, null);
+                new String[]{employeeID.toString(), scheduleID.toString()}, null, null, null);
         if(cursor.getCount() == 0){
             ContentValues contentValues = new ContentValues();
             contentValues.put(DBColumns.SE_EMPLOYEE_ID_COLUMN, employeeID);
             contentValues.put(DBColumns.SE_SCHEDULE_ID_COLUMN, scheduleID);
             database.insert(SCHEDULE_EMPLOYEE_TABLE_NAME, null, contentValues);
             cursor.close();
-            database.close();
         }
     }
 
+    public void deleteMePLS(){
+        /*String[] projection = new String[]{BaseColumns._ID, DBColumns.SUBJECT_ID_COLUMN, DBColumns.LESSON_TIME_ID_COLUMN, DBColumns.SUBGROUP_COLUMN, DBColumns.WEEK_NUMBER_COLUMN,
+                                            DBColumns.WEEK_DAY_COLUMN, DBColumns.DATE_COLUMN, DBColumns.LESSON_TYPE_COLUMN, DBColumns.STUDENT_GROUP_ID_COLUMN};
+
+
+        Cursor cursor = getWritableDatabase().query(SCHEDULE_TABLE_NAME, projection, null, null, null, null, null);
+        if(cursor.moveToFirst()){
+            do{
+                Long id = cursor.getLong(cursor.getColumnIndex(BaseColumns._ID));
+                Long sgID = cursor.getLong(cursor.getColumnIndex(DBColumns.STUDENT_GROUP_ID_COLUMN));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();*/
+
+        this.getWritableDatabase().delete(SCHEDULE_TABLE_NAME, null, null);
+    }
+
     public long addScheduleToDataBase(Schedule schedule){
+        //deleteMePLS();
+
         ContentValues contentValues = new ContentValues();
         contentValues.put(DBColumns.SUBJECT_ID_COLUMN, addSubjectToDataBase(schedule.getSubject()));
         contentValues.put(DBColumns.LESSON_TIME_ID_COLUMN, addLessonTimeToDataBase(schedule.getLessonTime()));
         contentValues.put(DBColumns.STUDENT_GROUP_ID_COLUMN, addStudentGroupToDataBase(schedule.getStudentGroup()));
-        if(schedule.getSubGroup() != null){
+        if(schedule.getSubGroup() != null && !schedule.getSubGroup().isEmpty()){
             contentValues.put(DBColumns.SUBGROUP_COLUMN, schedule.getSubGroup());
         }
         if(schedule.getWeekNumbers() != null){
@@ -406,17 +392,81 @@ public class DBHelper extends SQLiteOpenHelper {
         if(scheduleResultId < 0){
             SQLiteDatabase database = this.getWritableDatabase();
             scheduleResultId = database.insert(SCHEDULE_TABLE_NAME, null, contentValues);
-            database.close();
         }
 
         for(Employee employee : schedule.getEmployeeList()){
-            Long employeeID = getEmployeeFromDataBase(employee);
+            Long employeeID = addEmployeeToDataBase(employee);
             addScheduleEmployeeToDataBase(scheduleResultId, employeeID);
         }
         for(String auditory : schedule.getAuditories()){
-            Long auditoryID = getItemWithNameFromDataBase(AUDITORY_TABLE_NAME, DBColumns.AUDITORY_NAME_COLUMN, auditory);
+            Long auditoryID = addAuditoryToDataBase(auditory);
             addScheduleAuditoryToDataBase(scheduleResultId, auditoryID);
         }
         return scheduleResultId;
+    }
+
+    public List<SchoolDay> getWeekSchedulesForStudentGroup(String passedStudentGroup){
+        String studentGroup = passedStudentGroup.substring(0, 6);
+
+        SQLiteDatabase database = this.getWritableDatabase();
+        Cursor cursor = database.query(SCHEDULE_VIEW_NAME, new String[]{BaseColumns._ID, DBColumns.SUBJECT_NAME_COLUMN, DBColumns.LESSON_TIME_COLUMN, DBColumns.AUDITORY_NAME_COLUMN, DBColumns.SUBGROUP_COLUMN,
+                DBColumns.WEEK_NUMBER_COLUMN, DBColumns.WEEK_DAY_COLUMN, DBColumns.DATE_COLUMN, DBColumns.LESSON_TYPE_COLUMN}, null, null, null, null, null);
+        if(cursor.moveToFirst()){
+            do{
+                Long scheduleID = cursor.getLong(cursor.getColumnIndex(BaseColumns._ID));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return new ArrayList<>();
+    }
+
+    public ArrayList<Cursor> getData(String Query){
+        //get writable database
+        SQLiteDatabase sqlDB = this.getWritableDatabase();
+        String[] columns = new String[] { "mesage" };
+        //an array list of cursor to save two cursors one has results from the query
+        //other cursor stores error message if any errors are triggered
+        ArrayList<Cursor> alc = new ArrayList<Cursor>(2);
+        MatrixCursor Cursor2= new MatrixCursor(columns);
+        alc.add(null);
+        alc.add(null);
+
+
+        try{
+            String maxQuery = Query ;
+            //execute the query results will be save in Cursor c
+            Cursor c = sqlDB.rawQuery(maxQuery, null);
+
+
+            //add value to cursor2
+            Cursor2.addRow(new Object[] { "Success" });
+
+            alc.set(1,Cursor2);
+            if (null != c && c.getCount() > 0) {
+
+
+                alc.set(0,c);
+                c.moveToFirst();
+
+                return alc ;
+            }
+            return alc;
+        } catch(SQLException sqlEx){
+            Log.d("printing exception", sqlEx.getMessage());
+            //if any exceptions are triggered save the error message to cursor an return the arraylist
+            Cursor2.addRow(new Object[] { ""+sqlEx.getMessage() });
+            alc.set(1,Cursor2);
+            return alc;
+        } catch(Exception ex){
+
+            Log.d("printing exception", ex.getMessage());
+
+            //if any exceptions are triggered save the error message to cursor an return the arraylist
+            Cursor2.addRow(new Object[] { ""+ex.getMessage() });
+            alc.set(1,Cursor2);
+            return alc;
+        }
+
+
     }
 }

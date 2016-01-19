@@ -32,6 +32,9 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="com.example.myapplication.dao.AndroidDatabaseManager"
+            android:theme="@style/Theme.AppCompat.Light"/>
+
         <receiver android:name=".widget.ScheduleWidgetProvider" >
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
