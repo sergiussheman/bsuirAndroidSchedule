@@ -24,7 +24,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
     private static DBHelper sInstance;
 
-    private static final Integer DATABASE_VERSION = 3;
+    private static final Integer DATABASE_VERSION = 6;
     private static final String DATABASE_NAME = "scheduleDB";
     private static final String SUBJECT_TABLE_NAME = "subject";
     private static final String EMPLOYEE_TABLE_NAME = "employee";
@@ -115,25 +115,30 @@ public class DBHelper extends SQLiteOpenHelper {
         //creating schedule view
         sql = "CREATE VIEW " + SCHEDULE_VIEW_NAME + " AS SELECT " + SCHEDULE_TABLE_NAME + "." + BaseColumns._ID + ", " +
                 SUBJECT_TABLE_NAME + "." + DBColumns.SUBJECT_NAME_COLUMN + ", " + LESSON_TIME_TABLE_NAME + "." + DBColumns.LESSON_TIME_COLUMN + ", " +
-                AUDITORY_TABLE_NAME + "." + DBColumns.AUDITORY_NAME_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.SUBGROUP_COLUMN + ", " +
-                SCHEDULE_TABLE_NAME + "." + DBColumns.WEEK_NUMBER_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.WEEK_DAY_COLUMN + ", " +
-                SCHEDULE_TABLE_NAME + "." + DBColumns.DATE_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.LESSON_TYPE_COLUMN + ", " +
-                NOTE_TABLE_NAME + "." + DBColumns.NOTE_TEXT_COLUMN + ", " + STUDENT_GROUP_TABLE_NAME + "." + DBColumns.STUDENT_GROUP_NAME_COLUMN + ", " +
-                "GROUP_CONCAT(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.MIDDLE_NAME_COLUMN + " + ' ' + " +
-                "substr(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.FIRST_NAME_COLUMN + ", 0, 1) + '. ' + " +
-                "substr(" + EMPLOYEE_TABLE_NAME + "." + DBColumns.LAST_NAME_COLUMN + ", 0, 1) + '.'), " +
-                "GROUP_CONCAT(" + AUDITORY_TABLE_NAME + "." + DBColumns.AUDITORY_NAME_COLUMN + ") " +
-                "FROM " + SUBJECT_TABLE_NAME + ", " + LESSON_TIME_TABLE_NAME + ", " + SCHEDULE_TABLE_NAME + ", " +
-                SCHEDULE_EMPLOYEE_TABLE_NAME + ", " + SCHEDULE_AUDITORY_TABLE_NAME + ", " + EMPLOYEE_TABLE_NAME + ", " +
-                AUDITORY_TABLE_NAME + ", " + NOTE_TABLE_NAME + ", " + STUDENT_GROUP_TABLE_NAME +
-                " WHERE " + SCHEDULE_TABLE_NAME + "." + DBColumns.SUBJECT_ID_COLUMN + " = " + SUBJECT_TABLE_NAME + "." + BaseColumns._ID +
-                " AND " + SCHEDULE_TABLE_NAME + "." + DBColumns.LESSON_TIME_ID_COLUMN + " = " + LESSON_TIME_TABLE_NAME + "." + BaseColumns._ID +
-                " AND " + SCHEDULE_TABLE_NAME + "." + DBColumns.STUDENT_GROUP_ID_COLUMN + " = " + STUDENT_GROUP_TABLE_NAME + "." + BaseColumns._ID +
-                " AND " + SCHEDULE_TABLE_NAME + "." + BaseColumns._ID + " = " + SCHEDULE_AUDITORY_TABLE_NAME + "." + DBColumns.SA_SCHEDULE_ID_COLUMN +
-                " AND " + AUDITORY_TABLE_NAME + "." + BaseColumns._ID + " = " + SCHEDULE_AUDITORY_TABLE_NAME + "." + DBColumns.SA_AUDITORY_ID_COLUMN +
-                " AND " + SCHEDULE_TABLE_NAME + "." + BaseColumns._ID + " = " + SCHEDULE_EMPLOYEE_TABLE_NAME + "." + DBColumns.SE_SCHEDULE_ID_COLUMN +
-                " AND " + EMPLOYEE_TABLE_NAME + "." + BaseColumns._ID + " = " + SCHEDULE_EMPLOYEE_TABLE_NAME + "." + DBColumns.SE_EMPLOYEE_ID_COLUMN +
-                " AND " + SCHEDULE_TABLE_NAME + "." + BaseColumns._ID + " = " + NOTE_TABLE_NAME + "." + DBColumns.NOTE_SCHEDULE_ID_COLUMN;
+                SCHEDULE_TABLE_NAME + "." + DBColumns.SUBGROUP_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.WEEK_NUMBER_COLUMN + ", " +
+                SCHEDULE_TABLE_NAME + "." + DBColumns.WEEK_DAY_COLUMN + ", " + SCHEDULE_TABLE_NAME + "." + DBColumns.DATE_COLUMN + ", " +
+                SCHEDULE_TABLE_NAME + "." + DBColumns.LESSON_TYPE_COLUMN + ", " + STUDENT_GROUP_TABLE_NAME + "." + DBColumns.STUDENT_GROUP_NAME_COLUMN + ", " +
+                "GROUP_CONCAT(DISTINCT( " + EMPLOYEE_TABLE_NAME + "." + DBColumns.MIDDLE_NAME_COLUMN + " || ' ' || substr(" +
+                EMPLOYEE_TABLE_NAME + "." + DBColumns.FIRST_NAME_COLUMN + ", 1, 1) || '. ' || substr(" +
+                EMPLOYEE_TABLE_NAME + "." + DBColumns.LAST_NAME_COLUMN + ", 1, 1) || '. ')), " +
+                "GROUP_CONCAT(DISTINCT " + AUDITORY_TABLE_NAME + "." + DBColumns.AUDITORY_NAME_COLUMN + ")" +
+                " FROM " + SCHEDULE_TABLE_NAME +
+                " left join " + LESSON_TIME_TABLE_NAME + " on " + SCHEDULE_TABLE_NAME + "." + DBColumns.LESSON_TIME_ID_COLUMN + " = " +
+                LESSON_TIME_TABLE_NAME + "." + BaseColumns._ID +
+                " left join " + SUBJECT_TABLE_NAME + " on " + SCHEDULE_TABLE_NAME + "." + DBColumns.SUBJECT_ID_COLUMN + " = " +
+                SUBJECT_TABLE_NAME + "." + BaseColumns._ID +
+                " left join " + STUDENT_GROUP_TABLE_NAME + " on " + SCHEDULE_TABLE_NAME + "." + DBColumns.STUDENT_GROUP_ID_COLUMN + " = " +
+                STUDENT_GROUP_TABLE_NAME + "." + BaseColumns._ID +
+                " left join " + SCHEDULE_AUDITORY_TABLE_NAME + " on " + SCHEDULE_AUDITORY_TABLE_NAME + "." + DBColumns.SA_SCHEDULE_ID_COLUMN + " = " +
+                SCHEDULE_TABLE_NAME + "." + BaseColumns._ID +
+                " left join " + AUDITORY_TABLE_NAME + " on " + AUDITORY_TABLE_NAME + "." + BaseColumns._ID + " = " +
+                SCHEDULE_AUDITORY_TABLE_NAME + "." + DBColumns.SA_AUDITORY_ID_COLUMN +
+                " left join " + SCHEDULE_EMPLOYEE_TABLE_NAME + " on " + SCHEDULE_EMPLOYEE_TABLE_NAME + "." + DBColumns.SE_SCHEDULE_ID_COLUMN + " = " +
+                SCHEDULE_TABLE_NAME + "." + BaseColumns._ID +
+                " left join " + EMPLOYEE_TABLE_NAME + " on " + SCHEDULE_EMPLOYEE_TABLE_NAME + "." + DBColumns.SE_EMPLOYEE_ID_COLUMN + " = " +
+                EMPLOYEE_TABLE_NAME + "." + BaseColumns._ID +
+                " group by " + SCHEDULE_TABLE_NAME + "." + BaseColumns._ID + ";" ;
+
         db.execSQL(sql);
     }
 

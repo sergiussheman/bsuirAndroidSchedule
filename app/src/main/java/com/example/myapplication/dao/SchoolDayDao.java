@@ -28,6 +28,10 @@ public class SchoolDayDao {
         }
     }
 
+/*    public List<SchoolDay> getScheduleForStudentGroup(String studentGroupName){
+
+    }*/
+
     public DBHelper getDbHelper() {
         return dbHelper;
     }
