@@ -9,12 +9,14 @@ public class DBColumns {
     public static final String LAST_NAME_COLUMN = "LAST_NAME";
     public static final String MIDDLE_NAME_COLUMN = "MIDDLE_NAME";
     public static final String DEPARTMENT_COLUMN = "DEPARTMENT";
+    public static final String EMP_SCHEDULE_AVAILABLE = "EMP_SCHEDULE_AVAILABLE";
 
     //subject
     public static final String SUBJECT_NAME_COLUMN = "SUBJECT_NAME";
 
     //studentGroup
     public static final String STUDENT_GROUP_NAME_COLUMN = "STUDENT_GROUP_NAME";
+    public static final String GR_SCHEDULE_AVAILABLE = "GR_SCHEDULE_AVAILABLE";
 
     //lessonTime
     public static final String LESSON_TIME_COLUMN = "TIME";

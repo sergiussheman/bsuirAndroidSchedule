@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
+import com.example.myapplication.dao.DBHelper;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -61,7 +62,7 @@ public class FileUtil {
      * @param symbol переданный символ
      * @return возвращает true если это символ, иначе false
      */
-    private static boolean isDigit(char symbol){
+    public static boolean isDigit(char symbol){
         char[] digits = new char[] {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'};
         for(char tempSymbol : digits){
             if(tempSymbol == symbol){

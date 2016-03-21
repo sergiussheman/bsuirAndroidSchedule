@@ -52,6 +52,7 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("PRAGMA foreign_keys=ON;");
+       // db.execSQL("PRAGMA encoding = UTF-8;");
 
         //creating subject table
         String sql = "CREATE TABLE " + SUBJECT_TABLE_NAME + " (" + BaseColumns._ID +
@@ -62,7 +63,7 @@ public class DBHelper extends SQLiteOpenHelper {
         sql = "CREATE TABLE " + EMPLOYEE_TABLE_NAME + " (" + BaseColumns._ID +
                 " INTEGER PRIMARY KEY AUTOINCREMENT, " + DBColumns.FIRST_NAME_COLUMN + " TEXT, " +
                 DBColumns.LAST_NAME_COLUMN + " TEXT, " + DBColumns.MIDDLE_NAME_COLUMN + " TEXT, " +
-                DBColumns.DEPARTMENT_COLUMN + " TEXT);";
+                DBColumns.DEPARTMENT_COLUMN + " TEXT, " + DBColumns.EMP_SCHEDULE_AVAILABLE + " TEXT);";
         db.execSQL(sql);
 
         //creating auditory table
@@ -71,7 +72,8 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL(sql);
 
         sql = "CREATE TABLE " + STUDENT_GROUP_TABLE_NAME + " (" + BaseColumns._ID +
-                " INTEGER PRIMARY KEY AUTOINCREMENT, " + DBColumns.STUDENT_GROUP_NAME_COLUMN + " TEXT);";
+                " INTEGER PRIMARY KEY AUTOINCREMENT, " + DBColumns.STUDENT_GROUP_NAME_COLUMN + " TEXT, "
+                + DBColumns.GR_SCHEDULE_AVAILABLE + " TEXT);";
         db.execSQL(sql);
 
         //creating lessonTime table

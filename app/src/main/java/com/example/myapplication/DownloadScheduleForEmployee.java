@@ -28,9 +28,12 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.myapplication.dao.DBHelper;
+import com.example.myapplication.dao.SchoolDayDao;
 import com.example.myapplication.dataprovider.LoadSchedule;
 import com.example.myapplication.model.AvailableFragments;
 import com.example.myapplication.model.Employee;
+import com.example.myapplication.model.SchoolDay;
 import com.example.myapplication.utils.DateUtil;
 import com.example.myapplication.utils.FileUtil;
 import com.example.myapplication.utils.WidgetUtil;
@@ -94,7 +97,9 @@ public class DownloadScheduleForEmployee extends Fragment {
         downloadButton.setOnClickListener(new DownloadButtonClickListener());
 
         setTableLayoutForDownloadedSchedules((TableLayout) currentView.findViewById(R.id.tableLayoutForEmployee));
-        setDownloadedSchedules(FileUtil.getAllDownloadedSchedules(getActivity(), false));
+        //setDownloadedSchedules(FileUtil.getAllDownloadedSchedules(getActivity(), false));
+        SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
+        setDownloadedSchedules(sdd.getAvailableTeachers());
         populateTableLayout(getTableLayoutForDownloadedSchedules(), downloadedSchedules);
 
         mProgressDialog = new ProgressDialog(getActivity());
@@ -576,7 +581,9 @@ public class DownloadScheduleForEmployee extends Fragment {
                                 Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
                             }
                             deleteDefaultEmployeeIfNeed(fileNameForDelete);
-                            setDownloadedSchedules(FileUtil.getAllDownloadedSchedules(getActivity(), false));
+                            //setDownloadedSchedules(FileUtil.getAllDownloadedSchedules(getActivity(), false));
+                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
+                            setDownloadedSchedules(sdd.getAvailableTeachers());
                             populateTableLayout(tableLayout, getDownloadedSchedules());
                         }
                     })

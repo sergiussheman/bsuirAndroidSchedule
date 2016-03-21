@@ -27,6 +27,8 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.myapplication.dao.DBHelper;
+import com.example.myapplication.dao.SchoolDayDao;
 import com.example.myapplication.dataprovider.LoadSchedule;
 import com.example.myapplication.model.AvailableFragments;
 import com.example.myapplication.model.StudentGroup;
@@ -95,7 +97,7 @@ public class DownloadScheduleForGroup extends Fragment {
                 String studentGroup = editText.getText().toString();
                 StudentGroup selectedStudentGroup = isAppropriateStudentGroup(studentGroup);
                 if (selectedStudentGroup == null) {
-                    Toast toast =  Toast.makeText(getActivity(), R.string.not_schedule_for_your_group, Toast.LENGTH_LONG);
+                    Toast toast = Toast.makeText(getActivity(), R.string.not_schedule_for_your_group, Toast.LENGTH_LONG);
                     toast.setGravity(Gravity.TOP, 0, 30);
                     toast.show();
                 } else {
@@ -106,7 +108,8 @@ public class DownloadScheduleForGroup extends Fragment {
 
         TableLayout tableLayout = (TableLayout) currentView.findViewById(R.id.tableLayoutForGroup);
         setTableLayoutForDownloadedSchedules(tableLayout);
-        setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
+        SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
+        setDownloadedSchedulesForGroup(sdd.getAvailableGroups());
         populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());
 
         mProgressDialog = new ProgressDialog(getActivity());
@@ -500,6 +503,7 @@ public class DownloadScheduleForGroup extends Fragment {
                 if(isDownloadingNewSchedule()) {
                     parentActivity.onChangeFragment(AvailableFragments.SHOW_SCHEDULES);
                 } else{
+
                     populateTableLayout(getTableLayoutForDownloadedSchedules(), getDownloadedSchedulesForGroup());
                 }
             }
@@ -612,7 +616,9 @@ public class DownloadScheduleForGroup extends Fragment {
                                 Log.v(TAG, "file n  ot deleted");
                             }
                             deleteDefaultGroupIfNeed(fileNameForDelete.toString());
-                            setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
+                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(null));
+                            setDownloadedSchedulesForGroup(sdd.getAvailableGroups());
+                            //setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
                             populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());
                         }
                     })
