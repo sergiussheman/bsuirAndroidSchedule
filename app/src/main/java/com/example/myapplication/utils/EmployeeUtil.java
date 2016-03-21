@@ -24,4 +24,15 @@ public class EmployeeUtil {
         }
         return fio;
     }
+
+    public static String getEmployeeLastName(String fileName) {
+        int lastCharPos = 0;
+        if (FileUtil.isDigit(fileName.charAt(fileName.length() - 4 - 1))) {
+            lastCharPos = fileName.length() - 8 - 4;
+        }
+        else {
+            lastCharPos = fileName.length() - 2 - 4;
+        }
+        return fileName.substring(0, lastCharPos);
+    }
 }
