@@ -25,13 +25,21 @@ public class EmployeeUtil {
         return fio;
     }
 
-    public static String getEmployeeLastName(String fileName) {
+    public static String getEmployeeLastNameFromFile(String fileName) {
         int lastCharPos = 0;
+
+        //4 symbols = file extension , 8 symbols = teacher id (file name contain id only after download),
+        // 2 symbols = first and middle name (after first save)
+        //if first symbol after extension is digit then file name contains teachers id
         if (FileUtil.isDigit(fileName.charAt(fileName.length() - 4 - 1))) {
-            lastCharPos = fileName.length() - 8 - 4;
+            lastCharPos = fileName.length() - 8 - 4; // delete all except last name
         }
         else {
-            lastCharPos = fileName.length() - 2 - 4;
+            if (!fileName.contains(".xml")) {
+                lastCharPos = fileName.length() - 2; // delete firs and middle name
+            } else {
+                lastCharPos = fileName.length() - 2 - 4; // ... and ".xml"
+            }
         }
         return fileName.substring(0, lastCharPos);
     }

@@ -132,7 +132,7 @@ public class DownloadScheduleForGroup extends Fragment {
             DownloadStudentGroupScheduleTask downloadTask = new DownloadStudentGroupScheduleTask(getActivity());
             downloadTask.fileDir = getActivity().getFilesDir();
             downloadTask.execute(sg);
-            updateDefaultGroup(sg.getStudentGroupName() + sg.getStudentGroupId(), true);
+            updateDefaultGroup(sg.getStudentGroupName(), true);
         } else{
             Toast.makeText(getActivity(), getResources().getString(R.string.no_connection_to_network), Toast.LENGTH_SHORT).show();
         }
@@ -251,9 +251,18 @@ public class DownloadScheduleForGroup extends Fragment {
                         TableRow selectedRow = (TableRow) v.getParent();
                         Integer rowNumber = (Integer) selectedRow.getTag();
                         String fileNameForRefresh = schedulesForGroup.get(rowNumber);
-                        fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
+                        List<StudentGroup> studentGroups = new ArrayList<StudentGroup>();
+                        SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(null));
+
+                        //fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
                         setIsDownloadingNewSchedule(false);
-                        downloadOrUpdateSchedule(fileNameForRefresh);
+
+                        //downloadOrUpdateSchedule(fileNameForRefresh);
+                        UpdateScheduleForGroup updateTask = new UpdateScheduleForGroup(getActivity());
+                        updateTask.fileDir = getActivity().getFilesDir();
+                        updateTask.execute(fileNameForRefresh);
+                        updateDefaultGroup(fileNameForRefresh, true);
+
                     } catch (Exception e) {
                         Toast.makeText(getActivity(), getActivity().getString(R.string.error_while_updating_schedule), Toast.LENGTH_LONG).show();
                         Log.v(TAG, e.getMessage(), e);
@@ -296,11 +305,13 @@ public class DownloadScheduleForGroup extends Fragment {
         final SharedPreferences.Editor editor = preferences.edit();
         String groupFiledInSettings = getActivity().getString(R.string.default_group_field_in_settings);
         String defaultGroupName = preferences.getString(groupFiledInSettings, "none");
-        String groupName = passedGroupName.substring(0, passedGroupName.length() - 4);
-        if(groupName.equalsIgnoreCase(defaultGroupName)){
-            editor.remove(groupFiledInSettings);
+        //String groupName = passedGroupName.substring(0, passedGroupName.length() - 4);
+        if (defaultGroupName.length() > 5) {
+            if (passedGroupName.equalsIgnoreCase(defaultGroupName.substring(0, 6))) {
+                editor.remove(groupFiledInSettings);
+            }
         }
-        editor.remove(groupName);
+        editor.remove(defaultGroupName);
         editor.apply();
     }
 
@@ -398,6 +409,83 @@ public class DownloadScheduleForGroup extends Fragment {
         parentActivity = null;
     }
 
+    private class UpdateScheduleForGroup extends AsyncTask<String, Integer, String> {
+        private File fileDir;
+        private Context context;
+        private PowerManager.WakeLock mWakeLock;
+        private String groupName;
+
+        public UpdateScheduleForGroup(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected String doInBackground(String... parameters) {
+            try {
+                groupName = parameters[0];
+                List<StudentGroup> loadedStudentGroups = LoadSchedule.loadAvailableStudentGroups();
+                for (StudentGroup sg: loadedStudentGroups) {
+                    if (sg.getStudentGroupName().equals(parameters[0])) {
+                        return LoadSchedule.loadScheduleForStudentGroupById(sg, fileDir);
+                    }
+                }
+
+                return "not found";
+            } catch (Exception e){
+                Log.v(TAG, e.getMessage(), e);
+                return e.toString();
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    getClass().getName());
+            mWakeLock.acquire();
+            mProgressDialog.show();
+        }
+
+        /**
+         * Метод обновляет процент уже скачанного расписания
+         * @param progress Прогресс скачивания расписания
+         */
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            super.onProgressUpdate(progress);
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setProgress(progress[0]);
+        }
+
+        /**
+         * Метод вызывается после завершения скачивания. Метод открывает фрагмент для просмотра
+         * расписания, или показывает сообщение об ошибке, если расписание не было скачано.
+         * @param result Результат скачивания
+         */
+        protected void onPostExecute(String result) {
+            mWakeLock.release();
+            mProgressDialog.dismiss();
+            if(result != null) {
+                if (result.equals("not found")) {
+                    Toast.makeText(getActivity(), "Schedule not found!", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    Toast.makeText(getActivity(), getString(R.string.error_while_downloading_schedule), Toast.LENGTH_LONG).show();
+                }
+            } else {
+                if (isDownloadingNewSchedule()) {
+                    parentActivity.onChangeFragment(AvailableFragments.SHOW_SCHEDULES);
+                } else {
+                    Toast.makeText(getActivity(), "Расписание для группы " + groupName +" обновлено.", Toast.LENGTH_SHORT).show();
+                    populateTableLayout(getTableLayoutForDownloadedSchedules(), getDownloadedSchedulesForGroup());
+                }
+
+            }
+        }
+
+    }
+
     /**
      * Асинхронный таск для загрузки всех студенченских групп у которых есть расписание
      */
@@ -436,7 +524,7 @@ public class DownloadScheduleForGroup extends Fragment {
                     textView.setAdapter(adapter);
                 }
             } catch (Exception e){
-                Log.v(TAG, "Exception occurred" + e.toString(), e);
+                Log.v(TAG, "Exception occurred " + e.toString(), e);
             }
         }
     }
@@ -604,19 +692,33 @@ public class DownloadScheduleForGroup extends Fragment {
                     .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(null));
                             TableRow selectedRow = (TableRow) v.getParent();
                             Integer rowNumber = (Integer) selectedRow.getTag();
                             StringBuilder fileNameForDelete = new StringBuilder(schedulesForGroup.get(rowNumber));
-                            File file = new File(getActivity().getFilesDir(), fileNameForDelete.toString());
+                            sdd.setAsUnavailable(fileNameForDelete.toString());
+                            Integer dClausesNum = 0;
+                            if ((dClausesNum = sdd.deleteSchedule(fileNameForDelete.toString())) > 0) {
+                                Toast.makeText(getActivity(), "Расписание для группы " +
+                                        fileNameForDelete + " было удалено.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(getActivity(), "Ошибка при удалении расписания для группы " +
+                                        fileNameForDelete + ".", Toast.LENGTH_SHORT).show();
+                            }
+                            Log.d(TAG, "deleted clauses number = " + dClausesNum);
+
+                            /*File file = new File(getActivity().getFilesDir(), fileNameForDelete.toString());
                             if (!file.delete()) {
                                 Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
                             }
                             file = new File(getActivity().getFilesDir(), fileNameForDelete.insert(fileNameForDelete.length() - 4, "exam").toString());
                             if (!file.delete()) {
                                 Log.v(TAG, "file n  ot deleted");
-                            }
+                            }*/
+
                             deleteDefaultGroupIfNeed(fileNameForDelete.toString());
-                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(null));
+
+
                             setDownloadedSchedulesForGroup(sdd.getAvailableGroups());
                             //setDownloadedSchedulesForGroup(FileUtil.getAllDownloadedSchedules(getActivity(), true));
                             populateTableLayout(tableLayout, getDownloadedSchedulesForGroup());

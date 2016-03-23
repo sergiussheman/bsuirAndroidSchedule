@@ -23,6 +23,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -49,20 +50,190 @@ public class SchoolDayDao {
         }
     }
 
-    public List<SchoolDay> getSchedule(String fileName) {
+    //удаляет расписание для группы иди преподавателя
+    //возвращает количество удаленных записей
+    public Integer deleteSchedule(String fileName) {
         if (FileUtil.isDigit(fileName.charAt(0))) {
-            return getScheduleForStudentGroup(fileName);
+            return deleteGroupSchedule(fileName);
         } else {
-            return getScheduleForTeacher(fileName);
+            return deleteTeacherSchedule(fileName);
+        }
+    }
+
+    private Integer deleteGroupSchedule(String fileName) {
+        List<Cursor> tableCursor = new ArrayList<>();
+        String studentGroupName = fileName.substring(0, 6);
+        String query = "select * from schedule where id_student_group = "
+                + getGroupId(studentGroupName);
+        tableCursor = getDbHelper().getData(query);
+        Integer deletedRowNum = 0;
+
+        try {
+            tableCursor.get(0).moveToFirst();
+        } catch (NullPointerException ex) {
+            Log.d("DB", "schedule table doesn't contain this group!");
+            return -1;
+        }
+
+        do {
+            if (!isAvailableTeacherId(tableCursor.get(0).getString(0))) {
+                deleteScheduleTableRow(tableCursor.get(0).getString(0));
+                deletedRowNum++;
+            }
+        } while (tableCursor.get(0).moveToNext());
+
+        //resetScheduleTableId();
+
+        return deletedRowNum;
+    }
+
+    private Integer resetScheduleTableId() {
+        List<Cursor> scheduleCursor = new ArrayList<>();
+        String query = "select * from schedule";
+        scheduleCursor = getDbHelper().getData(query);
+        Integer newId = 1;
+
+        try {
+            scheduleCursor.get(0).moveToFirst();
+        } catch (NullPointerException ex) {
+            Log.d("DB", "schedule table doesn't contain this group!");
+            return - 1;
+        }
+
+        do {
+            ContentValues values = new ContentValues();
+            values.put(BaseColumns._ID, "" + newId);
+
+            String selection = BaseColumns._ID + " = " + scheduleCursor.get(0).getString(0);
+
+            int count = getDbHelper().getReadableDatabase().update(
+                    "schedule",
+                    values,
+                    selection,
+                    null);
+
+            newId++;
+
+        } while(scheduleCursor.get(0).moveToNext());
+
+        return 0;
+    }
+
+    private boolean isAvailableTeacherId(String id) {
+        List<Cursor> teacherTableCursor = new ArrayList<>();
+        String query = "select * from employee where " +
+                DBColumns.EMP_SCHEDULE_AVAILABLE + " = true";
+        teacherTableCursor = getDbHelper().getData(query);
+
+        try {
+            teacherTableCursor.get(0).moveToFirst();
+        } catch (NullPointerException ex) {
+            Log.d("DB ", "All teachers is unavailable!");
+            return false;
+        }
+
+        do {
+            if (teacherTableCursor.get(0).getString(0).equals(id)) {
+                return true;
+            }
+        } while(teacherTableCursor.get(0).moveToNext());
+
+        return false;
+    }
+
+    private boolean isAvailableGroupId(String id) {
+        List<Cursor> groupTableCursor = new ArrayList<>();
+        String query = "select * from student_group where " +
+                BaseColumns._ID + " = " + id;
+        groupTableCursor = getDbHelper().getData(query);
+
+        try {
+            groupTableCursor.get(0).moveToFirst();
+        } catch (NullPointerException ex) {
+            Log.d("DB ", "All groups is unavailable!");
+            return false;
+        }
+
+
+        if (groupTableCursor.get(0).getString(
+                groupTableCursor.get(0).getColumnIndex(
+                        DBColumns.GR_SCHEDULE_AVAILABLE)) != null) {
+            if (groupTableCursor.get(0).getString(
+                    groupTableCursor.get(0).getColumnIndex(
+                            DBColumns.GR_SCHEDULE_AVAILABLE)).equals("true")) {
+                Log.d("Data Base", groupTableCursor.get(0).getString(groupTableCursor.get(0).getColumnIndex(
+                                DBColumns.GR_SCHEDULE_AVAILABLE)));
+                return true;
+            }
+            else return false;
+        }
+        else return false;
+    }
+
+    private Integer deleteTeacherSchedule(String fileName) {
+        List<Cursor> tableCursor = new ArrayList<>();
+        String lastName = EmployeeUtil.getEmployeeLastNameFromFile(fileName);
+        String query = "select * from schedule";
+        tableCursor = getDbHelper().getData(query);
+        Integer deletedRowNum = 0;
+        List<String> scheduleId = new ArrayList<>();
+
+        try {
+            tableCursor.get(0).moveToFirst();
+        } catch (NullPointerException ex) {
+            Log.d("DB", "schedule table doesn't contain this group!");
+            return -1;
+        }
+
+        List<Cursor> cursor = new ArrayList<>();
+        query = "select se_id_schedule from schedule_employee where se_id_employee = "
+                + getEmployeeId(lastName);
+
+        Log.d("Emp id = ", getEmployeeId(lastName));
+
+        cursor = getDbHelper().getData(query);
+
+        cursor.get(0).moveToFirst();
+        do {
+            scheduleId.add(cursor.get(0).getString(0));
+        } while (cursor.get(0).moveToNext());
+
+        do {
+            if (isTeacherId(scheduleId, tableCursor.get(0).getString(0))) {
+                if (!isAvailableGroupId(tableCursor.get(0).getString(
+                        tableCursor.get(0).getColumnIndex(DBColumns.STUDENT_GROUP_ID_COLUMN)))) {
+                    deleteScheduleTableRow(tableCursor.get(0).getString(0));
+                    deletedRowNum++;
+                }
+            }
+        } while (tableCursor.get(0).moveToNext());
+
+        //resetScheduleTableId();
+
+        return deletedRowNum;
+    }
+
+    //удаляет все строки с заданным id
+    //метод возвращает кол-во удаленных строк
+    public Integer deleteScheduleTableRow(String id) {
+        return getDbHelper().getReadableDatabase().delete("schedule", "_id = " + id, null);
+    }
+
+    //расписание взависимости от названия
+    public List<SchoolDay> getSchedule(String fileName, boolean isForExam) {
+        if (FileUtil.isDigit(fileName.charAt(0))) {
+            return getScheduleForStudentGroup(fileName, isForExam);
+        } else {
+            return getScheduleForTeacher(fileName, isForExam);
         }
     }
 
     //расписание для преподавателей
-    public List<SchoolDay> getScheduleForTeacher(String  fileName) {
+    private List<SchoolDay> getScheduleForTeacher(String  fileName, boolean isForExam) {
         List<SchoolDay> weekSchedule = new ArrayList<>();
         int dayNum = 0;
         List<String> scheduleId = new ArrayList<>();
-        String lastName = EmployeeUtil.getEmployeeLastName(fileName);
+        String lastName = EmployeeUtil.getEmployeeLastNameFromFile(fileName);
 
         List<Cursor> cursor = new ArrayList<>();
         String query = "select se_id_schedule from schedule_employee where se_id_employee = "
@@ -81,8 +252,8 @@ public class SchoolDayDao {
         Log.d("sch id = ", buf.length + "");
 
         for (int i = 0; i < 6; i++) {
-            SchoolDay tmp = new SchoolDay();
-            if ((tmp = fillSchoolDayForTeacher(scheduleId, (long) (i + 1))) != null) {
+            SchoolDay tmp;
+            if ((tmp = fillSchoolDayForTeacher(scheduleId, (long) (i + 1), isForExam)) != null) {
                 weekSchedule.add(tmp);
             }
         }
@@ -103,9 +274,8 @@ public class SchoolDayDao {
         return weekSchedule;
     }
 
-
     //расписание для группы
-    public List<SchoolDay> getScheduleForStudentGroup(String groupFileName){
+    private List<SchoolDay> getScheduleForStudentGroup(String groupFileName, boolean isForExam){
         List<SchoolDay> weekSchedule = new ArrayList<>();
         int dayNum = 0;
         Log.d("file name = ", groupFileName);
@@ -122,7 +292,7 @@ public class SchoolDayDao {
                 getColumnIndex(DBColumns.WEEK_DAY_COLUMN));
 
         for (int i = 0; i < dayNum; i++) {
-            weekSchedule.add(fillSchoolDayForGroup(studentGroupName, (long) (i + 1)));
+            weekSchedule.add(fillSchoolDayForGroup(studentGroupName, (long) (i + 1), isForExam));
         }
 
         for (SchoolDay sd: weekSchedule) {
@@ -143,7 +313,7 @@ public class SchoolDayDao {
     }
 
     //распимание для преподавателя на один день
-    private SchoolDay fillSchoolDayForTeacher(List<String> scheduleId, Long weekDay) {
+    private SchoolDay fillSchoolDayForTeacher(List<String> scheduleId, Long weekDay, boolean isForExam) {
         List<SchoolDay> weekSchedule = new ArrayList<>();
 
         SchoolDay currentSchoolDay = new SchoolDay();
@@ -151,13 +321,15 @@ public class SchoolDayDao {
         List<Schedule> currentScheduleList = new ArrayList<>();
 
         List<Cursor> scheduleTableCursor = new ArrayList<>();
-        String scheduleTableQuery = "select * from schedule where " + "week_day = " + weekDay;
+        String scheduleTableQuery = "select * from schedule where " + "week_day = " + weekDay
+                + " order by id_lesson_time";
         scheduleTableCursor = getDbHelper().getData(scheduleTableQuery);
 
         String lessonTime = null;
         String lessonType = null;
         String subject = null;
         String subGroup = null;
+        String groupName = null;
         String[] weekNumbers = null;
         List<Employee> employees = new ArrayList<>();
         List<String> auds = new ArrayList<>();
@@ -190,14 +362,18 @@ public class SchoolDayDao {
                     currentSchedule.setSubject(subject);
                 } else currentSchedule.setSubject(null);
 
+                if ((groupName = getGroupNamebyId(getGroupIdFromScheduleTable(rowNum, scheduleTableCursor))) != null) {
+                    if (lessonType.equalsIgnoreCase("лк")) {
+                        currentSchedule.setStudentGroup(groupName.substring(0, groupName.length() - 1) + "X");
+                    }
+                    else currentSchedule.setStudentGroup(groupName);
+                } else currentSchedule.setStudentGroup("");
+
                 if ((subGroup = getSubGroupFromScheduleTable(rowNum, scheduleTableCursor)) != null ) {
                     if (!subGroup.equals("0")) {
                         currentSchedule.setSubGroup(subGroup);
-                    }
-                    else currentSchedule.setSubGroup("");
+                    } else currentSchedule.setSubGroup("");
                 } else currentSchedule.setSubGroup("");
-
-                currentSchedule.setStudentGroup("");
 
                 if ((weekDay = getWeekDayFromScheduleTable(rowNum, scheduleTableCursor)) != null) {
                     currentSchedule.setWeekDay(weekDay);
@@ -212,14 +388,45 @@ public class SchoolDayDao {
                     currentSchedule.setEmployeeList(employees);
                 } else currentSchedule.setEmployeeList(null);
 
-                if ((auds = getAudsFroScheduleTableRow(rowNum, scheduleTableCursor)) != null) {
+                if ((auds = getAudsForScheduleTableRow(rowNum, scheduleTableCursor)) != null) {
                     currentSchedule.setAuditories(auds);
                 } else currentSchedule.setAuditories(Arrays.asList(""));
 
-                currentScheduleList.add(currentSchedule);
+                if (isForExam) {
+                    if (lessonType != null && lessonType.equalsIgnoreCase("ЭКЗ")) {
+                        currentScheduleList.add(currentSchedule);
+                    }
+                } else {
+                    currentScheduleList.add(currentSchedule);
+                }
             }
             rowNum++;
         } while (scheduleTableCursor.get(0).moveToNext());
+
+        for (Schedule s: currentScheduleList) {
+            Log.d("full list ", s.getLessonTime() + s.getLessonType() +
+                    s.getSubject() + s.getWeekNumbers());
+        }
+
+        for (Schedule s: currentScheduleList) {
+            Log.d("Before del repetition", s.getLessonTime() + " " +
+            s.getSubGroup() + " " + s.getLessonType() + " " + s.getSubject() + " " +
+            s.getWeekNumbers());
+        }
+
+        //delete doubles
+        int i;
+        while ((i = getFirstRepetition(currentScheduleList)) > -1) {
+            currentScheduleList.remove(i);
+        }
+
+        for (Schedule s: currentScheduleList) {
+            Log.d("After del repetition", s.getLessonTime() + " " +
+                    s.getSubGroup() + " " + s.getLessonType() + " " + s.getSubject() + " " +
+                    s.getWeekNumbers());
+        }
+
+        currentScheduleList = sortScheduleListByTime(currentScheduleList);
 
         currentSchoolDay.setSchedules(currentScheduleList);
 
@@ -237,6 +444,54 @@ public class SchoolDayDao {
         return currentSchoolDay;
     }
 
+    private Integer getFirstRepetition(List<Schedule> currentScheduleList) {
+        Integer rIndex = -1;
+        boolean flag = false;
+        int n = 0;
+        int m = 0;
+        for (Schedule i: currentScheduleList) {
+            for (Schedule j: currentScheduleList) {
+                if (n != m) {
+                    if (i.getLessonTime().equals(j.getLessonTime()) && i.getSubGroup().equals(j.getSubGroup())) {
+                        if (isEqualWeekNums(i.getWeekNumbers().toArray(new String[i.getWeekNumbers().size()]),
+                                j.getWeekNumbers().toArray(new String[j.getWeekNumbers().size()]))) {
+                            rIndex = m;
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                m++;
+            }
+            if (flag) break;
+            m = 0;
+            n++;
+        }
+
+        if (rIndex >= 0) {
+            return rIndex;
+        } else {
+            return -1;
+        }
+    }
+
+    private boolean isEqualWeekNums(String[] w1, String[] w2) {
+        boolean flag = false;
+        if (w1.length != w2.length) {
+            return false;
+        }
+
+        for (int i = 0; i < w1.length; i++) {
+            if (w1[i].equals(w2[i])) {
+                flag = true;
+            } else {
+                return false;
+            }
+        }
+
+        return flag;
+    }
+
     //проверяет принадлежит ли запись в таблице преподавателю
     private boolean isTeacherId(List<String> scheduleId, String value) {
         for(String str: scheduleId) {
@@ -246,7 +501,7 @@ public class SchoolDayDao {
     }
 
     //заполняет расписание на один день для группы
-    private SchoolDay fillSchoolDayForGroup(String studentGroupName, Long weekDay) {
+    private SchoolDay fillSchoolDayForGroup(String studentGroupName, Long weekDay, boolean isForExam) {
 
         List<SchoolDay> weekSchedule = new ArrayList<>();
 
@@ -256,13 +511,14 @@ public class SchoolDayDao {
 
         List<Cursor> scheduleTableCursor = new ArrayList<>();
         String scheduleTableQuery = "select * from schedule where id_student_group = "
-                + getGroupId(studentGroupName) + " and " + "week_day = " + weekDay;
+                + getGroupId(studentGroupName) + " and " + "week_day = " + weekDay + " order by id_lesson_time";
         scheduleTableCursor = getDbHelper().getData(scheduleTableQuery);
 
         String lessonTime = null;
         String lessonType = null;
         String subject = null;
         String subGroup = null;
+        String groupName = null;
         String[] weekNumbers = null;
         List<Employee> employees = new ArrayList<>();
         List<String> auds = new ArrayList<>();
@@ -301,7 +557,9 @@ public class SchoolDayDao {
             }
             else currentSchedule.setSubGroup("");
 
-            currentSchedule.setStudentGroup(studentGroupName);
+            if ((groupName = getGroupNamebyId(getGroupIdFromScheduleTable(rowNum, scheduleTableCursor))) != null) {
+                currentSchedule.setStudentGroup(groupName);
+            } else currentSchedule.setStudentGroup("");
 
             if ((weekDay = getWeekDayFromScheduleTable(rowNum, scheduleTableCursor)) != null) {
                 currentSchedule.setWeekDay(weekDay);
@@ -319,14 +577,24 @@ public class SchoolDayDao {
             }
             else currentSchedule.setEmployeeList(null);
 
-            if ((auds = getAudsFroScheduleTableRow(rowNum, scheduleTableCursor)) != null) {
+            if ((auds = getAudsForScheduleTableRow(rowNum, scheduleTableCursor)) != null) {
                 currentSchedule.setAuditories(auds);
             }
             else currentSchedule.setAuditories(Arrays.asList(""));
 
-            currentScheduleList.add(currentSchedule);
+            if (isForExam) {
+                if (lessonType != null && lessonType.equalsIgnoreCase("ЭКЗ")) {
+                    currentScheduleList.add(currentSchedule);
+                }
+            } else {
+                currentScheduleList.add(currentSchedule);
+            }
+
+            //currentScheduleList.add(currentSchedule);
             rowNum++;
         } while (scheduleTableCursor.get(0).moveToNext());
+
+        currentScheduleList = sortScheduleListByTime(currentScheduleList);
 
         currentSchoolDay.setSchedules(currentScheduleList);
 
@@ -344,6 +612,32 @@ public class SchoolDayDao {
         return currentSchoolDay;
     }
 
+    //сортирует расписание по времени от меньшего к большему
+    private List<Schedule> sortScheduleListByTime(List<Schedule> schedules) {
+        for (int i = 0; i < schedules.size(); i++) {
+            for (int j = i; j < schedules.size(); j++) {
+                if (!isTimeLess(schedules.get(i).getLessonTime(), schedules.get(j).getLessonTime())) {
+                    Schedule buf;
+                    buf = schedules.get(i);
+                    schedules.set(i, schedules.get(j));
+                    schedules.set(j, buf);
+                }
+            }
+        }
+
+        return schedules;
+    }
+
+    private boolean isTimeLess(String firstTime, String secondTime) {
+        Integer first = Integer.valueOf(firstTime.substring(0, 2));
+        Integer second = Integer.valueOf(secondTime.substring(0, 2));
+
+        if (first < second) return true;
+        else return false;
+
+    }
+
+    //получить id группы по навзанию группы
     private String getGroupId(String studentGroupName) {
         String id = null;
         List<Cursor> groupNameCursor = new ArrayList<>();
@@ -359,7 +653,6 @@ public class SchoolDayDao {
         Log.d("selected group id = ", id);
         return id;
     }
-
 
     //получает номера недель из строки в таблицы расписании
     private String[] getWeekNumsFromScheduleTable(Integer rowNum, List<Cursor> c) {
@@ -415,12 +708,21 @@ public class SchoolDayDao {
         return cursor.get(0).getString(cursor.get(0).getColumnIndex(DBColumns.LESSON_TIME_ID_COLUMN));
     }
 
+    private String getGroupIdFromScheduleTable(Integer rowNum, List<Cursor> c) {
+        List<Cursor> cursor = c;
+
+        cursor.get(0).moveToFirst();
+        cursor.get(0).moveToPosition(rowNum);
+        return cursor.get(0).getString(cursor.get(0).getColumnIndex(DBColumns.STUDENT_GROUP_ID_COLUMN));
+
+    }
+
     private String getGroupNamebyId(String id) {
         List<Cursor> groupNameCursor;
         String getGroupNameQuery = "select * from student_group where _id = " + id;
 
         groupNameCursor = getDbHelper().getData(getGroupNameQuery);
-        return groupNameCursor.get(0).getString(groupNameCursor.get(0).getColumnCount() - 1);
+        return groupNameCursor.get(0).getString(groupNameCursor.get(0).getColumnIndex(DBColumns.STUDENT_GROUP_NAME_COLUMN));
     }
 
     private Employee getEmployeeById(String id) {
@@ -523,7 +825,7 @@ public class SchoolDayDao {
         return cursor.get(0).getString(cursor.get(0).getColumnIndex(DBColumns.AUDITORY_NAME_COLUMN));
     }
 
-    private List<String> getAudsFroScheduleTableRow(Integer rowNum, List<Cursor> c) {
+    private List<String> getAudsForScheduleTableRow(Integer rowNum, List<Cursor> c) {
         List<String> auds = new ArrayList<>();
         String scheduleId = null;
 
@@ -571,6 +873,7 @@ public class SchoolDayDao {
        return null;
     }
 
+    //сделать расписание группы доступным для просмотра
     private void setGroupAsAvailable(String fileName) {
         String groupName = fileName.substring(0, 6);
 
@@ -587,6 +890,59 @@ public class SchoolDayDao {
                 null);
     }
 
+    //делает группу недоступной для просмотра
+    private void setGroupAsUnavailable(String fileName) {
+        String groupName = fileName.substring(0, 6);
+
+        ContentValues values = new ContentValues();
+        values.put(DBColumns.GR_SCHEDULE_AVAILABLE, "");
+
+        String selection = DBColumns.STUDENT_GROUP_NAME_COLUMN + " = " + groupName;
+
+
+        int count = getDbHelper().getReadableDatabase().update(
+                "student_group",
+                values,
+                selection,
+                null);
+    }
+
+    //сделать расписание преподавателя доступным для просмотра
+    private void setTeacherAsAvailable(String fileName) {
+        String lastName = EmployeeUtil.getEmployeeLastNameFromFile(fileName);
+        int id = 0;
+
+        ContentValues values = new ContentValues();
+        values.put(DBColumns.EMP_SCHEDULE_AVAILABLE, "true");
+
+        String selection = BaseColumns._ID + " = " + getEmployeeId(lastName);;
+
+
+        int count = getDbHelper().getReadableDatabase().update(
+                "employee",
+                values,
+                selection,
+                null);
+    }
+
+    private void setTeacherAsUnavailable(String fileName) {
+        String lastName = EmployeeUtil.getEmployeeLastNameFromFile(fileName);
+        int id = 0;
+
+        ContentValues values = new ContentValues();
+        values.put(DBColumns.EMP_SCHEDULE_AVAILABLE, "");
+
+        String selection = BaseColumns._ID + " = " + getEmployeeId(lastName);;
+
+
+        int count = getDbHelper().getReadableDatabase().update(
+                "employee",
+                values,
+                selection,
+                null);
+    }
+
+    //доступные расписания групп
     public List<String> getAvailableGroups() {
         List<Cursor> cursors = new ArrayList<>();
         List<String> groups = new ArrayList<>();
@@ -599,6 +955,7 @@ public class SchoolDayDao {
 
 
             do {
+                // 2 = GR_SCHEDULE_AVAILABLE column
                 if (cursors.get(0).getString(2) != null){
                     if (cursors.get(0).getString(2).equals("true")) {
                         //1 = GROUP_NAME column
@@ -617,6 +974,7 @@ public class SchoolDayDao {
         }
     }
 
+    //доступные расписания преподавателей
     public List<String> getAvailableTeachers() {
         List<Cursor> cursors = new ArrayList<>();
         List<String> teachers = new ArrayList<>();
@@ -650,28 +1008,20 @@ public class SchoolDayDao {
         }
     }
 
-    private void setTeacherAsAvailable(String fileName) {
-        String lastName = EmployeeUtil.getEmployeeLastName(fileName);
-        int id = 0;
-
-        ContentValues values = new ContentValues();
-        values.put(DBColumns.EMP_SCHEDULE_AVAILABLE, "true");
-
-        String selection = BaseColumns._ID + " = " + getEmployeeId(lastName);;
-
-
-        int count = getDbHelper().getReadableDatabase().update(
-                "employee",
-                values,
-                selection,
-                null);
-    }
-
+    //сделать расписание доступным
     public void setAsAvailable(String fileName) {
         if (FileUtil.isDigit(fileName.charAt(0))) {
             setGroupAsAvailable(fileName);
         } else {
             setTeacherAsAvailable(fileName);
+        }
+    }
+
+    public void setAsUnavailable(String fileName) {
+        if (FileUtil.isDigit(fileName.charAt(0))) {
+            setGroupAsUnavailable(fileName);
+        } else {
+            setTeacherAsUnavailable(fileName);
         }
     }
 

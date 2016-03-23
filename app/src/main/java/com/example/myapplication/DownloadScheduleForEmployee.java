@@ -34,6 +34,7 @@ import com.example.myapplication.dataprovider.LoadSchedule;
 import com.example.myapplication.model.AvailableFragments;
 import com.example.myapplication.model.Employee;
 import com.example.myapplication.model.SchoolDay;
+import com.example.myapplication.model.StudentGroup;
 import com.example.myapplication.utils.DateUtil;
 import com.example.myapplication.utils.FileUtil;
 import com.example.myapplication.utils.WidgetUtil;
@@ -192,9 +193,12 @@ public class DownloadScheduleForEmployee extends Fragment {
                         TableRow selectedRow = (TableRow) v.getParent();
                         Integer rowNumber = (Integer) selectedRow.getTag();
                         String fileNameForRefresh = schedulesForEmployee.get(rowNumber);
-                        fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
+                        //fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
                         setIsDownloadingNewSchedule(false);
-                        downloadOrUpdateScheduleForEmployee(fileNameForRefresh);
+                        //downloadOrUpdateScheduleForEmployee(fileNameForRefresh);
+                        UpdateScheduleForEmployee updateTask = new UpdateScheduleForEmployee(getActivity());
+                        updateTask.fileDir = getActivity().getFilesDir();
+                        updateTask.execute(fileNameForRefresh);
                         updateDefaultEmployee(fileNameForRefresh, true);
                     } else {
                         Toast.makeText(getActivity(), getResources().getString(R.string.no_connection_to_network), Toast.LENGTH_LONG).show();
@@ -232,12 +236,12 @@ public class DownloadScheduleForEmployee extends Fragment {
         final SharedPreferences.Editor editor = preferences.edit();
         String employeeFieldInSettings = getActivity().getString(R.string.default_employee_field_in_settings);
         String defaultEmployeeName = preferences.getString(employeeFieldInSettings, "none");
-        String employeeName = passedEmployeeName.substring(0, passedEmployeeName.length() - 4);
-        if(employeeName.equalsIgnoreCase(defaultEmployeeName)){
+        //String employeeName = passedEmployeeName.substring(0, passedEmployeeName.length() - 4);
+        if(passedEmployeeName.equalsIgnoreCase(defaultEmployeeName)){
             editor.remove(employeeFieldInSettings);
 
         }
-        editor.remove(employeeName);
+        editor.remove(passedEmployeeName);
         editor.apply();
     }
 
@@ -454,6 +458,8 @@ public class DownloadScheduleForEmployee extends Fragment {
         }
     }
 
+
+
     private class DownloadFilesTask extends AsyncTask<String, Integer, String> {
         private File filesDir;
         private Context context;
@@ -522,6 +528,79 @@ public class DownloadScheduleForEmployee extends Fragment {
         }
     }
 
+    private class UpdateScheduleForEmployee extends AsyncTask<String, Integer, String> {
+        private File fileDir;
+        private Context context;
+        private PowerManager.WakeLock mWakeLock;
+        private String teacherName;
+
+        public UpdateScheduleForEmployee(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected String doInBackground(String... parameters) {
+            try {
+                teacherName = parameters[0];
+                List<Employee> loadedEmployeeList = LoadSchedule.loadListEmployee();
+                for (Employee emp: loadedEmployeeList) {
+                    if (emp.getLastName().equals(
+                            parameters[0].substring(0, parameters[0].length() - 2))) {
+                        return LoadSchedule.loadScheduleForEmployeeById(emp, fileDir);
+                    }
+                }
+
+                return "not found";
+            } catch (Exception e){
+                Log.v(TAG, e.getMessage(), e);
+                return e.toString();
+            }
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    getClass().getName());
+            mWakeLock.acquire();
+            mProgressDialog.show();
+        }
+
+        /**
+         * Метод обновляет процент уже скачанного расписания
+         * @param progress Прогресс скачивания расписания
+         */
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            super.onProgressUpdate(progress);
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setProgress(progress[0]);
+        }
+
+        /**
+         * Метод вызывается после завершения скачивания. Метод открывает фрагмент для просмотра
+         * расписания, или показывает сообщение об ошибке, если расписание не было скачано.
+         * @param result Результат скачивания
+         */
+        protected void onPostExecute(String result) {
+            mWakeLock.release();
+            mProgressDialog.dismiss();
+            if(result != null) {
+                Toast.makeText(getActivity(), getString(R.string.error_while_downloading_schedule), Toast.LENGTH_LONG).show();
+            } else {
+                if(isDownloadingNewSchedule()) {
+                    mListener.onChangeFragment(AvailableFragments.SHOW_SCHEDULES);
+                } else{
+                    Toast.makeText(getActivity(), "Расписание для преподавателя " + teacherName + " обновлено.",
+                            Toast.LENGTH_LONG).show();
+                    populateTableLayout(getTableLayoutForDownloadedSchedules(), getDownloadedSchedules());
+                }
+            }
+        }
+
+    }
+
     public List<String> getDownloadedSchedules() {
         return downloadedSchedules;
     }
@@ -573,16 +652,27 @@ public class DownloadScheduleForEmployee extends Fragment {
                     .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
                             TableRow selectedRow = (TableRow) v.getParent();
                             Integer rowNumber = (Integer) selectedRow.getTag();
                             String fileNameForDelete = schedulesForEmployee.get(rowNumber);
-                            File file = new File(getActivity().getFilesDir(), fileNameForDelete);
+                            sdd.setAsUnavailable(fileNameForDelete);
+                            Integer dClausesNum = 0;
+                            if ((dClausesNum = sdd.deleteSchedule(fileNameForDelete)) > 0) {
+                                Toast.makeText(getActivity(), "Расписание для преподавателя " +
+                                        fileNameForDelete + " было удалено.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(getActivity(), "Ошибка при удалении расписания для преподавателя " +
+                                        fileNameForDelete + ".", Toast.LENGTH_SHORT).show();
+                            }
+                            Log.d(TAG, "deleted clauses number = " + dClausesNum);
+                            /* File file = new File(getActivity().getFilesDir(), fileNameForDelete);
                             if (!file.delete()) {
                                 Toast.makeText(getActivity(), R.string.error_while_deleting_file, Toast.LENGTH_LONG).show();
-                            }
+                            } */
                             deleteDefaultEmployeeIfNeed(fileNameForDelete);
                             //setDownloadedSchedules(FileUtil.getAllDownloadedSchedules(getActivity(), false));
-                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
+
                             setDownloadedSchedules(sdd.getAvailableTeachers());
                             populateTableLayout(tableLayout, getDownloadedSchedules());
                         }
