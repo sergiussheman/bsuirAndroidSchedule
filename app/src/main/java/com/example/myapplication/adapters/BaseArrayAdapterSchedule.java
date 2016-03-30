@@ -18,6 +18,7 @@ public abstract class BaseArrayAdapterSchedule extends ArrayAdapter<Schedule> {
     int layoutID;
     Schedule[] data = null;
 
+
     /**
      * Базовый адаптер для отображения расписания занятий
      * @param context контекст
@@ -85,7 +86,7 @@ public abstract class BaseArrayAdapterSchedule extends ArrayAdapter<Schedule> {
      */
     @Override
     public boolean areAllItemsEnabled() {
-        return false;
+        return true;
     }
 
     /**
@@ -94,6 +95,6 @@ public abstract class BaseArrayAdapterSchedule extends ArrayAdapter<Schedule> {
      */
     @Override
     public boolean isEnabled(int position) {
-        return false;
+        return true;
     }
 }

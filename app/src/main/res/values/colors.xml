@@ -10,4 +10,6 @@
     <color name="widget_no_lessons_color">#8e8e8e</color>
     <color name="widget_underlying_line_color">#0b32ff</color>
     <color name="widget_background_light">#56eaffce</color>
+    <color name="edit_text_background">#e2e1e1</color>
+    <color name="edit_text_background_darker">#bcbaba</color>
 </resources>

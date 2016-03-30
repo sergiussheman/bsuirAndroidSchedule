@@ -42,4 +42,14 @@
                 android:title="@string/second_sub_group" />
         </menu>
     </item>
+
+
+
+    <item
+        android:id="@+id/menuShowHidden"
+        android:checkable="true"
+        android:checked="false"
+        android:title="Показывать скрытые записи"/>
+
+
 </menu>

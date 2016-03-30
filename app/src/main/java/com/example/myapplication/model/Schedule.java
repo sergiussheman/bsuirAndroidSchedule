@@ -21,6 +21,24 @@ public class Schedule implements Serializable{
     private String subGroup = "";
     private String studentGroup = "";
     private String note = "";
+    private String scheduleTableRowId = "";
+    private boolean isHidden = false;
+
+    public boolean isHidden() {
+        return isHidden;
+    }
+
+    public void setHidden(boolean isHidden) {
+        this.isHidden = isHidden;
+    }
+
+    public String getScheduleTableRowId() {
+        return scheduleTableRowId;
+    }
+
+    public void setScheduleTableRowId(String rowId) {
+        this.scheduleTableRowId = rowId;
+    }
 
     public List<String> getEmployees() {
         return employees;

@@ -18,6 +18,7 @@ public abstract class BaseViewPagerAdapter extends FragmentStatePagerAdapter {
     protected Integer selectedDayPosition;
     protected WeekNumberEnum selectedWeekNumber;
     protected SubGroupEnum selectedSubGroupNumber;
+    protected boolean showHidden;
 
     protected List<SchoolDay> allSchedules;
 
@@ -45,12 +46,20 @@ public abstract class BaseViewPagerAdapter extends FragmentStatePagerAdapter {
         this.selectedDayPosition = selectedDayPosition;
     }
 
+    public void setShowHidden(boolean show) {
+        this.showHidden = show;
+    }
+
     /**
      * Метод для получения выбранной учебной недели
      * @return Возвращает выбранную неделю
      */
     public WeekNumberEnum getSelectedWeekNumber() {
         return selectedWeekNumber;
+    }
+
+    public boolean getShowHidden() {
+        return showHidden;
     }
 
     /**

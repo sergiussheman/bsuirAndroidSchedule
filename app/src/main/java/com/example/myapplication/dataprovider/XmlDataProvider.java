@@ -285,6 +285,9 @@ public class XmlDataProvider {
                     break;
                 case XmlPullParser.TEXT:
                     switch(currentTag){
+                        case "date":
+                            currentSchedule.setDate(parser.getText());
+                            break;
                         case "auditory":
                             currentSchedule.getAuditories().add(parser.getText());
                             break;

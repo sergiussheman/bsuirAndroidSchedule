@@ -5,9 +5,12 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 
 import com.example.myapplication.adapters.ScheduleViewPagerAdapter;
 import com.example.myapplication.model.SchoolDay;
@@ -29,6 +32,7 @@ public class ScheduleViewPagerFragment extends Fragment {
     private static final String CURRENT_MIDDLE_INDEX_KEY = "currentMiddleIndexKey";
     private static final String CURRENT_WEEK_NUMBER_KEY = "currentWeekNumberKey";
     private static final String CURRENT_SUB_GROUP_KEY = "currentSubGroupKey";
+    private static final String CURRENT_SHOW_HIDDEN_KEY = "currentShowHiddenKey";
 
     private ViewPager scheduleViewPager;
     private List<SchoolDay> allWeekSchedules;
@@ -37,6 +41,7 @@ public class ScheduleViewPagerFragment extends Fragment {
     private Integer currentSelectedIndex;
     private WeekNumberEnum selectedWeekNumber = WeekNumberEnum.ALL;
     private SubGroupEnum selectedSubGroup = SubGroupEnum.ENTIRE_GROUP;
+    private boolean selectedShowHidden;
 
     /**
      * ViewPager для отображения списка занятий
@@ -49,18 +54,21 @@ public class ScheduleViewPagerFragment extends Fragment {
      * Статический метод для создания экземпляра фрагмента
      * @return
      */
-    public static ScheduleViewPagerFragment newInstance(List<SchoolDay> schedules, int currentMiddleIndex, WeekNumberEnum currentWeekNumber, SubGroupEnum currentSubGroup) {
+    public static ScheduleViewPagerFragment newInstance(List<SchoolDay> schedules, int currentMiddleIndex, WeekNumberEnum currentWeekNumber,
+                                                        SubGroupEnum currentSubGroup, boolean showHidden) {
         ScheduleViewPagerFragment result = new ScheduleViewPagerFragment();
         Bundle args = new Bundle();
         args.putSerializable(SCHEDULES_PARCELABLE_KEY, (Serializable) schedules);
         args.putInt(CURRENT_MIDDLE_INDEX_KEY, currentMiddleIndex);
         args.putSerializable(CURRENT_WEEK_NUMBER_KEY, currentWeekNumber);
         args.putSerializable(CURRENT_SUB_GROUP_KEY, currentSubGroup);
+        args.putBoolean(CURRENT_SHOW_HIDDEN_KEY, showHidden);
         result.setArguments(args);
         result.setAllWeekSchedules(schedules);
         result.setCurrentMiddleIndex(currentMiddleIndex);
         result.setSelectedWeekNumber(currentWeekNumber);
         result.setSelectedSubGroup(currentSubGroup);
+        result.setShowHidden(showHidden);
         return result;
     }
 
@@ -80,6 +88,7 @@ public class ScheduleViewPagerFragment extends Fragment {
             setCurrentMiddleIndex(args.getInt(CURRENT_MIDDLE_INDEX_KEY, 0));
             setSelectedWeekNumber((WeekNumberEnum) args.getSerializable(CURRENT_WEEK_NUMBER_KEY));
             setSelectedSubGroup((SubGroupEnum) args.getSerializable(CURRENT_SUB_GROUP_KEY));
+            setShowHidden(args.getBoolean(CURRENT_SHOW_HIDDEN_KEY));
         }
     }
 
@@ -98,9 +107,10 @@ public class ScheduleViewPagerFragment extends Fragment {
         scheduleViewPager = (ViewPager) view.findViewById(R.id.scheduleViewPager);
         scheduleViewPager.addOnPageChangeListener(new ViewPagerChangeListener());
 
-        updateFiltersForViewPager(getCurrentMiddleIndex(), getSelectedWeekNumber(), getSelectedSubGroup());
+        updateFiltersForViewPager(getCurrentMiddleIndex(), getSelectedWeekNumber(), getSelectedSubGroup(), getShowHidden());
         return view;
     }
+
 
     /**
      * Метод настраивает ViewPager для отображения списка занятий используя переданные параметры
@@ -109,16 +119,18 @@ public class ScheduleViewPagerFragment extends Fragment {
      * @param subGroup выбранная подгруппа
      * @return null
      */
-    public Void updateFiltersForViewPager(Integer dayPosition, WeekNumberEnum weekNumber, SubGroupEnum subGroup) {
+    public Void updateFiltersForViewPager(Integer dayPosition, WeekNumberEnum weekNumber, SubGroupEnum subGroup, boolean showHidden) {
         if(getActivity() != null) {
             selectedWeekNumber = weekNumber;
             selectedSubGroup = subGroup;
+            selectedShowHidden = showHidden;
             ScheduleViewPagerAdapter adapter = new ScheduleViewPagerAdapter(getActivity().getSupportFragmentManager());
             adapter.setAllSchedules(getAllWeekSchedules());
             currentMiddleIndex = dayPosition;
             adapter.setSelectedDayPosition(dayPosition);
             adapter.setSelectedWeekNumber(weekNumber);
             adapter.setSelectedSubGroupNumber(subGroup);
+            adapter.setShowHidden(showHidden);
             scheduleViewPager.setAdapter(adapter);
             scheduleViewPager.setCurrentItem(PAGE_MIDDLE);
         }
@@ -158,6 +170,10 @@ public class ScheduleViewPagerFragment extends Fragment {
         this.allWeekSchedules = allWeekSchedules;
     }
 
+    public void setShowHidden(boolean show) {
+        this.selectedShowHidden = show;
+    }
+
     public Integer getCurrentMiddleIndex() {
         return currentMiddleIndex;
     }
@@ -168,6 +184,10 @@ public class ScheduleViewPagerFragment extends Fragment {
 
     public SubGroupEnum getSelectedSubGroup() {
         return selectedSubGroup;
+    }
+
+    public boolean getShowHidden() {
+        return selectedShowHidden;
     }
 
     public void setSelectedSubGroup(SubGroupEnum selectedSubGroup) {
@@ -231,7 +251,7 @@ public class ScheduleViewPagerFragment extends Fragment {
         @Override
         public void onPageScrollStateChanged(int state) {
             if (state == ViewPager.SCROLL_STATE_IDLE && currentSelectedIndex != null) {
-                updateFiltersForViewPager(currentMiddleIndex, selectedWeekNumber, selectedSubGroup);
+                updateFiltersForViewPager(currentMiddleIndex, selectedWeekNumber, selectedSubGroup, selectedShowHidden);
             }
         }
     }

@@ -36,7 +36,7 @@ public class ScheduleViewPagerAdapter extends BaseViewPagerAdapter {
             default:
                 calculatedDayPosition = selectedDayPosition;
         }
-        return ScheduleFragmentForGroup.newInstance(getAllSchedules(), calculatedDayPosition, getSelectedWeekNumber(), getSelectedSubGroupNumber());
+        return ScheduleFragmentForGroup.newInstance(getAllSchedules(), calculatedDayPosition, getSelectedWeekNumber(), getSelectedSubGroupNumber(), getShowHidden());
     }
 
     /**

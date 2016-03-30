@@ -25,6 +25,10 @@ public class ArrayAdapterEmployeeSchedule extends BaseArrayAdapterSchedule {
         super(context, layoutResourceId, data);
     }
 
+    public Schedule getSchedule(int position) {
+        return data[position];
+    }
+
     /**
      * Метод возвращает view для выбранного занятия из списка занятий преподавателя выбранного пользователем дня
      * @param position номер занятия для которого нужно создать view

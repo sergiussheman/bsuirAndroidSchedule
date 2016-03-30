@@ -19,11 +19,30 @@
         android:layout_marginRight="8dp"
         android:layout_below="@id/currentWeekNumber"/>
 
+    <TextView
+        android:layout_marginTop="10dp"
+        android:id="@+id/addNewSchedule"
+        android:layout_below="@id/lineBelowWeekNumber"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:textStyle="italic"
+        android:textSize="18dp"
+        android:text="   Нажмите чтобы добавить новую запись..." />
+
+    <View
+        android:id="@+id/lineBelowAddSchedule"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#b3b3b3"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_below="@id/addNewSchedule"/>
+
     <ListView
         android:id="@+id/showScheduleListView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/lineBelowWeekNumber"/>
+        android:layout_below="@id/lineBelowAddSchedule"/>
     <TextView
         android:id="@+id/emptyResults"
         android:layout_width="match_parent"

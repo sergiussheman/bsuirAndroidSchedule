@@ -33,6 +33,8 @@ public class DBColumns {
     public static final String DATE_COLUMN = "DATE";
     public static final String LESSON_TYPE_COLUMN = "LESSON_TYPE";
     public static final String STUDENT_GROUP_ID_COLUMN = "ID_STUDENT_GROUP";
+    public static final String IS_HIDDEN = "IS_HIDDEN";
+    public static final String IS_MANUAL = "IS_MANUAL";
 
     //note
     public static final String NOTE_TEXT_COLUMN = "NOTE_TEXT";
