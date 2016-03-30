@@ -96,6 +96,12 @@ public class AndroidDatabaseManager extends Activity implements OnItemClickListe
         maintext.setText("Select Table");
         maintext.setTextSize(22);
         maintext.setLayoutParams(firstrowlp);
+        maintext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
         select_table=new Spinner(AndroidDatabaseManager.this);
         select_table.setLayoutParams(firstrowlp);
 

@@ -133,4 +133,41 @@
     <string name="title_activity_schedule_widget_configure">Конфигурирование виджета</string>
 
     <string name="date_format_template">dd.MM.yyyy</string>
+
+
+    <string name="set_time">Время:</string>
+    <string name="set_aud">Ауд.:</string>
+    <string name="set_employee_firstname">Имя:</string>
+    <string name="set_employee_lastname">Фамилия:</string>
+    <string name="set_employee_middlename">Отчество:</string>
+    <string name="set_group">Группа:</string>
+    <string name="set_subj">Дисциплина:</string>
+    <string name="set_note">Примечание:</string>
+    <string name="set_subgroup">Подгруппа:</string>
+    <string name="set_weeknums">Недели:</string>
+    <string name="set_hidden">Скрыть текущую запись после добавления:</string>
+    <string name="set_ltype">Тип предмета:</string>
+
+
+
+
+    <string-array name="subgroup_array">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="ltype_array">
+        <item>ЛК</item>
+        <item>ПЗ</item>
+        <item>ЛР</item>
+    </string-array>
+
+    <string-array name="choose_action_array">
+        <item>Скрыть</item>
+        <item>Удалить</item>
+        <item>Редактировать</item>
+    </string-array>
+
+
 </resources>

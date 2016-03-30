@@ -192,7 +192,9 @@ public class DownloadScheduleForEmployee extends Fragment {
                     if (networkInfo != null && networkInfo.isConnected()) {
                         TableRow selectedRow = (TableRow) v.getParent();
                         Integer rowNumber = (Integer) selectedRow.getTag();
+                        SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
                         String fileNameForRefresh = schedulesForEmployee.get(rowNumber);
+                        sdd.deleteSchedule(fileNameForRefresh, true);
                         //fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
                         setIsDownloadingNewSchedule(false);
                         //downloadOrUpdateScheduleForEmployee(fileNameForRefresh);
@@ -658,7 +660,7 @@ public class DownloadScheduleForEmployee extends Fragment {
                             String fileNameForDelete = schedulesForEmployee.get(rowNumber);
                             sdd.setAsUnavailable(fileNameForDelete);
                             Integer dClausesNum = 0;
-                            if ((dClausesNum = sdd.deleteSchedule(fileNameForDelete)) > 0) {
+                            if ((dClausesNum = sdd.deleteSchedule(fileNameForDelete, false)) > 0) {
                                 Toast.makeText(getActivity(), "Расписание для преподавателя " +
                                         fileNameForDelete + " было удалено.", Toast.LENGTH_SHORT).show();
                             } else {

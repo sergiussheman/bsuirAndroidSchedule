@@ -5,7 +5,10 @@ import android.content.Intent;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
+import com.example.myapplication.MainActivity;
 import com.example.myapplication.R;
+import com.example.myapplication.dao.DBHelper;
+import com.example.myapplication.dao.SchoolDayDao;
 import com.example.myapplication.dataprovider.XmlDataProvider;
 import com.example.myapplication.model.Schedule;
 import com.example.myapplication.model.SchoolDay;
@@ -71,7 +74,8 @@ class ListRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory{
             if (!isLastUsingDailySchedule) {
                 defaultSchedule = defaultSchedule.replace(".xml", "exam.xml");
             }
-            weekSchedules = XmlDataProvider.parseScheduleXml(savedContext.getFilesDir(), defaultSchedule);
+            SchoolDayDao sdd =new SchoolDayDao(DBHelper.getInstance(savedContext));
+            weekSchedules = sdd.getSchedule(defaultSchedule, false);
             updateCurrentDaySchedules();
         }
     }

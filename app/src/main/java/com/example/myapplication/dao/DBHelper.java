@@ -86,8 +86,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 " INTEGER PRIMARY KEY AUTOINCREMENT, " + DBColumns.LESSON_TYPE_COLUMN + " TEXT, " +
                 DBColumns.SUBJECT_ID_COLUMN + " INTEGER, " + DBColumns.LESSON_TIME_ID_COLUMN + " INTEGER, " +
                 DBColumns.SUBGROUP_COLUMN + " INTEGER DEFAULT 0, " +
-                DBColumns.WEEK_NUMBER_COLUMN + " TEXT, " + DBColumns.WEEK_DAY_COLUMN + " INTEGER, " +
-                DBColumns.DATE_COLUMN + " DATE, " + DBColumns.STUDENT_GROUP_ID_COLUMN + " INTEGER, " +
+                DBColumns.WEEK_NUMBER_COLUMN + " TEXT, " + DBColumns.WEEK_DAY_COLUMN + " TEXT, " +
+                DBColumns.DATE_COLUMN + " DATE, " + DBColumns.STUDENT_GROUP_ID_COLUMN + " INTEGER, " + DBColumns.IS_HIDDEN + " TEXT, " +
+                DBColumns.IS_MANUAL + " TEXT," +
                 "FOREIGN KEY (" + DBColumns.SUBJECT_ID_COLUMN + ") REFERENCES " + SUBJECT_TABLE_NAME + "(" + BaseColumns._ID + "), " +
                 "FOREIGN KEY (" + DBColumns.STUDENT_GROUP_ID_COLUMN + ") REFERENCES " + STUDENT_GROUP_TABLE_NAME + "(" + BaseColumns._ID + "), " +
                 "FOREIGN KEY (" + DBColumns.LESSON_TIME_ID_COLUMN + ") REFERENCES " + LESSON_TIME_TABLE_NAME + "(" + BaseColumns._ID + "));";
@@ -355,6 +356,24 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    public void addScheduleNoteToDataBase(Long scheduleID, String text) {
+        SQLiteDatabase database = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(DBColumns.NOTE_SCHEDULE_ID_COLUMN, scheduleID);
+        cv.put(DBColumns.NOTE_TEXT_COLUMN, text);
+
+        long rowID = database.insert("note", null, cv);
+    }
+
+   /* public void addScheduleDateToDataBase(String date) {
+        SQLiteDatabase database = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(DBColumns.NOTE_SCHEDULE_ID_COLUMN, scheduleID);
+        cv.put(DBColumns.NOTE_TEXT_COLUMN, text);
+
+        long rowID = database.insert("note", null, cv);
+    }
+*/
     public void deleteMePLS(){
         /*String[] projection = new String[]{BaseColumns._ID, DBColumns.SUBJECT_ID_COLUMN, DBColumns.LESSON_TIME_ID_COLUMN, DBColumns.SUBGROUP_COLUMN, DBColumns.WEEK_NUMBER_COLUMN,
                                             DBColumns.WEEK_DAY_COLUMN, DBColumns.DATE_COLUMN, DBColumns.LESSON_TYPE_COLUMN, DBColumns.STUDENT_GROUP_ID_COLUMN};
@@ -382,7 +401,7 @@ public class DBHelper extends SQLiteOpenHelper {
         if(schedule.getSubGroup() != null && !schedule.getSubGroup().isEmpty()){
             contentValues.put(DBColumns.SUBGROUP_COLUMN, schedule.getSubGroup());
         }
-        if(schedule.getWeekNumbers() != null){
+        if(schedule.getWeekNumbers() != null && schedule.getWeekNumbers().size() > 0){
             contentValues.put(DBColumns.WEEK_NUMBER_COLUMN, ListUtil.convertListToString(schedule.getWeekNumbers()));
         }
         if(schedule.getWeekDay() != null){
@@ -409,6 +428,7 @@ public class DBHelper extends SQLiteOpenHelper {
             Long auditoryID = addAuditoryToDataBase(auditory);
             addScheduleAuditoryToDataBase(scheduleResultId, auditoryID);
         }
+        addScheduleNoteToDataBase(scheduleResultId, schedule.getNote());
         return scheduleResultId;
     }
 

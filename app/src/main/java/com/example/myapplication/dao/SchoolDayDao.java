@@ -5,11 +5,13 @@ import android.database.Cursor;
 import android.provider.BaseColumns;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.myapplication.model.Employee;
 import com.example.myapplication.model.Schedule;
 import com.example.myapplication.model.SchoolDay;
 import com.example.myapplication.model.WeekDayEnum;
+import com.example.myapplication.utils.DateUtil;
 import com.example.myapplication.utils.EmployeeUtil;
 import com.example.myapplication.utils.FileUtil;
 
@@ -33,6 +35,7 @@ import java.util.ListIterator;
  */
 public class SchoolDayDao {
     private DBHelper dbHelper;
+    static final Integer WEEK_WORKDAY_NUM = 6;
 
     public SchoolDayDao(DBHelper helper){
         setDbHelper(helper);
@@ -42,7 +45,15 @@ public class SchoolDayDao {
         for(SchoolDay schoolDay : week){
             for(Schedule schedule : schoolDay.getSchedules()){
                 WeekDayEnum weekDay = WeekDayEnum.getDayByName(schoolDay.getDayName());
+
+                //if weekDay == date
+                //weekDay == date if schedule is for exam
+                if (schoolDay.getDayName().contains(".")) {
+                    schedule.setDate(schoolDay.getDayName());
+                }
+
                 if(weekDay != null) {
+
                     schedule.setWeekDay((long) weekDay.getOrder());
                 }
                 getDbHelper().addScheduleToDataBase(schedule);
@@ -50,17 +61,45 @@ public class SchoolDayDao {
         }
     }
 
+    public void updateScheduleForGroup(String rowId, Schedule newRecord) {
+        Log.d("Update schedule", "ROW NUM = " + rowId);
+        String weekNums = "";
+        for (String str: newRecord.getWeekNumbers()) {
+            weekNums += str;
+            weekNums += ", ";
+        }
+        weekNums = weekNums.substring(0, weekNums.length() - 2);
+        ContentValues values = new ContentValues();
+        values.put(DBColumns.LESSON_TIME_ID_COLUMN, newRecord.getLessonTime());
+        values.put(DBColumns.LESSON_TYPE_COLUMN, newRecord.getLessonType());
+        values.put(DBColumns.WEEK_DAY_COLUMN, newRecord.getLessonType());
+        values.put(DBColumns.WEEK_NUMBER_COLUMN, weekNums);
+        values.put(DBColumns.SUBJECT_ID_COLUMN, "true");
+        values.put(DBColumns.SUBGROUP_COLUMN, newRecord.getSubGroup());
+
+        String selection = BaseColumns._ID + " = " + rowId;
+
+
+        int count = getDbHelper().getReadableDatabase().update(
+                "schedule",
+                values,
+                selection,
+                null);
+
+    }
+
     //удаляет расписание для группы иди преподавателя
     //возвращает количество удаленных записей
-    public Integer deleteSchedule(String fileName) {
+    //если нужно удалить расписание для обновления то не удаляем записи в которых колонка IS_MANUAL == true
+    public Integer deleteSchedule(String fileName, boolean isForRefresh) {
         if (FileUtil.isDigit(fileName.charAt(0))) {
-            return deleteGroupSchedule(fileName);
+            return deleteGroupSchedule(fileName, isForRefresh);
         } else {
-            return deleteTeacherSchedule(fileName);
+            return deleteTeacherSchedule(fileName, isForRefresh);
         }
     }
 
-    private Integer deleteGroupSchedule(String fileName) {
+    private Integer deleteGroupSchedule(String fileName, boolean isForRefresh) {
         List<Cursor> tableCursor = new ArrayList<>();
         String studentGroupName = fileName.substring(0, 6);
         String query = "select * from schedule where id_student_group = "
@@ -77,8 +116,21 @@ public class SchoolDayDao {
 
         do {
             if (!isAvailableTeacherId(tableCursor.get(0).getString(0))) {
-                deleteScheduleTableRow(tableCursor.get(0).getString(0));
-                deletedRowNum++;
+                if (isForRefresh) {
+                    try {
+                        if (!tableCursor.get(0).getString(tableCursor.get(0).getColumnIndex(DBColumns.IS_MANUAL))
+                                .equalsIgnoreCase("true")) {
+                            deleteScheduleTableRow(tableCursor.get(0).getString(0));
+                            deletedRowNum++;
+                        }
+                    } catch (NullPointerException ex) {
+                        deleteScheduleTableRow(tableCursor.get(0).getString(0));
+                        deletedRowNum++;
+                    }
+                } else {
+                    deleteScheduleTableRow(tableCursor.get(0).getString(0));
+                    deletedRowNum++;
+                }
             }
         } while (tableCursor.get(0).moveToNext());
 
@@ -170,7 +222,7 @@ public class SchoolDayDao {
         else return false;
     }
 
-    private Integer deleteTeacherSchedule(String fileName) {
+    private Integer deleteTeacherSchedule(String fileName,  boolean isForRefresh) {
         List<Cursor> tableCursor = new ArrayList<>();
         String lastName = EmployeeUtil.getEmployeeLastNameFromFile(fileName);
         String query = "select * from schedule";
@@ -202,8 +254,21 @@ public class SchoolDayDao {
             if (isTeacherId(scheduleId, tableCursor.get(0).getString(0))) {
                 if (!isAvailableGroupId(tableCursor.get(0).getString(
                         tableCursor.get(0).getColumnIndex(DBColumns.STUDENT_GROUP_ID_COLUMN)))) {
-                    deleteScheduleTableRow(tableCursor.get(0).getString(0));
-                    deletedRowNum++;
+                    if (isForRefresh) {
+                        try {
+                            if (!tableCursor.get(0).getString(tableCursor.get(0).getColumnIndex(DBColumns.IS_MANUAL))
+                                    .equalsIgnoreCase("true")) {
+                                deleteScheduleTableRow(tableCursor.get(0).getString(0));
+                                deletedRowNum++;
+                            }
+                        } catch (NullPointerException ex) {
+                            deleteScheduleTableRow(tableCursor.get(0).getString(0));
+                            deletedRowNum++;
+                        }
+                    } else {
+                        deleteScheduleTableRow(tableCursor.get(0).getString(0));
+                        deletedRowNum++;
+                    }
                 }
             }
         } while (tableCursor.get(0).moveToNext());
@@ -221,8 +286,13 @@ public class SchoolDayDao {
 
     //расписание взависимости от названия
     public List<SchoolDay> getSchedule(String fileName, boolean isForExam) {
+        Log.d("Current date", DateUtil.getCurrentDateAsString());
         if (FileUtil.isDigit(fileName.charAt(0))) {
-            return getScheduleForStudentGroup(fileName, isForExam);
+            if (isForExam) {
+                return getExamScheduleForStudentGroup(fileName);
+            } else {
+                return getScheduleForStudentGroup(fileName);
+            }
         } else {
             return getScheduleForTeacher(fileName, isForExam);
         }
@@ -251,10 +321,14 @@ public class SchoolDayDao {
         String[] buf = scheduleId.toArray(new String[scheduleId.size()]);
         Log.d("sch id = ", buf.length + "");
 
-        for (int i = 0; i < 6; i++) {
-            SchoolDay tmp;
-            if ((tmp = fillSchoolDayForTeacher(scheduleId, (long) (i + 1), isForExam)) != null) {
-                weekSchedule.add(tmp);
+        if (isForExam) {
+            return fillExamScheduleForTeacher(scheduleId, lastName);
+        } else {
+            for (int i = 0; i < WEEK_WORKDAY_NUM; i++) {
+                SchoolDay tmp;
+                if ((tmp = fillSchoolDayForTeacher(scheduleId, (long) (i + 1))) != null) {
+                    weekSchedule.add(tmp);
+                }
             }
         }
 
@@ -274,8 +348,275 @@ public class SchoolDayDao {
         return weekSchedule;
     }
 
+    private List<SchoolDay> getExamScheduleForStudentGroup(String fileName) {
+
+        List<SchoolDay> weekSchedule = new ArrayList<>();
+
+        SchoolDay currentSchoolDay = new SchoolDay();
+        Schedule currentSchedule = new Schedule();
+        List<Schedule> currentScheduleList = new ArrayList<>();
+        String studentGroupName = fileName.substring(0, 6);
+        List<SchoolDay> sdList = new ArrayList<>();
+
+
+        List<Cursor> scheduleTableCursor = new ArrayList<>();
+        String scheduleTableQuery = "select * from schedule where id_student_group = "
+                + getGroupId(studentGroupName) + " and " + "week_day IS NULL";
+        scheduleTableCursor = getDbHelper().getData(scheduleTableQuery);
+
+        String lessonTime = null;
+        String lessonType = null;
+        String subject = null;
+        String subGroup = null;
+        String groupName = null;
+        String[] weekNumbers = null;
+        String note = null;
+        List<Employee> employees = new ArrayList<>();
+        List<String> auds = new ArrayList<>();
+        String isHidden;
+        String date;
+        List<String> dateList = new ArrayList<>();
+
+        if (scheduleTableCursor.isEmpty()) {
+            Log.d("cursor", " is empty");
+        }
+        else {
+            try {
+                scheduleTableCursor.get(0).moveToFirst();
+            } catch (NullPointerException ex) {
+                return new ArrayList<>();
+            }
+        }
+
+        int rowNum = 0;
+        //fill SchoolDay
+        do {
+            currentSchedule = new Schedule();
+            currentScheduleList = new ArrayList<>();
+            currentSchoolDay = new SchoolDay();
+
+
+            //currentSchedule.setWeekDay(null);
+            if ((date = scheduleTableCursor.get(0).getString(scheduleTableCursor.get(0)
+                    .getColumnIndex(DBColumns.DATE_COLUMN))) != null) {
+                currentSchedule.setDate(date);
+            }
+
+            // if schedule for this date was processed continue
+            if (dateList.contains(date)) {
+                rowNum++;
+                continue;
+            }
+
+            dateList.add(date);
+
+            List<Cursor> dateCursor = new ArrayList<>();
+            dateCursor = getDbHelper().getData("select * from schedule where date = '" + date + "'");
+
+            dateCursor.get(0).moveToFirst();
+
+            int dateRowNum = 0;
+            do {
+                currentSchedule = new Schedule();
+                if ((isHidden = dateCursor.get(0).getString(dateCursor.get(0)
+                        .getColumnIndex(DBColumns.IS_HIDDEN))) != null) {
+                    if (isHidden.equals("true")) {
+                        currentSchedule.setHidden(true);
+                    } else currentSchedule.setHidden(false);
+                } else currentSchedule.setHidden(false);
+
+
+                if ((lessonTime = getLessonTimeById(getLessonTimeIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
+                    currentSchedule.setLessonTime(lessonTime);
+                } else currentSchedule.setLessonTime(null);
+
+                if ((lessonType = getLessonTypeFromScheduleTable(dateRowNum, dateCursor)) != null) {
+                    currentSchedule.setLessonType(lessonType);
+                } else currentSchedule.setLessonType(null);
+
+                if ((subject = getSubjectById(getSubjectIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
+                    currentSchedule.setSubject(subject);
+                } else currentSchedule.setSubject(null);
+
+                if ((subGroup = getSubGroupFromScheduleTable(dateRowNum, dateCursor)) != null) {
+                    if (!subGroup.equals("0")) {
+                        currentSchedule.setSubGroup(subGroup);
+                    } else currentSchedule.setSubGroup("");
+                } else currentSchedule.setSubGroup("");
+
+                if ((groupName = getGroupNamebyId(getGroupIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
+                    currentSchedule.setStudentGroup(groupName);
+                } else currentSchedule.setStudentGroup("");
+
+                if ((employees = getEmployeeForScheduleTableRow(dateRowNum, dateCursor)) != null) {
+                    currentSchedule.setEmployeeList(employees);
+                } else currentSchedule.setEmployeeList(null);
+
+                if ((auds = getAudsForScheduleTableRow(dateRowNum, dateCursor)) != null) {
+                    currentSchedule.setAuditories(auds);
+                } else currentSchedule.setAuditories(Arrays.asList(""));
+
+                if ((note = getNoteForScheduleTableRow(dateRowNum, dateCursor)) != null) {
+                    currentSchedule.setNote(note);
+                } else currentSchedule.setNote("");
+
+                currentSchedule.setScheduleTableRowId(dateCursor.get(0).getString(
+                        dateCursor.get(0).getColumnIndex(BaseColumns._ID)));
+
+                currentScheduleList.add(currentSchedule);
+                dateRowNum++;
+            } while (dateCursor.get(0).moveToNext());
+
+
+            currentSchoolDay.setSchedules(currentScheduleList);
+            currentSchoolDay.setDayName(date);
+
+            sdList.add(currentSchoolDay);
+            rowNum++;
+        } while (scheduleTableCursor.get(0).moveToNext());
+
+       // currentScheduleList = sortScheduleListByTime(currentScheduleList);
+
+
+        return sdList;
+    }
+
+    private List<SchoolDay> fillExamScheduleForTeacher(List<String> scheduleId, String fileName) {
+
+        List<SchoolDay> weekSchedule = new ArrayList<>();
+
+        SchoolDay currentSchoolDay = new SchoolDay();
+        Schedule currentSchedule = new Schedule();
+        List<Schedule> currentScheduleList = new ArrayList<>();
+        String studentGroupName = fileName.substring(0, 6);
+        List<SchoolDay> sdList = new ArrayList<>();
+
+
+        List<Cursor> scheduleTableCursor = new ArrayList<>();
+        String scheduleTableQuery = "select * from schedule where week_day IS NULL";
+        scheduleTableCursor = getDbHelper().getData(scheduleTableQuery);
+
+        String lessonTime = null;
+        String lessonType = null;
+        String subject = null;
+        String subGroup = null;
+        String groupName = null;
+        String[] weekNumbers = null;
+        String note = null;
+        List<Employee> employees = new ArrayList<>();
+        List<String> auds = new ArrayList<>();
+        String isHidden;
+        String date;
+        List<String> dateList = new ArrayList<>();
+
+        if (scheduleTableCursor.isEmpty()) {
+            Log.d("cursor", " is empty");
+        }
+        else {
+            try {
+                scheduleTableCursor.get(0).moveToFirst();
+            } catch (NullPointerException ex) {
+                return new ArrayList<>();
+            }
+        }
+
+        int rowNum = 0;
+        //fill SchoolDay
+        do {
+            if (isTeacherId(scheduleId, scheduleTableCursor.get(0).getString(0))) {
+                currentSchedule = new Schedule();
+                currentScheduleList = new ArrayList<>();
+                currentSchoolDay = new SchoolDay();
+
+
+                //currentSchedule.setWeekDay(null);
+                if ((date = scheduleTableCursor.get(0).getString(scheduleTableCursor.get(0)
+                        .getColumnIndex(DBColumns.DATE_COLUMN))) != null) {
+                    currentSchedule.setDate(date);
+                }
+
+                // if schedule for this date was processed continue
+                if (dateList.contains(date)) {
+                    rowNum++;
+                    continue;
+                }
+
+                dateList.add(date);
+
+                List<Cursor> dateCursor = new ArrayList<>();
+                dateCursor = getDbHelper().getData("select * from schedule where date = '" + date + "'");
+
+                dateCursor.get(0).moveToFirst();
+
+                int dateRowNum = 0;
+                do {
+                    currentSchedule = new Schedule();
+                    if ((isHidden = dateCursor.get(0).getString(dateCursor.get(0)
+                            .getColumnIndex(DBColumns.IS_HIDDEN))) != null) {
+                        if (isHidden.equals("true")) {
+                            currentSchedule.setHidden(true);
+                        } else currentSchedule.setHidden(false);
+                    } else currentSchedule.setHidden(false);
+
+
+                    if ((lessonTime = getLessonTimeById(getLessonTimeIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
+                        currentSchedule.setLessonTime(lessonTime);
+                    } else currentSchedule.setLessonTime(null);
+
+                    if ((lessonType = getLessonTypeFromScheduleTable(dateRowNum, dateCursor)) != null) {
+                        currentSchedule.setLessonType(lessonType);
+                    } else currentSchedule.setLessonType(null);
+
+                    if ((subject = getSubjectById(getSubjectIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
+                        currentSchedule.setSubject(subject);
+                    } else currentSchedule.setSubject(null);
+
+                    if ((subGroup = getSubGroupFromScheduleTable(dateRowNum, dateCursor)) != null) {
+                        if (!subGroup.equals("0")) {
+                            currentSchedule.setSubGroup(subGroup);
+                        } else currentSchedule.setSubGroup("");
+                    } else currentSchedule.setSubGroup("");
+
+                    if ((groupName = getGroupNamebyId(getGroupIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
+                        currentSchedule.setStudentGroup(groupName);
+                    } else currentSchedule.setStudentGroup("");
+
+                    if ((employees = getEmployeeForScheduleTableRow(dateRowNum, dateCursor)) != null) {
+                        currentSchedule.setEmployeeList(employees);
+                    } else currentSchedule.setEmployeeList(null);
+
+                    if ((auds = getAudsForScheduleTableRow(dateRowNum, dateCursor)) != null) {
+                        currentSchedule.setAuditories(auds);
+                    } else currentSchedule.setAuditories(Arrays.asList(""));
+
+                    if ((note = getNoteForScheduleTableRow(dateRowNum, dateCursor)) != null) {
+                        currentSchedule.setNote(note);
+                    } else currentSchedule.setNote("");
+
+                    currentSchedule.setScheduleTableRowId(dateCursor.get(0).getString(
+                            dateCursor.get(0).getColumnIndex(BaseColumns._ID)));
+
+                    currentScheduleList.add(currentSchedule);
+                    dateRowNum++;
+                } while (dateCursor.get(0).moveToNext());
+
+
+                currentSchoolDay.setSchedules(currentScheduleList);
+                currentSchoolDay.setDayName(date);
+
+                sdList.add(currentSchoolDay);
+            }
+            rowNum++;
+        } while (scheduleTableCursor.get(0).moveToNext());
+
+        // currentScheduleList = sortScheduleListByTime(currentScheduleList);
+
+
+        return sdList;
+    }
+
     //расписание для группы
-    private List<SchoolDay> getScheduleForStudentGroup(String groupFileName, boolean isForExam){
+    private List<SchoolDay> getScheduleForStudentGroup(String groupFileName){
         List<SchoolDay> weekSchedule = new ArrayList<>();
         int dayNum = 0;
         Log.d("file name = ", groupFileName);
@@ -288,11 +629,12 @@ public class SchoolDayDao {
         scheduleTableCursor = getDbHelper().getData(scheduleTableQuery);
 
         scheduleTableCursor.get(0).moveToLast();
-        dayNum = scheduleTableCursor.get(0).getInt(scheduleTableCursor.get(0).
-                getColumnIndex(DBColumns.WEEK_DAY_COLUMN));
 
-        for (int i = 0; i < dayNum; i++) {
-            weekSchedule.add(fillSchoolDayForGroup(studentGroupName, (long) (i + 1), isForExam));
+        for (int i = 0; i < WEEK_WORKDAY_NUM; i++) {
+            SchoolDay tmp;
+            if ((tmp = fillSchoolDayForGroup(studentGroupName, (long) (i + 1))) != null) {
+                weekSchedule.add(tmp);
+            }
         }
 
         for (SchoolDay sd: weekSchedule) {
@@ -313,7 +655,7 @@ public class SchoolDayDao {
     }
 
     //распимание для преподавателя на один день
-    private SchoolDay fillSchoolDayForTeacher(List<String> scheduleId, Long weekDay, boolean isForExam) {
+    private SchoolDay fillSchoolDayForTeacher(List<String> scheduleId, Long weekDay) {
         List<SchoolDay> weekSchedule = new ArrayList<>();
 
         SchoolDay currentSchoolDay = new SchoolDay();
@@ -333,6 +675,7 @@ public class SchoolDayDao {
         String[] weekNumbers = null;
         List<Employee> employees = new ArrayList<>();
         List<String> auds = new ArrayList<>();
+        String isHidden;
 
         try {
             if (scheduleTableCursor.isEmpty()) {
@@ -350,6 +693,16 @@ public class SchoolDayDao {
         do {
             if (isTeacherId(scheduleId, scheduleTableCursor.get(0).getString(0))) {
                 currentSchedule = new Schedule();
+
+                if ((isHidden = scheduleTableCursor.get(0).getString(scheduleTableCursor.get(0)
+                        .getColumnIndex(DBColumns.IS_HIDDEN))) != null) {
+                    if (isHidden.equals("true")) {
+                        currentSchedule.setHidden(true);
+                    }
+                    else currentSchedule.setHidden(false);
+                }
+                else currentSchedule.setHidden(false);
+
                 if ((lessonTime = getLessonTimeById(getLessonTimeIdFromScheduleTable(rowNum, scheduleTableCursor))) != null) {
                     currentSchedule.setLessonTime(lessonTime);
                 } else currentSchedule.setLessonTime(null);
@@ -363,10 +716,7 @@ public class SchoolDayDao {
                 } else currentSchedule.setSubject(null);
 
                 if ((groupName = getGroupNamebyId(getGroupIdFromScheduleTable(rowNum, scheduleTableCursor))) != null) {
-                    if (lessonType.equalsIgnoreCase("лк")) {
-                        currentSchedule.setStudentGroup(groupName.substring(0, groupName.length() - 1) + "X");
-                    }
-                    else currentSchedule.setStudentGroup(groupName);
+                    currentSchedule.setStudentGroup(groupName);
                 } else currentSchedule.setStudentGroup("");
 
                 if ((subGroup = getSubGroupFromScheduleTable(rowNum, scheduleTableCursor)) != null ) {
@@ -392,13 +742,10 @@ public class SchoolDayDao {
                     currentSchedule.setAuditories(auds);
                 } else currentSchedule.setAuditories(Arrays.asList(""));
 
-                if (isForExam) {
-                    if (lessonType != null && lessonType.equalsIgnoreCase("ЭКЗ")) {
-                        currentScheduleList.add(currentSchedule);
-                    }
-                } else {
-                    currentScheduleList.add(currentSchedule);
-                }
+                currentSchedule.setScheduleTableRowId(scheduleTableCursor.get(0).getString(
+                        scheduleTableCursor.get(0).getColumnIndex(BaseColumns._ID)));
+
+                currentScheduleList.add(currentSchedule);
             }
             rowNum++;
         } while (scheduleTableCursor.get(0).moveToNext());
@@ -415,10 +762,12 @@ public class SchoolDayDao {
         }
 
         //delete doubles
+        /*
         int i;
         while ((i = getFirstRepetition(currentScheduleList)) > -1) {
             currentScheduleList.remove(i);
         }
+        */
 
         for (Schedule s: currentScheduleList) {
             Log.d("After del repetition", s.getLessonTime() + " " +
@@ -444,7 +793,7 @@ public class SchoolDayDao {
         return currentSchoolDay;
     }
 
-    private Integer getFirstRepetition(List<Schedule> currentScheduleList) {
+    public Integer getFirstRepetition(List<Schedule> currentScheduleList) {
         Integer rIndex = -1;
         boolean flag = false;
         int n = 0;
@@ -452,7 +801,8 @@ public class SchoolDayDao {
         for (Schedule i: currentScheduleList) {
             for (Schedule j: currentScheduleList) {
                 if (n != m) {
-                    if (i.getLessonTime().equals(j.getLessonTime()) && i.getSubGroup().equals(j.getSubGroup())) {
+                    if (i.getLessonTime().equals(j.getLessonTime()) && i.getSubGroup().equals(j.getSubGroup())
+                            && i.getNote().equals(j.getNote())) {
                         if (isEqualWeekNums(i.getWeekNumbers().toArray(new String[i.getWeekNumbers().size()]),
                                 j.getWeekNumbers().toArray(new String[j.getWeekNumbers().size()]))) {
                             rIndex = m;
@@ -501,7 +851,7 @@ public class SchoolDayDao {
     }
 
     //заполняет расписание на один день для группы
-    private SchoolDay fillSchoolDayForGroup(String studentGroupName, Long weekDay, boolean isForExam) {
+    private SchoolDay fillSchoolDayForGroup(String studentGroupName, Long weekDay) {
 
         List<SchoolDay> weekSchedule = new ArrayList<>();
 
@@ -520,20 +870,38 @@ public class SchoolDayDao {
         String subGroup = null;
         String groupName = null;
         String[] weekNumbers = null;
+        String note = null;
         List<Employee> employees = new ArrayList<>();
         List<String> auds = new ArrayList<>();
+        String isHidden;
+        String date;
 
         if (scheduleTableCursor.isEmpty()) {
             Log.d("cursor", " is empty");
         }
         else {
-            scheduleTableCursor.get(0).moveToFirst();
+            try {
+                scheduleTableCursor.get(0).moveToFirst();
+            } catch (NullPointerException ex) {
+                return null;
+            }
         }
         int rowNum = 0;
 
         //fill SchoolDay
         do {
             currentSchedule = new Schedule();
+
+            if ((isHidden = scheduleTableCursor.get(0).getString(scheduleTableCursor.get(0)
+                    .getColumnIndex(DBColumns.IS_HIDDEN))) != null) {
+                if (isHidden.equals("true")) {
+                    currentSchedule.setHidden(true);
+                }
+                else currentSchedule.setHidden(false);
+            }
+            else currentSchedule.setHidden(false);
+
+
             if ((lessonTime = getLessonTimeById(getLessonTimeIdFromScheduleTable(rowNum, scheduleTableCursor))) != null) {
                 currentSchedule.setLessonTime(lessonTime);
             }
@@ -582,15 +950,20 @@ public class SchoolDayDao {
             }
             else currentSchedule.setAuditories(Arrays.asList(""));
 
-            if (isForExam) {
-                if (lessonType != null && lessonType.equalsIgnoreCase("ЭКЗ")) {
-                    currentScheduleList.add(currentSchedule);
-                }
-            } else {
-                currentScheduleList.add(currentSchedule);
-            }
+            if ((note = getNoteForScheduleTableRow(rowNum, scheduleTableCursor)) != null) {
+                currentSchedule.setNote(note);
+            } else currentSchedule.setNote("");
 
-            //currentScheduleList.add(currentSchedule);
+            currentSchedule.setScheduleTableRowId(scheduleTableCursor.get(0).getString(
+                    scheduleTableCursor.get(0).getColumnIndex(BaseColumns._ID)));
+
+            if ((date = scheduleTableCursor.get(0).getString(scheduleTableCursor.get(0)
+                    .getColumnIndex(DBColumns.DATE_COLUMN))) != null) {
+                currentSchedule.setDate(date);
+            } else currentSchedule.setDate("");
+
+
+            currentScheduleList.add(currentSchedule);
             rowNum++;
         } while (scheduleTableCursor.get(0).moveToNext());
 
@@ -613,7 +986,7 @@ public class SchoolDayDao {
     }
 
     //сортирует расписание по времени от меньшего к большему
-    private List<Schedule> sortScheduleListByTime(List<Schedule> schedules) {
+    public List<Schedule> sortScheduleListByTime(List<Schedule> schedules) {
         for (int i = 0; i < schedules.size(); i++) {
             for (int j = i; j < schedules.size(); j++) {
                 if (!isTimeLess(schedules.get(i).getLessonTime(), schedules.get(j).getLessonTime())) {
@@ -629,11 +1002,25 @@ public class SchoolDayDao {
     }
 
     private boolean isTimeLess(String firstTime, String secondTime) {
-        Integer first = Integer.valueOf(firstTime.substring(0, 2));
-        Integer second = Integer.valueOf(secondTime.substring(0, 2));
+        if (firstTime.length() <= 0 || secondTime.length() <= 0) {
+            return true;
+        }
+        try {
+            try {
+                Integer first = Integer.valueOf(firstTime.substring(0, 2));
+                Integer second = Integer.valueOf(secondTime.substring(0, 2));
+                if (first < second) return true;
+                else return false;
+            } catch (NumberFormatException ex) {
+                Integer first = Integer.valueOf(firstTime.substring(0, 1));
+                Integer second = Integer.valueOf(secondTime.substring(0, 1));
+                if (first < second) return true;
+                else return false;
+            }
 
-        if (first < second) return true;
-        else return false;
+        } catch (NullPointerException ex) {
+            return true;
+        }
 
     }
 
@@ -657,12 +1044,16 @@ public class SchoolDayDao {
     //получает номера недель из строки в таблицы расписании
     private String[] getWeekNumsFromScheduleTable(Integer rowNum, List<Cursor> c) {
         List<Cursor> cursor = c;
-        String[] weekNums = null;
+        String[] weekNums = {"1", "2", "3", "4"};
 
-        cursor.get(0).moveToFirst();
-        cursor.get(0).moveToPosition(rowNum);
-        weekNums = cursor.get(0).getString(cursor.get(0).getColumnIndex(DBColumns.WEEK_NUMBER_COLUMN)).split("\\, ");
-        return weekNums;
+        try {
+            cursor.get(0).moveToFirst();
+            cursor.get(0).moveToPosition(rowNum);
+            weekNums = cursor.get(0).getString(cursor.get(0).getColumnIndex(DBColumns.WEEK_NUMBER_COLUMN)).split("\\, ");
+            return weekNums;
+        } catch (NullPointerException ex) {
+            return  weekNums;
+        }
     }
 
     //получае день недели из строки в таблицы расписании
@@ -681,6 +1072,28 @@ public class SchoolDayDao {
         cursor.get(0).moveToFirst();
         cursor.get(0).moveToPosition(rowNum);
         return cursor.get(0).getString(cursor.get(0).getColumnIndex(DBColumns.SUBGROUP_COLUMN));
+    }
+
+    private String getNoteForScheduleTableRow(Integer rowNum, List<Cursor> c) {
+        List<Cursor> cursor = c;
+
+        cursor.get(0).moveToFirst();
+        cursor.get(0).moveToPosition(rowNum);
+
+        String rowId = cursor.get(0).getString(cursor.get(0).getColumnIndex(BaseColumns._ID));
+        String query = "select " + DBColumns.NOTE_TEXT_COLUMN + " from note"  + " where " +
+                DBColumns.NOTE_SCHEDULE_ID_COLUMN + " = " + rowId;
+
+        List<Cursor> noteCursor = getDbHelper().getData(query);
+
+        try {
+            Log.d("Date Base", " Row with id " + rowId + " have note = " + noteCursor.get(0).getString(0));
+           return noteCursor.get(0).getString(0);
+        } catch (NullPointerException ex) {
+            Log.d("Data Base", " Row with id " + rowId + " haven't got note." );
+            return null;
+        }
+
     }
 
     //тип занятия
@@ -937,6 +1350,49 @@ public class SchoolDayDao {
 
         int count = getDbHelper().getReadableDatabase().update(
                 "employee",
+                values,
+                selection,
+                null);
+    }
+
+    public void hideScheduleRow(String rowId) {
+
+        ContentValues values = new ContentValues();
+        values.put(DBColumns.IS_HIDDEN, "true");
+
+        String selection = BaseColumns._ID + " = " + rowId;
+
+
+        int count = getDbHelper().getReadableDatabase().update(
+                "schedule",
+                values,
+                selection,
+                null);
+    }
+
+    public void setAsManual(String rowId) {
+        ContentValues values = new ContentValues();
+        values.put(DBColumns.IS_MANUAL, "true");
+
+        String selection = BaseColumns._ID + " = " + rowId;
+
+
+        int count = getDbHelper().getReadableDatabase().update(
+                "schedule",
+                values,
+                selection,
+                null);
+    }
+
+    public void showScheduleRow(String rowId) {
+        ContentValues values = new ContentValues();
+        values.put(DBColumns.IS_HIDDEN, "false");
+
+        String selection = BaseColumns._ID + " = " + rowId;
+
+
+        int count = getDbHelper().getReadableDatabase().update(
+                "schedule",
                 values,
                 selection,
                 null);

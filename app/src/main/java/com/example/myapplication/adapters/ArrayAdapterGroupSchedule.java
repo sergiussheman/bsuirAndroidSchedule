@@ -3,10 +3,15 @@ package com.example.myapplication.adapters;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.TextView;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
 
 import com.example.myapplication.R;
 import com.example.myapplication.model.Employee;
@@ -20,7 +25,9 @@ import java.util.List;
  */
 public class ArrayAdapterGroupSchedule extends BaseArrayAdapterSchedule {
 
-
+    View.OnCreateContextMenuListener menuListener;
+    Integer id = 0;
+    public int pos;
     /**
      * Адаптер для отображения расписания занятий группы
      * @param context контекст
@@ -29,6 +36,14 @@ public class ArrayAdapterGroupSchedule extends BaseArrayAdapterSchedule {
      */
     public ArrayAdapterGroupSchedule(Context context, int layoutResourceId, Schedule[] data){
         super(context, layoutResourceId, data);
+    }
+
+    public Integer getPosition() {
+        return pos;
+    }
+
+    public Schedule getSchedule(int position) {
+        return data[position];
     }
 
     /**
@@ -54,15 +69,19 @@ public class ArrayAdapterGroupSchedule extends BaseArrayAdapterSchedule {
         scheduleTimeTextView.setText(currentSchedule.getLessonTime());
 
         TextView subjectName = (TextView) convertView.findViewById(R.id.subjectNameListItem);
+        subjectName.setMaxWidth(200);
         String textForSubjectTextView = currentSchedule.getSubject();
         if(!currentSchedule.getLessonType().isEmpty()){
             textForSubjectTextView += " (" + currentSchedule.getLessonType() + ")";
         }
         subjectName.setText(textForSubjectTextView);
+
         TextView noteTextView = (TextView) convertView.findViewById(R.id.scheduleNoteTextView);
         noteTextView.setText(currentSchedule.getNote());
+
+
         TextView employeeName = (TextView) convertView.findViewById(R.id.employeeNameListItem);
-        employeeName.setText(convertEmployeeListToString(currentSchedule.getEmployeeList()));
+        employeeName.append(convertEmployeeListToString(currentSchedule.getEmployeeList()));
 
         if(!currentSchedule.getSubGroup().isEmpty()) {
             TextView subGroup = (TextView) convertView.findViewById(R.id.subGroupTextView);
@@ -75,6 +94,7 @@ public class ArrayAdapterGroupSchedule extends BaseArrayAdapterSchedule {
 
         TextView auditoryName = (TextView) convertView.findViewById(R.id.auditoryNameListItem);
         auditoryName.setText(convertListString(currentSchedule.getAuditories(), ""));
+
         return convertView;
     }
 

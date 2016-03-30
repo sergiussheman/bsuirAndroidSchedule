@@ -253,6 +253,7 @@ public class DownloadScheduleForGroup extends Fragment {
                         String fileNameForRefresh = schedulesForGroup.get(rowNumber);
                         List<StudentGroup> studentGroups = new ArrayList<StudentGroup>();
                         SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(null));
+                        sdd.deleteSchedule(fileNameForRefresh, true);
 
                         //fileNameForRefresh = fileNameForRefresh.substring(0, fileNameForRefresh.length() - 4);
                         setIsDownloadingNewSchedule(false);
@@ -334,6 +335,7 @@ public class DownloadScheduleForGroup extends Fragment {
         editor.putString(groupFieldInSettings, studentGroup);
         editor.putString(employeeFieldInSettings, "none");
         if(isDownloadedSchedule) {
+            Log.d("Current date", DateUtil.getCurrentDateAsString());
             editor.putString(studentGroup, DateUtil.getCurrentDateAsString());
         }
         editor.apply();
@@ -696,9 +698,13 @@ public class DownloadScheduleForGroup extends Fragment {
                             TableRow selectedRow = (TableRow) v.getParent();
                             Integer rowNumber = (Integer) selectedRow.getTag();
                             StringBuilder fileNameForDelete = new StringBuilder(schedulesForGroup.get(rowNumber));
+
+                            //set group as unavailable
                             sdd.setAsUnavailable(fileNameForDelete.toString());
+
+                            //delete group
                             Integer dClausesNum = 0;
-                            if ((dClausesNum = sdd.deleteSchedule(fileNameForDelete.toString())) > 0) {
+                            if ((dClausesNum = sdd.deleteSchedule(fileNameForDelete.toString(), false)) > 0) {
                                 Toast.makeText(getActivity(), "Расписание для группы " +
                                         fileNameForDelete + " было удалено.", Toast.LENGTH_SHORT).show();
                             } else {
