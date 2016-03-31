@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -60,6 +61,7 @@ public class ScheduleFragmentForGroup extends Fragment {
     private WeekNumberEnum selectedWeekNumber;
     private SubGroupEnum selectedSubGroup;
     private boolean showHidden;
+
     private ArrayAdapterGroupSchedule groupAdapter;
     private ArrayAdapterEmployeeSchedule empAdapter;
 
@@ -178,10 +180,12 @@ public class ScheduleFragmentForGroup extends Fragment {
                         createChooseActionDialog(s, true);
                     }
                 });
-                TextView tvAddSchedule = (TextView) currentView.findViewById(R.id.addNewSchedule);
+                final TextView tvAddSchedule = (TextView) currentView.findViewById(R.id.addNewSchedule);
+                final Animation anim = AnimationUtils.loadAnimation(getActivity(), R.anim.onclick_anim);
                 tvAddSchedule.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        tvAddSchedule.startAnimation(anim);
                         Schedule s = empAdapter.getSchedule(0);
                         createAddDialog(s, true);
                     }
@@ -206,18 +210,14 @@ public class ScheduleFragmentForGroup extends Fragment {
             boolean matchSubGroup = isMatchSubGroup(subGroupEnum, schedule);
 
             if (matchSubGroup && matchWeekNumber) {
+                //если нужно показывать скрытые записи то показываем все для текущих настроек
                 if (showHidden) {
                     result.add(schedule);
-                } else {
-                    if (!schedule.isHidden()) {
-                        result.add(schedule);
-                    }
+                } else if (!schedule.isHidden()) {
+                    //не показывать скрытые записи
+                    result.add(schedule);
                 }
             }
-
-            /*if (matchSubGroup && matchWeekNumber) {
-                result.add(schedule);
-            }*/
         }
         schedulesForShow = result.toArray(new Schedule[result.size()]);
         updateListView();
@@ -354,7 +354,7 @@ public class ScheduleFragmentForGroup extends Fragment {
         this.selectedSubGroup = selectedSubGroup;
     }
 
-    //create view for action dialog and fill it
+    //create view for action dialog
     private View getEmptyView(Schedule scheduleForFill, boolean isForGroup) {
         LayoutInflater ltInflater = getActivity().getLayoutInflater();
         View view = ltInflater.inflate(R.layout.edit_schedule_dialog, null, false);
@@ -408,6 +408,7 @@ public class ScheduleFragmentForGroup extends Fragment {
         return view;
     }
 
+    //create view for action dialog
     private View getEditView(Schedule scheduleForFill, boolean isForGroup) {
         LayoutInflater ltInflater = getActivity().getLayoutInflater();
         View view = ltInflater.inflate(R.layout.edit_schedule_dialog, null, false);
@@ -506,7 +507,7 @@ public class ScheduleFragmentForGroup extends Fragment {
         return view;
     }
 
-    //get schedule params from action dialog
+    //get schedule params from edit dialog
     private Schedule fillScheduleFromEditDialog(View view) {
         EditText etAud, etSubj, etEmpLastName, etEmpFirstName,
                 etEmpMiddleName, etNote, etTime, etLType, etGroupName;
@@ -578,6 +579,7 @@ public class ScheduleFragmentForGroup extends Fragment {
         return newSchedule;
     }
 
+    //get schedule params from add dialog
     private Schedule fillScheduleFromAddDialog(View view) {
         EditText etAud, etSubj, etEmpLastName, etEmpFirstName,
                 etEmpMiddleName, etNote, etTime, etLType, etGroupName;
@@ -649,6 +651,90 @@ public class ScheduleFragmentForGroup extends Fragment {
         return newSchedule;
     }
 
+    private void addScheduleRowAction(Schedule schedule, View view) {
+        Schedule record = fillScheduleFromAddDialog(view);
+        record.setWeekDay((long) currentPosition + 1);
+        SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
+        String buf = String.valueOf(sdd.getDbHelper().addScheduleToDataBase(record));
+        record.setScheduleTableRowId(buf);
+        sdd.setAsManual(record.getScheduleTableRowId());
+
+        Integer currDay = currentPosition;
+        allScheduleForGroup.get(currDay).getSchedules().add(record);
+        allScheduleForGroup.get(currDay).setSchedules(sdd.sortScheduleListByTime(
+                allScheduleForGroup.get(currDay).getSchedules()));
+        getThisFragment().onResume();
+        filterScheduleList(currDay, selectedWeekNumber,
+                selectedSubGroup, showHidden);
+    }
+
+    private void editScheduleRowAction(Schedule schedule, View view) {
+        Schedule record = fillScheduleFromEditDialog(view);
+        record.setWeekDay(schedule.getWeekDay());
+        SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
+        sdd.deleteScheduleTableRow(schedule.getScheduleTableRowId());
+        String buf = String.valueOf(sdd.getDbHelper().addScheduleToDataBase(record));
+        record.setScheduleTableRowId(buf);
+        sdd.setAsManual(record.getScheduleTableRowId());
+
+        Integer currDay = Integer.valueOf(schedule.getWeekDay().toString()) - 1;
+        allScheduleForGroup.get(currDay).getSchedules().remove(schedule);
+        allScheduleForGroup.get(currDay).getSchedules().add(record);
+        allScheduleForGroup.get(currDay).setSchedules(sdd.sortScheduleListByTime(
+                allScheduleForGroup.get(currDay).getSchedules()));
+        filterScheduleList(currDay, selectedWeekNumber,
+                selectedSubGroup, showHidden);
+    }
+
+    private void deleteScheduleRowAction(Schedule schedule) {
+        SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
+        sdd.deleteScheduleTableRow(schedule.getScheduleTableRowId());
+
+        Integer currDay = Integer.valueOf(schedule.getWeekDay().toString()) - 1;
+        allScheduleForGroup.get(currDay).getSchedules().remove(schedule);
+        allScheduleForGroup.get(currDay).setSchedules(sdd.sortScheduleListByTime(
+                allScheduleForGroup.get(currDay).getSchedules()));
+        filterScheduleList(currDay, selectedWeekNumber,
+                selectedSubGroup, showHidden);
+    }
+
+    private Integer executeAction(int which, Schedule schedule, boolean isForEmp, DialogInterface dialog) {
+        switch (which) {
+            case 0:
+                createConfirmDeletingDialog(schedule);
+                dialog.dismiss();
+                return 0;
+
+            case 1:
+                createEditDialog(schedule, isForEmp);
+                dialog.dismiss();
+                return 0;
+
+            case 2:
+                SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
+
+                if (schedule.isHidden()) {
+                    sdd.showScheduleRow(schedule.getScheduleTableRowId());
+                    schedule.setHidden(false);
+                } else {
+                    sdd.hideScheduleRow(schedule.getScheduleTableRowId());
+                    schedule.setHidden(true);
+                }
+
+                Integer currDay = Integer.valueOf(schedule.getWeekDay().toString()) - 1;
+                allScheduleForGroup.get(currDay).getSchedules().remove(schedule);
+                allScheduleForGroup.get(currDay).getSchedules().add(schedule);
+                allScheduleForGroup.get(currDay).setSchedules(sdd.sortScheduleListByTime(
+                        allScheduleForGroup.get(currDay).getSchedules()));
+                filterScheduleList(currDay, selectedWeekNumber,
+                        selectedSubGroup, showHidden);
+                dialog.dismiss();
+                return 0;
+
+            default: return -1;
+        }
+    }
+
     public void createAddDialog(Schedule s, boolean isForEmp) {
         final Schedule schedule = s;
         final View view = getEmptyView(s, isForEmp);
@@ -664,27 +750,14 @@ public class ScheduleFragmentForGroup extends Fragment {
                             .setPositiveButton("Добавить",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
-                                            Schedule record = fillScheduleFromAddDialog(view);
-                                            record.setWeekDay((long) currentPosition + 1);
-                                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
-                                            String buf = String.valueOf(sdd.getDbHelper().addScheduleToDataBase(record));
-                                            record.setScheduleTableRowId(buf);
-                                            sdd.setAsManual(record.getScheduleTableRowId());
-
-                                            Integer currDay = currentPosition;
-                                            allScheduleForGroup.get(currDay).getSchedules().add(record);
-                                            allScheduleForGroup.get(currDay).setSchedules(sdd.sortScheduleListByTime(
-                                                    allScheduleForGroup.get(currDay).getSchedules()));
-                                            getThisFragment().onResume();
-                                            filterScheduleList(currDay, selectedWeekNumber,
-                                                    selectedSubGroup, showHidden);
+                                           addScheduleRowAction(schedule, view);
                                         }
                                     })
 
                             .setNegativeButton("Отмена",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
-
+                                            dialog.dismiss();
                                         }
                                     })
                             .create().show();
@@ -708,28 +781,14 @@ public class ScheduleFragmentForGroup extends Fragment {
                             .setPositiveButton("Редактировать",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
-                                            Schedule record = fillScheduleFromEditDialog(view);
-                                            record.setWeekDay(schedule.getWeekDay());
-                                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
-                                            sdd.deleteScheduleTableRow(schedule.getScheduleTableRowId());
-                                            String buf = String.valueOf(sdd.getDbHelper().addScheduleToDataBase(record));
-                                            record.setScheduleTableRowId(buf);
-                                            sdd.setAsManual(record.getScheduleTableRowId());
-
-                                            Integer currDay = Integer.valueOf(schedule.getWeekDay().toString()) - 1;
-                                            allScheduleForGroup.get(currDay).getSchedules().remove(schedule);
-                                            allScheduleForGroup.get(currDay).getSchedules().add(record);
-                                            allScheduleForGroup.get(currDay).setSchedules(sdd.sortScheduleListByTime(
-                                                    allScheduleForGroup.get(currDay).getSchedules()));
-                                            filterScheduleList(currDay, selectedWeekNumber,
-                                                    selectedSubGroup, showHidden);
+                                            editScheduleRowAction(schedule, view);
                                         }
                                     })
 
                             .setNegativeButton("Отмена",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
-
+                                            dialog.dismiss();
                                         }
                                     })
                             .create().show();
@@ -756,22 +815,14 @@ public class ScheduleFragmentForGroup extends Fragment {
                             .setPositiveButton("Да",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
-                                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
-                                            sdd.deleteScheduleTableRow(schedule.getScheduleTableRowId());
-
-                                            Integer currDay = Integer.valueOf(schedule.getWeekDay().toString()) - 1;
-                                            allScheduleForGroup.get(currDay).getSchedules().remove(schedule);
-                                            allScheduleForGroup.get(currDay).setSchedules(sdd.sortScheduleListByTime(
-                                                    allScheduleForGroup.get(currDay).getSchedules()));
-                                            filterScheduleList(currDay, selectedWeekNumber,
-                                                    selectedSubGroup, showHidden);
+                                           deleteScheduleRowAction(schedule);
                                         }
                                     })
 
                             .setNegativeButton("Нет",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
-
+                                            dialog.dismiss();
                                         }
                                     })
                             .create().show();
@@ -792,8 +843,6 @@ public class ScheduleFragmentForGroup extends Fragment {
             items = actionsIfNotHidden;
         }
 
-
-
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -804,44 +853,17 @@ public class ScheduleFragmentForGroup extends Fragment {
                             .setItems(items, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    switch (which) {
-                                        case 0:
-                                            createConfirmDeletingDialog(schedule);
-                                            dialog.dismiss();
-                                            break;
-
-                                        case 1:
-                                            createEditDialog(schedule, isForEmp);
-                                            dialog.dismiss();
-                                            break;
-
-                                        case 2:
-                                            SchoolDayDao sdd = new SchoolDayDao(DBHelper.getInstance(getActivity()));
-
-                                            if (schedule.isHidden()) {
-                                                sdd.showScheduleRow(schedule.getScheduleTableRowId());
-                                                schedule.setHidden(false);
-                                            } else {
-                                                sdd.hideScheduleRow(schedule.getScheduleTableRowId());
-                                                schedule.setHidden(true);
-                                            }
-
-                                            Integer currDay = Integer.valueOf(schedule.getWeekDay().toString()) - 1;
-                                            allScheduleForGroup.get(currDay).getSchedules().remove(schedule);
-                                            allScheduleForGroup.get(currDay).getSchedules().add(schedule);
-                                            allScheduleForGroup.get(currDay).setSchedules(sdd.sortScheduleListByTime(
-                                                    allScheduleForGroup.get(currDay).getSchedules()));
-                                            filterScheduleList(currDay, selectedWeekNumber,
-                                                    selectedSubGroup, showHidden);
-                                            dialog.dismiss();
-                                            break;
-
-                                    }
+                                  if (executeAction(which, schedule, isForEmp, dialog) < 0) {
+                                      Log.d("Action Dialog", "Can't find handler for this action.");
+                                  } else {
+                                      Log.d("Action Dialog", "Action executed.");
+                                  }
                                 }
                             })
                             .setNegativeButton("Отмена",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
                                         }
                                     })
                             .create().show();
@@ -849,8 +871,5 @@ public class ScheduleFragmentForGroup extends Fragment {
             }
         });
     }
-
-
-
 
 }
