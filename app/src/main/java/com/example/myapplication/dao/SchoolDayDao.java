@@ -3,9 +3,7 @@ package com.example.myapplication.dao;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.provider.BaseColumns;
-import android.support.annotation.NonNull;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.myapplication.model.Employee;
 import com.example.myapplication.model.Schedule;
@@ -15,20 +13,9 @@ import com.example.myapplication.utils.DateUtil;
 import com.example.myapplication.utils.EmployeeUtil;
 import com.example.myapplication.utils.FileUtil;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserFactory;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 
 /**
  * Created by iChrome on 29.12.2015.
@@ -413,7 +400,12 @@ public class SchoolDayDao {
             List<Cursor> dateCursor = new ArrayList<>();
             dateCursor = getDbHelper().getData("select * from schedule where date = '" + date + "'");
 
-            dateCursor.get(0).moveToFirst();
+            try {
+                dateCursor.get(0).moveToFirst();
+            } catch (NullPointerException ex) {
+                rowNum++;
+                continue;
+            }
 
             int dateRowNum = 0;
             do {
@@ -425,6 +417,7 @@ public class SchoolDayDao {
                     } else currentSchedule.setHidden(false);
                 } else currentSchedule.setHidden(false);
 
+                currentSchedule.setDate(date);
 
                 if ((lessonTime = getLessonTimeById(getLessonTimeIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
                     currentSchedule.setLessonTime(lessonTime);
@@ -444,7 +437,7 @@ public class SchoolDayDao {
                     } else currentSchedule.setSubGroup("");
                 } else currentSchedule.setSubGroup("");
 
-                if ((groupName = getGroupNamebyId(getGroupIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
+                if ((groupName = getGroupNameById(getGroupIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
                     currentSchedule.setStudentGroup(groupName);
                 } else currentSchedule.setStudentGroup("");
 
@@ -577,7 +570,7 @@ public class SchoolDayDao {
                         } else currentSchedule.setSubGroup("");
                     } else currentSchedule.setSubGroup("");
 
-                    if ((groupName = getGroupNamebyId(getGroupIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
+                    if ((groupName = getGroupNameById(getGroupIdFromScheduleTable(dateRowNum, dateCursor))) != null) {
                         currentSchedule.setStudentGroup(groupName);
                     } else currentSchedule.setStudentGroup("");
 
@@ -715,7 +708,7 @@ public class SchoolDayDao {
                     currentSchedule.setSubject(subject);
                 } else currentSchedule.setSubject(null);
 
-                if ((groupName = getGroupNamebyId(getGroupIdFromScheduleTable(rowNum, scheduleTableCursor))) != null) {
+                if ((groupName = getGroupNameById(getGroupIdFromScheduleTable(rowNum, scheduleTableCursor))) != null) {
                     currentSchedule.setStudentGroup(groupName);
                 } else currentSchedule.setStudentGroup("");
 
@@ -793,7 +786,7 @@ public class SchoolDayDao {
         return currentSchoolDay;
     }
 
-    public Integer getFirstRepetition(List<Schedule> currentScheduleList) {
+    private Integer getFirstRepetition(List<Schedule> currentScheduleList) {
         Integer rIndex = -1;
         boolean flag = false;
         int n = 0;
@@ -925,7 +918,7 @@ public class SchoolDayDao {
             }
             else currentSchedule.setSubGroup("");
 
-            if ((groupName = getGroupNamebyId(getGroupIdFromScheduleTable(rowNum, scheduleTableCursor))) != null) {
+            if ((groupName = getGroupNameById(getGroupIdFromScheduleTable(rowNum, scheduleTableCursor))) != null) {
                 currentSchedule.setStudentGroup(groupName);
             } else currentSchedule.setStudentGroup("");
 
@@ -1130,7 +1123,7 @@ public class SchoolDayDao {
 
     }
 
-    private String getGroupNamebyId(String id) {
+    private String getGroupNameById(String id) {
         List<Cursor> groupNameCursor;
         String getGroupNameQuery = "select * from student_group where _id = " + id;
 
@@ -1370,6 +1363,8 @@ public class SchoolDayDao {
                 null);
     }
 
+    //сделать строку в расписании пользовательской
+    //и не удалять при обновлении
     public void setAsManual(String rowId) {
         ContentValues values = new ContentValues();
         values.put(DBColumns.IS_MANUAL, "true");
@@ -1384,6 +1379,7 @@ public class SchoolDayDao {
                 null);
     }
 
+    //показывать строку из расписания
     public void showScheduleRow(String rowId) {
         ContentValues values = new ContentValues();
         values.put(DBColumns.IS_HIDDEN, "false");
@@ -1473,6 +1469,7 @@ public class SchoolDayDao {
         }
     }
 
+    //сделать расписание недоступным
     public void setAsUnavailable(String fileName) {
         if (FileUtil.isDigit(fileName.charAt(0))) {
             setGroupAsUnavailable(fileName);

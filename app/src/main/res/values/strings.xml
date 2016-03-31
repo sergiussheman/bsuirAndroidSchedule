@@ -146,7 +146,8 @@
     <string name="set_subgroup">Подгруппа:</string>
     <string name="set_weeknums">Недели:</string>
     <string name="set_hidden">Скрыть текущую запись после добавления:</string>
-    <string name="set_ltype">Тип предмета:</string>
+    <string name="set_ltype">Тип дисциплины:</string>
+    <string name="set_date">Дата:</string>
 
 
 

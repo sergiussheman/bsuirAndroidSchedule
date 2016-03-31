@@ -3,7 +3,26 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:layout_marginTop="10dp"
+        android:id="@+id/addNewExamSchedule"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:textStyle="italic"
+        android:textSize="18dp"
+        android:text="   Нажмите чтобы добавить новую запись..." />
+
+    <View
+        android:id="@+id/lineBelowAddExamSchedule"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#b3b3b3"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_below="@id/addNewExamSchedule"/>
+
     <ListView
+        android:layout_below="@id/lineBelowAddExamSchedule"
         android:id="@+id/showExamScheduleView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
